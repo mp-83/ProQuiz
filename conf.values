@@ -1,0 +1,27 @@
+project_name [Base Project]: proquiz   
+project_slug [proquiz]: 
+domain_main [proquiz.com]: proquiz.it
+domain_staging [stag.proquiz.it]: 
+docker_swarm_stack_name_main [proquiz-it]: 
+docker_swarm_stack_name_staging [stag-proquiz-it]: 
+secret_key [changethis]: b6b406ae89ba79db1dbe50173613b9746455a3fb2757ad2f4f4dadc03b2f516a
+first_superuser [admin@proquiz.it]: 
+first_superuser_password [changethis]: 53b326d2967bc34729339fdfd3558bd01
+["http://localhost", "http://localhost:4200", "http://localhost:3000", "http://localhost:6500", "https://localhost", "https://localhost:4200", "https://localhost:3000", "https://localhost:6500", "http://dev.proquiz.it", "https://stag.proquiz.it", "https://proquiz.it", "http://local.dockertoolbox.tiangolo.com", "http://localhost.tiangolo.com"]
+smtp_port [587]: 
+smtp_host []: 
+smtp_user []: 
+smtp_password []: 
+smtp_emails_from_email [info@proquiz.it]: 
+postgres_password [changethis]: ef34a17f1eca4698726a0f663
+pgadmin_default_user [admin@proquiz.it]: 
+pgadmin_default_user_password []: d4e715472461
+traefik_constraint_tag [proquiz.it]: 
+traefik_constraint_tag_staging [stag.proquiz.it]: 
+traefik_public_constraint_tag [traefik-public]: 
+flower_auth [admin:]: 757ad2f4f4dadc 
+sentry_dsn []: 
+docker_image_prefix []: 
+docker_image_backend [backend]: server
+docker_image_celeryworker [celeryworker]: 
+docker_image_frontend [frontend]:   
