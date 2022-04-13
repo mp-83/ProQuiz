@@ -8,6 +8,7 @@ from emails.template import JinjaTemplate
 from jose import jwt
 
 from app.core.config import settings
+from fastapi.responses import RedirectResponse
 
 
 def send_email(

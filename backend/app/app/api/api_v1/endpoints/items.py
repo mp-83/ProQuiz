@@ -3,8 +3,9 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app import crud, models, schemas
+from app import crud, schemas
 from app.api import deps
+from app.entities import User
 
 router = APIRouter()
 
@@ -14,7 +15,7 @@ def read_items(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Retrieve items.
@@ -33,7 +34,7 @@ def create_item(
     *,
     db: Session = Depends(deps.get_db),
     item_in: schemas.ItemCreate,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Create new item.
@@ -48,7 +49,7 @@ def update_item(
     db: Session = Depends(deps.get_db),
     id: int,
     item_in: schemas.ItemUpdate,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Update an item.
@@ -67,7 +68,7 @@ def read_item(
     *,
     db: Session = Depends(deps.get_db),
     id: int,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Get item by ID.
@@ -85,7 +86,7 @@ def delete_item(
     *,
     db: Session = Depends(deps.get_db),
     id: int,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Delete an item.

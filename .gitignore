@@ -5,3 +5,4 @@ docker-stack.yml
 **/__pycache__/**
 *.pyc
 *egg-info
+.idea

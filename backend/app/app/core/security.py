@@ -22,8 +22,7 @@ def create_access_token(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
     to_encode = {"exp": expire, "sub": str(subject)}
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -32,3 +31,17 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
+
+from fastapi.responses import RedirectResponse
+
+
+def login_required(func):
+    def function_wrapper(*args, **kwargs):
+        view = args[0]
+        if view.request.is_authenticated:
+            return func(*args, **kwargs)
+        login_url = view.request.route_url("login")
+        return RedirectResponse(login_url)
+
+    return function_wrapper

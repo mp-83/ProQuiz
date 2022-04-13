@@ -29,11 +29,18 @@ class UserInDBBase(UserBase):
         orm_mode = True
 
 
-# Additional properties to return via API
-class User(UserInDBBase):
-    pass
-
-
 # Additional properties stored in DB
 class UserInDB(UserInDBBase):
     hashed_password: str
+
+
+class User(BaseModel):
+    email: EmailStr
+    email_digest: Optional[str] = None
+    token_digest: Optional[str] = None
+    name: str = None
+    password_hash: str = None
+    key: str = None
+    is_admin: bool = False
+
+
