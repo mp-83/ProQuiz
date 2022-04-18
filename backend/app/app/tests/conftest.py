@@ -7,7 +7,6 @@ import alembic.command
 import alembic.config
 import pytest
 
-from app import main
 from app.entities import Game, Match, Question, User
 from app.tests.fixtures import TEST_1
 from sqlalchemy import event
@@ -18,12 +17,29 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.db.base import Base
+from app.db.session import get_db
 from app.core.config import settings
 from app.main import app
 from app.core import security
 from app.tests.utilities.user import authentication_token_from_email
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+engine = create_engine(
+    "sqlite:///:memory:", connect_args={"check_same_thread": False}
+)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def override_get_db():
+    Base.metadata.create_all(bind=engine)
+    _session = TestingSessionLocal()
+    yield _session
+    Base.metadata.drop_all(bind=engine)
+    _session.close()
+
+
+app.dependency_overrides[get_db] = override_get_db
 
 
 @pytest.fixture(scope="module")
@@ -56,11 +72,6 @@ class Cookie:
         return []
 
 
-@pytest.fixture(scope="session")
-def testapp():
-    yield
-
-
 def pytest_addoption(parser):
     parser.addoption("--ini", action="store", metavar="INI_FILE")
 
@@ -79,9 +90,8 @@ def alembic_ini_file(request):
 @pytest.fixture(scope="session")
 def db_engine() -> Generator:
     alembic_cfg = alembic.config.Config(alembic_ini_file)
-    engine = create_engine("sqlite:///:memory:", pool_pre_ping=True)
-    Base.metadata.drop_all(bind=engine)
-    alembic.command.stamp(alembic_cfg, None, purge=True)
+    # Base.metadata.drop_all(bind=engine)
+    # alembic.command.stamp(alembic_cfg, None, purge=True)
 
     # run migrations to initialize the database
     # depending on how we want to initialize the database from scratch
@@ -98,7 +108,8 @@ def db_engine() -> Generator:
 
 @pytest.fixture(scope="session")
 def dbsession(db_engine) -> Generator:
-    yield sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
+    session = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
+    yield session
 
 
 class AuthenticatedRequest:
