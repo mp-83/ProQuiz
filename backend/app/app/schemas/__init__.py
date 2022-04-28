@@ -1,11 +1,15 @@
-from .item import Item, ItemCreate, ItemInDB, ItemUpdate
-from .token import Token, TokenPayload
-from .user import User, UserCreate, UserInDB, UserUpdate
-from app.schemas.answer import Answer
-from app.schemas.game import Game
-from app.schemas.match import Match
-from app.schemas.question import Question
-from app.schemas.ranking import Ranking
-from app.schemas.reaction import Reaction
-from app.schemas.user import User
+from app.schemas.answer import Answer  # noqa: F401
+from app.schemas.game import Game  # noqa: F401
+from app.schemas.match import (  # noqa: F401
+    Match,
+    MatchCreate,
+    MatchEdit,
+    MatchYamlImport,
+)
+from app.schemas.question import Question  # noqa: F401
+from app.schemas.ranking import Ranking  # noqa: F401
+from app.schemas.reaction import Reaction  # noqa: F401
+from app.schemas.user import User, UserCreate, UserInDB, UserUpdate  # noqa: F401
 
+from .item import Item, ItemCreate, ItemInDB, ItemUpdate  # noqa: F401
+from .token import Token, TokenPayload  # noqa: F401

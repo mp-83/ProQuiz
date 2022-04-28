@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer
+from sqlalchemy.orm import Session, relationship
+from sqlalchemy.schema import UniqueConstraint
+
 from app.db.base import Base
 from app.db.utils import StoreConfig, TableMixin, classproperty
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer
-from sqlalchemy.orm import relationship
-from sqlalchemy.schema import UniqueConstraint
 
 
 class Reaction(TableMixin, Base):
@@ -48,9 +49,13 @@ class Reaction(TableMixin, Base):
         ),
     )
 
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
+        super().__init__(**kwargs)
+
     @property
     def session(self):
-        return StoreConfig().session
+        return self._session
 
     @property
     def answer(self):

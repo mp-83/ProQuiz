@@ -12,3 +12,6 @@ class Answer(BaseModel):
     is_correct: Optional[bool]
     content_url: Optional[str]
 
+
+class AnswerCreate(BaseModel):
+    text: str

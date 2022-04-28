@@ -3,6 +3,10 @@ from hashlib import blake2b
 from uuid import uuid4
 
 import bcrypt
+from sqlalchemy import Boolean, Column, String
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Session
+
 from app.constants import (
     DIGEST_LENGTH,
     DIGEST_SIZE,
@@ -11,11 +15,9 @@ from app.constants import (
     PASSWORD_HASH_LENGTH,
     USER_NAME_MAX_LENGTH,
 )
-from app.entities import Reaction
 from app.db.base import Base
 from app.db.utils import StoreConfig, TableMixin, classproperty
-from sqlalchemy import Boolean, Column, String
-from sqlalchemy.ext.hybrid import hybrid_property
+from app.entities import Reaction
 
 
 class WordDigest:
@@ -85,7 +87,8 @@ class User(TableMixin, Base):
     key = Column(String(KEY_LENGTH))
     is_admin = Column(Boolean, default=False)
 
-    def __init__(self, **kwargs):
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
         password = kwargs.pop("password", None)
         if password:
             self.set_password(password)
@@ -108,7 +111,7 @@ class User(TableMixin, Base):
 
     @property
     def session(self):
-        return StoreConfig().session
+        return self._session
 
     def save(self):
         self.session.add(self)

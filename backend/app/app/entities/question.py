@@ -1,10 +1,11 @@
-from app.constants import QUESTION_TEXT_MAX_LENGTH, URL_LENGTH
-from app.entities.answer import Answer
-from app.db.base import Base
-from app.db.utils import StoreConfig, TableMixin, classproperty
 from sqlalchemy import Column, ForeignKey, Integer, String, select
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Session, relationship
 from sqlalchemy.schema import UniqueConstraint
+
+from app.constants import QUESTION_TEXT_MAX_LENGTH, URL_LENGTH
+from app.db.base import Base
+from app.db.utils import TableMixin
+from app.entities.answer import Answer
 
 
 class Question(TableMixin, Base):
@@ -23,23 +24,24 @@ class Question(TableMixin, Base):
         UniqueConstraint("game_uid", "position", name="ck_question_game_uid_position"),
     )
 
-    @property
-    def session(self):
-        return StoreConfig().session
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
+        super().__init__(**kwargs)
 
     @property
     def is_open(self):
         return len(self.answers) == 0
 
     @property
+    def answers_list(self):
+        return [a.json for a in self.answers]
+
+    @property
     def is_template(self):
         return self.game_uid is None
 
-    def all(self):
-        return self.session.execute(select(Question)).all()
-
     def at_position(self, position):
-        matched_row = self.session.execute(
+        matched_row = self._session.execute(
             select(Question).where(Question.position == position)
         )
         return matched_row.scalar_one_or_none()
@@ -48,12 +50,13 @@ class Question(TableMixin, Base):
         if self.position is None and self.game:
             self.position = len(self.game.questions)
 
-        self.session.add(self)
-        self.session.commit()
+        self._session.add(self)
+        self._session.commit()
+        self._session.refresh(self)
         return self
 
     def refresh(self):
-        self.session.refresh(self)
+        self._session.refresh(self)
         return self
 
     def update(self, **kwargs):
@@ -63,7 +66,7 @@ class Question(TableMixin, Base):
             elif hasattr(self, k):
                 setattr(self, k, v)
 
-        self.session.commit()
+        self._session.commit()
 
     @property
     def answers_by_uid(self):
@@ -79,17 +82,17 @@ class Question(TableMixin, Base):
             _answer = self.answers_by_uid[data["uid"]]
             _answer.update(**data)
 
-        self.session.commit()
+        self._session.commit()
 
     def create_with_answers(self, answers):
         _answers = answers or []
-        self.session.add(self)
+        self._session.add(self)
         # this commit might be avoided, as it is done in the .clone()
         # method but without it, fails
         # https://docs.sqlalchemy.org/en/14/tutorial/orm_related_objects.html#cascading-objects-into-the-session
-        self.session.commit()
+        self._session.commit()
         for position, _answer in enumerate(_answers):
-            self.session.add(
+            self._session.add(
                 Answer(
                     question_uid=self.uid,
                     text=_answer["text"],
@@ -97,7 +100,7 @@ class Question(TableMixin, Base):
                     is_correct=position == 0,
                 )
             )
-        self.session.commit()
+        self._session.commit()
         return self
 
     def clone(self, many=False):
@@ -106,9 +109,9 @@ class Question(TableMixin, Base):
             text=self.text,
             position=self.position,
         )
-        self.session.add(new)
+        self._session.add(new)
         for _answer in self.answers:
-            self.session.add(
+            self._session.add(
                 Answer(
                     question_uid=new.uid,
                     text=_answer.text,
@@ -118,7 +121,7 @@ class Question(TableMixin, Base):
                 )
             )
         if not many:
-            self.session.commit()
+            self._session.commit()
         return new
 
     @property
@@ -126,23 +129,20 @@ class Question(TableMixin, Base):
         return {
             "text": self.text,
             "position": self.position,
-            "answers": [a.json for a in self.answers],
+            "answers": self.answers,
         }
 
 
 class Questions:
-    @classproperty
-    def session(self):
-        return StoreConfig().session
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
+        super().__init__(**kwargs)
 
-    @classmethod
-    def count(cls):
-        return cls.session.query(Question).count()
+    def count(self):
+        return self._session.query(Question).count()
 
-    @classmethod
-    def questions_with_ids(cls, *ids):
-        return cls.session.query(Question).filter(Question.uid.in_(ids))
+    def questions_with_ids(self, *ids):
+        return self._session.query(Question).filter(Question.uid.in_(ids))
 
-    @classmethod
-    def get(cls, **filters):
-        return cls.session.query(Question).filter_by(**filters).one_or_none()
+    def get(self, **filters):
+        return self._session.query(Question).filter_by(**filters).one_or_none()

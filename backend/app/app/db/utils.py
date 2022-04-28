@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import Column, DateTime, Integer
-from sqlalchemy.orm import declarative_mixin
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm import declarative_mixin
 
 
 def t_now():
@@ -11,8 +11,8 @@ def t_now():
 
 class StoreConfig:
     _instance = None
-    _config = None
     _session = None
+    _factory = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -20,22 +20,12 @@ class StoreConfig:
         return cls._instance
 
     @property
-    def config(self):
-        return self._config
-
-    @config.setter
-    def config(self, value):
-        self._config = value
-
-    @property
     def session(self):
-        factory = self._config.registry.get("dbsession_factory")
-        if self._session is None:
-            self._session = factory()
-        if not self._session.is_active:
-            self._session = factory()
-
         return self._session
+
+    @session.setter
+    def session(self, value):
+        self._session = value
 
 
 @declarative_mixin

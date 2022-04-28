@@ -1,9 +1,12 @@
-from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
 
 from pydantic import BaseModel
-from app.schemas.game import Game
-from app.schemas.answer import Answer
+
+from app.schemas import Answer
+
+
+class SimpleAnswer(BaseModel):
+    text: str
 
 
 class Question(BaseModel):
@@ -12,4 +15,16 @@ class Question(BaseModel):
     text: str
     time: int = None
     content_url: str = None
-    # answers = List[Answer]
+    answers_list: List[Answer] = []
+
+    class Config:
+        orm_mode = True
+        arbitrary_types_allowed = True
+
+
+class QuestionCreate(BaseModel):
+    text: str
+    time: int = None
+    content_url: str = None
+    game: Optional[int]
+    answers: List[SimpleAnswer]

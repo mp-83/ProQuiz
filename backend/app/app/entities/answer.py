@@ -1,9 +1,10 @@
-from app.constants import ANSWER_TEXT_MAX_LENGTH, URL_LENGTH
-from app.db.base import Base
-from app.db.utils import StoreConfig, TableMixin, classproperty
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
+
+from app.constants import ANSWER_TEXT_MAX_LENGTH, URL_LENGTH
+from app.db.base import Base
+from app.db.utils import StoreConfig, TableMixin, classproperty
 
 
 class Answer(TableMixin, Base):
@@ -57,6 +58,7 @@ class Answer(TableMixin, Base):
         return {
             "uid": self.uid,
             "text": self.text,
+            "question_uid": self.question_uid,
             "is_correct": self.is_correct,
             "position": self.position,
             "level": self.level,

@@ -1,14 +1,17 @@
 from datetime import datetime
 
+from sqlalchemy.orm import Session
+
 from app.entities import Answers, Matches, Questions, Reactions, Users
 from app.entities.user import WordDigest
 from app.exceptions import NotFoundObjectError, ValidateError
 
 
 class RetrieveObject:
-    def __init__(self, uid, otype):
+    def __init__(self, uid: int, otype: str, db_session: Session):
         self.object_uid = uid
         self.otype = otype
+        self.db_session = db_session
 
     def get(self):
         klass = {
@@ -18,7 +21,7 @@ class RetrieveObject:
             "user": Users,
         }.get(self.otype)
 
-        obj = klass.get(uid=self.object_uid)
+        obj = klass(self.db_session).get(uid=self.object_uid)
         if obj:
             return obj
         raise NotFoundObjectError()
@@ -171,11 +174,14 @@ class ValidatePlayNext:
 
 
 class ValidateEditMatch:
-    def __init__(self, match_uid):
+    def __init__(self, match_uid, db_session: Session):
         self.match_uid = match_uid
+        self._session = db_session
 
     def valid_match(self):
-        match = RetrieveObject(self.match_uid, otype="match").get()
+        match = RetrieveObject(
+            self.match_uid, otype="match", db_session=self._session
+        ).get()
         if not match.is_started:
             return match
 
@@ -200,11 +206,14 @@ class ValidateNewCodeMatch:
 
 
 class ValidateMatchImport:
-    def __init__(self, match_uid):
+    def __init__(self, match_uid, db_session: Session):
         self.match_uid = match_uid
+        self._session = db_session
 
     def valid_match(self):
-        return RetrieveObject(self.match_uid, otype="match").get()
+        return RetrieveObject(
+            self.match_uid, otype="match", db_session=self._session
+        ).get()
 
     def is_valid(self):
         return self.valid_match()

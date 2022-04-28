@@ -1,45 +1,68 @@
 import os
 from base64 import b64encode
 from datetime import timedelta
-
-import alembic
-import alembic.command
-import alembic.config
-import pytest
-
-from app.entities import Game, Match, Question, User
-from app.tests.fixtures import TEST_1
-from sqlalchemy import event
-
-
 from typing import Dict, Generator
-from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from app.core import security
+from app.core.config import settings
 from app.db.base import Base
 from app.db.session import get_db
-from app.core.config import settings
+from app.entities import Game, Match, Question, User
 from app.main import app
-from app.core import security
+from app.tests.fixtures import TEST_1
 from app.tests.utilities.user import authentication_token_from_email
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
-engine = create_engine(
-    "sqlite:///:memory:", connect_args={"check_same_thread": False}
+test_engine = create_engine(
+    "sqlite:///:memory:",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def init_db():
+    Base.metadata.create_all(bind=test_engine)
+
+
+def reset_db():
+    Base.metadata.drop_all(bind=test_engine)
 
 
 def override_get_db():
-    Base.metadata.create_all(bind=engine)
-    _session = TestingSessionLocal()
-    yield _session
-    Base.metadata.drop_all(bind=engine)
-    _session.close()
+    _maker = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+    yield _maker()
 
 
 app.dependency_overrides[get_db] = override_get_db
+
+
+@pytest.fixture()
+def old_dbsession() -> Generator:
+    # alembic_cfg = alembic.config.Config(alembic_ini_file)
+    # alembic.command.stamp(alembic_cfg, None, purge=True)
+
+    # run migrations to initialize the database
+    # depending on how we want to initialize the database from scratch
+    # we could alternatively call:
+    # alembic.command.stamp(alembic_cfg, "head")
+    # alembic.command.upgrade(alembic_cfg, "head")
+    # alembic.command.stamp(alembic_cfg, None, purge=True)
+    yield
+
+
+@pytest.fixture()
+def dbsession():
+    init_db()
+    _session_factory = sessionmaker(
+        autocommit=False, autoflush=False, bind=test_engine
+    )()
+    yield _session_factory
+    reset_db()
 
 
 @pytest.fixture(scope="module")
@@ -85,31 +108,6 @@ def ini_file(request):
 @pytest.fixture(scope="session")
 def alembic_ini_file(request):
     return os.path.abspath("alembic.ini")
-
-
-@pytest.fixture(scope="session")
-def db_engine() -> Generator:
-    alembic_cfg = alembic.config.Config(alembic_ini_file)
-    # Base.metadata.drop_all(bind=engine)
-    # alembic.command.stamp(alembic_cfg, None, purge=True)
-
-    # run migrations to initialize the database
-    # depending on how we want to initialize the database from scratch
-    # we could alternatively call:
-    Base.metadata.create_all(bind=engine)
-    # alembic.command.stamp(alembic_cfg, "head")
-    # alembic.command.upgrade(alembic_cfg, "head")
-
-    yield engine
-
-    Base.metadata.drop_all(bind=engine)
-    # alembic.command.stamp(alembic_cfg, None, purge=True)
-
-
-@pytest.fixture(scope="session")
-def dbsession(db_engine) -> Generator:
-    session = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
-    yield session
 
 
 class AuthenticatedRequest:
@@ -176,7 +174,7 @@ def create_fixture_test(dbsession):
 
 @pytest.fixture
 def yaml_file_handler():
-    with open("codechallenge/tests/files/file.yaml", "rb") as fp:
+    with open("app/tests/files/file.yaml", "rb") as fp:
         b64content = b64encode(fp.read()).decode()
         b64string = f"data:application/x-yaml;base64,{b64content}"
         yield b64string, "file.yaml"
@@ -184,5 +182,5 @@ def yaml_file_handler():
 
 @pytest.fixture
 def excel_file_handler():
-    with open("codechallenge/tests/files/file.xlsx", "rb") as fp:
+    with open("app/tests/files/file.xlsx", "rb") as fp:
         yield fp, "file.xlsx"

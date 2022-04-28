@@ -1,16 +1,15 @@
-from typing import Optional, List
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel
-from app.schemas import Match, User, Answer, Game, Question
 
+from app.schemas import Answer, Game, Match, Question
 
 
 class Reaction(BaseModel):
     match_uid: int
     match: Optional[Match]
     user_uid: int
-    user: Optional[User]
     answer_uid: int
     answer: Optional[Answer]
     game_uid: int

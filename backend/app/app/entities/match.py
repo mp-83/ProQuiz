@@ -2,6 +2,9 @@ from datetime import datetime
 from random import choices
 from uuid import uuid1
 
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, select
+from sqlalchemy.orm import Session
+
 from app.constants import (
     CODE_POPULATION,
     HASH_POPULATION,
@@ -11,12 +14,11 @@ from app.constants import (
     MATCH_PASSWORD_LEN,
     PASSWORD_POPULATION,
 )
-from app.entities.game import Game
 from app.db.base import Base
-from app.db.utils import StoreConfig, TableMixin, classproperty
+from app.db.utils import TableMixin
+from app.entities.game import Game
 from app.entities.question import Question, Questions
 from app.exceptions import NotUsableQuestionError
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, select
 
 
 class Match(TableMixin, Base):
@@ -42,7 +44,7 @@ class Match(TableMixin, Base):
     # when True games should be played in order
     order = Column(Boolean, default=True)
 
-    def __init__(self, **kwargs):
+    def __init__(self, db_session: Session = None, **data):
         """
         Initiate the instance
 
@@ -51,38 +53,48 @@ class Match(TableMixin, Base):
         the time, therefore the ones that change
         every tick and guarantee the uniqueness
         """
-        expires = kwargs.pop("expires", None)
-        if not kwargs.get("to_time"):
+        self._session = db_session
+        expires = data.pop("expires", None)
+        if not data.get("to_time"):
             self.to_time = expires
 
-        if not kwargs.get("from_time"):
+        if not data.get("from_time"):
             self.from_time = datetime.now()
 
-        _name = kwargs.get("name")
+        _name = data.get("name")
         if _name is None or _name == "":
             uuid_time_substring = "{}".format(uuid1())[:23]
-            kwargs["name"] = f"M-{uuid_time_substring}"
+            data["name"] = f"M-{uuid_time_substring}"
 
-        with_code = kwargs.pop("with_code", False)
+        with_code = data.pop("with_code", False)
         if with_code:
-            self.code = MatchCode().get_code()
+            self.code = MatchCode(db_session=self.session).get_code()
 
         with_hash = not with_code
         if with_hash:
-            self.uhash = MatchHash().get_hash()
+            self.uhash = MatchHash(db_session=self.session).get_hash()
 
-        if kwargs.get("is_restricted"):
-            self.uhash = kwargs.get("uhash") or MatchHash().get_hash()
-            self.password = MatchPassword(uhash=self.uhash).get_value()
-        super().__init__(**kwargs)
+        if data.get("is_restricted"):
+            self.uhash = (
+                data.get("uhash") or MatchHash(db_session=self._session).get_hash()
+            )
+            self.password = MatchPassword(
+                db_session=self.session, uhash=self.uhash
+            ).get_value()
+        super().__init__(**data)
 
     @property
     def session(self):
-        return StoreConfig().session
+        return self._session
 
     @property
     def questions(self):
-        return [list(g.ordered_questions) for g in self.games]
+        return [g.ordered_questions for g in self.games]
+
+    @property
+    def questions_list(self):
+        return [q for g in self.games for q in g.ordered_questions]
+        # return [[q.json for q in g.ordered_questions] for g in self.games]
 
     @property
     def questions_count(self):
@@ -99,6 +111,7 @@ class Match(TableMixin, Base):
     def save(self):
         self.session.add(self)
         self.session.commit()
+        self.session.refresh(self)
         return self
 
     def with_name(self, name):
@@ -121,28 +134,32 @@ class Match(TableMixin, Base):
     def is_started(self):
         return len(self.reactions)
 
-    def update(self, **attrs):
+    def update(self, session: Session, **attrs):
+        self._session = session
         for name, value in attrs.items():
             if name == "questions":
-                self.update_questions(value)
+                self.update_questions(value, commit=True)
+            elif name == "name" and not value:
+                continue
             else:
                 setattr(self, name, value)
-        self.session.commit()
+        self.save()
 
-    def insert_questions(self, questions, commit=False):
+    def insert_questions(self, questions, session: Session):
         result = []
-        g = Game(match_uid=self.uid).save()
-        for q in questions:
+        self._session = session
+        new_game = Game(match_uid=self.uid, db_session=session).save()
+        for data in questions:
             question = Question(
-                game_uid=g.uid,
-                text=q.get("text"),
-                position=len(g.questions),
+                game_uid=new_game.uid,
+                text=data.get("text"),
+                position=len(new_game.questions),
+                db_session=session,
             )
-            question.create_with_answers(q["answers"])
+            question.create_with_answers(data["answers"])
             result.append(question)
 
-        if commit:
-            self.session.commit()
+        self.save()
         return result
 
     def update_questions(self, questions, commit=False):
@@ -160,7 +177,7 @@ class Match(TableMixin, Base):
         for q in questions:
             game_idx = q.get("game")
             if game_idx is None:
-                g = Game(match_uid=self.uid).save()
+                g = Game(match_uid=self.uid, db_session=self.session).save()
             else:
                 g = self.games[game_idx]
 
@@ -173,6 +190,7 @@ class Match(TableMixin, Base):
                     game_uid=g.uid,
                     text=q.get("text"),
                     position=len(g.questions),
+                    db_session=self.session,
                 )
             self.session.add(question)
             result.append(question)
@@ -233,19 +251,23 @@ class Match(TableMixin, Base):
 
 
 class MatchHash:
+    def __init__(self, db_session: Session):
+        self._session = db_session
+
     def new_value(self, length):
         return "".join(choices(HASH_POPULATION, k=length))
 
     def get_hash(self, length=MATCH_HASH_LEN):
         value = self.new_value(length)
-        while Matches.get(uhash=value):
+        while Matches(db_session=self._session).get(uhash=value):
             value = self.new_value(length)
 
         return value
 
 
 class MatchPassword:
-    def __init__(self, uhash):
+    def __init__(self, db_session, uhash):
+        self._session = db_session
         self.match_uhash = uhash
 
     def new_value(self, length):
@@ -253,45 +275,45 @@ class MatchPassword:
 
     def get_value(self, length=MATCH_PASSWORD_LEN):
         value = self.new_value(length)
-        while Matches.get(uhash=self.match_uhash, password=value):
+        while Matches(db_session=self._session).get(
+            uhash=self.match_uhash, password=value
+        ):
             value = self.new_value(length)
 
         return value
 
 
 class MatchCode:
+    def __init__(self, db_session: Session):
+        self._session = db_session
+
     def new_value(self, length):
         return "".join(choices(CODE_POPULATION, k=length))
 
     def get_code(self, length=MATCH_CODE_LEN):
         value = self.new_value(length)
-        while Matches.active_with_code(value):
+        while Matches(db_session=self._session).active_with_code(value):
             value = self.new_value(length)
 
         return value
 
 
 class Matches:
-    @classproperty
-    def session(self):
-        return StoreConfig().session
+    def __init__(self, db_session: Session):
+        self._session = db_session
 
-    @classmethod
-    def count(cls):
-        return cls.session.query(Match).count()
+    def count(self):
+        return self._session.query(Match).count()
 
-    @classmethod
-    def get(cls, **filters):
-        return cls.session.query(Match).filter_by(**filters).one_or_none()
+    def get(self, **filters):
+        return self._session.query(Match).filter_by(**filters).one_or_none()
 
-    @classmethod
-    def active_with_code(cls, code):
+    def active_with_code(self, code):
         return (
-            cls.session.query(Match)
+            self._session.query(Match)
             .filter(Match.code == code, Match.to_time > datetime.now())
             .one_or_none()
         )
 
-    @classmethod
-    def all_matches(cls, **filters):
-        return cls.session.query(Match).filter_by(**filters).all()
+    def all_matches(self, **filters):
+        return self._session.query(Match).filter_by(**filters).all()

@@ -1,8 +1,9 @@
-from app.db.base import Base
-from app.db.utils import StoreConfig, TableMixin
 from sqlalchemy import Boolean, Column, ForeignKey, Integer
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Session, relationship
 from sqlalchemy.schema import UniqueConstraint
+
+from app.db.base import Base
+from app.db.utils import TableMixin
 
 
 class Game(TableMixin, Base):
@@ -20,13 +21,14 @@ class Game(TableMixin, Base):
         UniqueConstraint("match_uid", "index", name="ck_game_match_uid_question"),
     )
 
-    @property
-    def session(self):
-        return StoreConfig().session
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
+        super().__init__(**kwargs)
 
     def save(self):
-        self.session.add(self)
-        self.session.commit()
+        self._session.add(self)
+        self._session.commit()
+        self._session.refresh(self)
         return self
 
     def first_question(self):

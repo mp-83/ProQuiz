@@ -3,4 +3,5 @@
 set -e
 set -x
 
-pytest --cov=app --cov-report=term-missing app/tests/integration/match_tests.py::TestCaseBadRequest "${@}"
+pytest app/tests/integration/match_tests.py::TestCaseMatchEndpoints "${@}"
+#pytest --cov=app --cov-report=term-missing app/tests/integration/match_tests.py::TestCaseMatchEndpoints::t_successfulCreationOfAMatch "${@}"
