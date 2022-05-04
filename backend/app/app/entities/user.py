@@ -16,7 +16,7 @@ from app.constants import (
     USER_NAME_MAX_LENGTH,
 )
 from app.db.base import Base
-from app.db.utils import StoreConfig, TableMixin, classproperty
+from app.db.utils import TableMixin
 from app.entities import Reaction
 
 
@@ -35,10 +35,13 @@ class UserFactory:
     def __init__(self, **kwargs):
         self.original_email = kwargs.pop("original_email", "")
         self.signed = kwargs.pop("signed", None) or self.original_email
+        self._session = kwargs.pop("db_session", None)
         self.kwargs = kwargs
 
     def exists(self, email_digest, token_digest):
-        return Users.get(email_digest=email_digest, token_digest=token_digest)
+        return Users(db_session=self._session).get(
+            email_digest=email_digest, token_digest=token_digest
+        )
 
     def fetch(self):
         email = self.kwargs.get("email")
@@ -46,18 +49,21 @@ class UserFactory:
             email_digest = WordDigest(email).value()
             password = self.kwargs.get("password")
 
-            internal_user = Users.get(email=email)
+            internal_user = Users(db_session=self._session).get(email=email)
             return (
                 internal_user
                 or User(
-                    email=email, email_digest=email_digest, password=password
+                    email=email,
+                    email_digest=email_digest,
+                    password=password,
+                    db_session=self._session,
                 ).save()
             )
 
         if not self.signed:
             email_digest = uuid4().hex
             email = f"uns-{email_digest}@progame.io"
-            return User(email=email).save()
+            return User(email=email, db_session=self._session).save()
 
         token = self.kwargs.get("token", "")
         email_digest = WordDigest(self.original_email).value()
@@ -66,7 +72,7 @@ class UserFactory:
         if user:
             return user
 
-        user = User()
+        user = User(db_session=self._session)
         user.email = f"{email_digest}@progame.io"
         user.email_digest = email_digest
         user.token_digest = token_digest
@@ -124,26 +130,22 @@ class User(TableMixin, Base):
 
 
 class Users:
-    @classproperty
-    def session(self):
-        return StoreConfig().session
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
+        super().__init__(**kwargs)
 
-    @classmethod
-    def count(cls):
-        return cls.session.query(User).count()
+    def count(self):
+        return self._session.query(User).count()
 
-    @classmethod
-    def get(cls, **filters):
-        return cls.session.query(User).filter_by(**filters).one_or_none()
+    def get(self, **filters):
+        return self._session.query(User).filter_by(**filters).one_or_none()
 
-    @classmethod
-    def all(cls):
-        return cls.session.query(User).all()
+    def all(self):
+        return self._session.query(User).all()
 
-    @classmethod
-    def players_of_match(cls, match_uid):
+    def players_of_match(self, match_uid):
         return (
-            cls.session.query(User)
+            self._session.query(User)
             .join(Reaction, Reaction.user_uid == User.uid)
             .filter(Reaction.match_uid == match_uid)
             .all()

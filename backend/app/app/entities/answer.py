@@ -1,10 +1,10 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, select
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Session, relationship
 from sqlalchemy.schema import UniqueConstraint
 
 from app.constants import ANSWER_TEXT_MAX_LENGTH, URL_LENGTH
 from app.db.base import Base
-from app.db.utils import StoreConfig, TableMixin, classproperty
+from app.db.utils import StoreConfig, TableMixin
 
 
 class Answer(TableMixin, Base):
@@ -25,9 +25,13 @@ class Answer(TableMixin, Base):
 
     __table_args__ = (UniqueConstraint("question_uid", "text"),)
 
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
+        super().__init__(**kwargs)
+
     @property
     def session(self):
-        return StoreConfig().session
+        return self._session
 
     def all(self):
         return self.session.execute(select(Answer)).all()
@@ -67,14 +71,12 @@ class Answer(TableMixin, Base):
 
 
 class Answers:
-    @classproperty
-    def session(self):
-        return StoreConfig().session
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
+        super().__init__(**kwargs)
 
-    @classmethod
-    def count(cls):
-        return cls.session.query(Answer).count()
+    def count(self):
+        return self._session.query(Answer).count()
 
-    @classmethod
-    def get(cls, uid):
-        return cls.session.query(Answer).filter_by(uid=uid).one_or_none()
+    def get(self, uid):
+        return self._session.query(Answer).filter_by(uid=uid).one_or_none()

@@ -105,13 +105,14 @@ class GameFactory:
 
 
 class PlayerStatus:
-    def __init__(self, user, match):
+    def __init__(self, user, match, db_session):
         self._user = user
         self._current_match = match
+        self._session = db_session
 
     @property
     def _all_reactions_query(self):
-        return Reactions.all_reactions_of_user_to_match(
+        return Reactions(db_session=self._session).all_reactions_of_user_to_match(
             self._user, self._current_match
         )  # .filter_by(_answer=None)
 
@@ -132,7 +133,7 @@ class PlayerStatus:
         return {r.game.uid: r.game for r in self._all_reactions_query.all()}
 
     def current_score(self):
-        return sum([r.score for r in self.all_reactions()])
+        return sum(r.score for r in self.all_reactions())
 
     @property
     def match(self):
@@ -140,17 +141,18 @@ class PlayerStatus:
 
 
 class SinglePlayer:
-    def __init__(self, status, user, match):
+    def __init__(self, status, user, match, db_session):
         self._status = status
         self._user = user
         self._match = match
+        self._session = db_session
 
         self._game_factory = None
         self._question_factory = None
         self._current_reaction = None
 
     def start(self):
-        self._match.refresh()
+        self._session.refresh(self._match)
         # TODO to fix
         if self._match.left_attempts(self._user) == 0:
             raise MatchNotPlayableError(
@@ -173,6 +175,7 @@ class SinglePlayer:
             user_uid=self._user.uid,
             game_uid=game.uid,
             question_uid=question.uid,
+            db_session=self._session,
         ).save()
 
         return question
@@ -197,10 +200,10 @@ class SinglePlayer:
         return self._status.total_score()
 
     def last_reaction(self, question):
-        reactions = Reactions.all_reactions_of_user_to_match(
-            self._user, self._match
-        ).filter_by(
-            _answer=None
+        reactions = (
+            Reactions(db_session=self._session)
+            .all_reactions_of_user_to_match(self._user, self._match)
+            .filter_by(_answer=None)
         )  # TODO to fix: or _open_answer=None
 
         if reactions.count() > 0:
@@ -211,6 +214,7 @@ class SinglePlayer:
             question_uid=question.uid,
             game_uid=question.game.uid,
             user_uid=self._user.uid,
+            db_session=self._session,
         ).save()
 
     @property
@@ -240,8 +244,7 @@ class SinglePlayer:
             )
 
         self._current_reaction.record_answer(answer)
-        question = self.forward()
-        return question
+        return self.forward()
 
     @property
     def current(self):
@@ -259,12 +262,16 @@ class SinglePlayer:
 
 
 class PlayScore:
-    def __init__(self, match_uid, user_uid, score):
+    def __init__(self, match_uid, user_uid, score, db_session):
         self.match_uid = match_uid
         self.user_uid = user_uid
         self.score = score
+        self._session = db_session
 
     def save_to_ranking(self):
         return Ranking(
-            match_uid=self.match_uid, user_uid=self.user_uid, score=self.score
+            match_uid=self.match_uid,
+            user_uid=self.user_uid,
+            score=self.score,
+            db_session=self._session,
         ).save()

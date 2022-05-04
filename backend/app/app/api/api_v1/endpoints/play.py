@@ -1,8 +1,19 @@
 import logging
 
+from fastapi import APIRouter, Depends, Response, status
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
+from sqlalchemy.orm import Session
+
 from app import schemas
+from app.db.session import get_db
 from app.entities.user import UserFactory
-from app.exceptions import MatchOver, NotFoundObjectError, ValidateError
+from app.exceptions import (
+    InternalException,
+    MatchOver,
+    NotFoundObjectError,
+    ValidateError,
+)
 from app.play.single_player import PlayerStatus, PlayScore, SinglePlayer
 from app.validation.logical import (
     ValidatePlayCode,
@@ -11,102 +22,123 @@ from app.validation.logical import (
     ValidatePlaySign,
     ValidatePlayStart,
 )
-from fastapi import APIRouter, Response, status
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-@router.post("/{match_uhash}")
-def land(match_uhash: str):
-    # TODO land_play_schema
+@router.post("/h/{match_uhash}", response_model=schemas.PlaySchemaBase)
+def land(
+    match_uhash: str,
+    session: Session = Depends(get_db),
+):
     try:
-        data = ValidatePlayLand(**{"match_uhash": match_uhash}).is_valid()
+        match_uhash = schemas.LandPlay(match_uhash=match_uhash).dict()["match_uhash"]
+    except ValidationError as e:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={"error": e.errors()},
+        )
+
+    try:
+        data = ValidatePlayLand(match_uhash=match_uhash, db_session=session).is_valid()
     except (NotFoundObjectError, ValidateError) as e:
         if isinstance(e, NotFoundObjectError):
             return Response(status_code=status.HTTP_404_NOT_FOUND)
-        return Response(status_code=status.HTTP_400_BAD_REQUEST, json={"error": e.message})
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST, content={"error": e.message}
+        )
 
     match = data.get("match")
-    return Response(json={"match": match.uid})
+    return JSONResponse(content={"match": match.uid})
 
 
-@router.post("/code")
-def code(user_input):
-    # TODO code_play_schema
+@router.post("/code", response_model=schemas.PlaySchemaBase)
+def code(user_input: schemas.CodePlay, session: Session = Depends(get_db)):
+    match_code = user_input.dict()["match_code"]
     try:
-        data = ValidatePlayCode(**user_input).is_valid()
+        data = ValidatePlayCode(match_code=match_code, db_session=session).is_valid()
     except (NotFoundObjectError, ValidateError) as e:
         if isinstance(e, NotFoundObjectError):
-            return Response(status=404)
-        return Response(status=400, json={"error": e.message})
+            return Response(status_code=404)
+        return JSONResponse(status_code=400, content={"error": e.message})
 
     match = data.get("match")
-    user = UserFactory(signed=True).fetch()
-    return Response(json={"match": match.uid, "user": user.uid})
+    user = UserFactory(signed=True, db_session=session).fetch()
+    return JSONResponse(content={"match": match.uid, "user": user.uid})
 
 
 @router.post("/start")
-def start(user_input):
-    # TODO start_play_schema
+def start(user_input: schemas.StartPlay, session: Session = Depends(get_db)):
+    user_input = user_input.dict()
     try:
-        data = ValidatePlayStart(**user_input).is_valid()
+        data = ValidatePlayStart(db_session=session, **user_input).is_valid()
     except (NotFoundObjectError, ValidateError) as e:
         if isinstance(e, NotFoundObjectError):
-            return Response(status=404)
-        return Response(status=400, json={"error": e.message})
+            return Response(status_code=404)
+        return JSONResponse(status_code=400, content={"error": e.message})
 
     match = data.get("match")
     user = data.get("user")
     if not user:
-        user = UserFactory(signed=match.is_restricted).fetch()
+        user = UserFactory(signed=match.is_restricted, db_session=session).fetch()
 
-    status = PlayerStatus(user, match)
-    player = SinglePlayer(status, user, match)
-    current_question = player.start()
+    status = PlayerStatus(user, match, db_session=session)
+    try:
+        player = SinglePlayer(status, user, match, db_session=session)
+        current_question = player.start()
+    except InternalException as e:
+        return JSONResponse(status_code=400, content={"error": e.message})
+
     match_data = {
         "match": match.uid,
         "question": current_question.json,
         "user": user.uid,
     }
-    return Response(json=match_data)
+    return JSONResponse(content=match_data)
 
 
 @router.post("/next")
-def next(user_input):
-    # TODO next_play_schema
+def next(user_input: schemas.NextPlay, session: Session = Depends(get_db)):
+    user_input = user_input.dict()
     try:
-        data = ValidatePlayNext(**user_input).is_valid()
+        data = ValidatePlayNext(db_session=session, **user_input).is_valid()
     except (NotFoundObjectError, ValidateError) as e:
         if isinstance(e, NotFoundObjectError):
-            return Response(status=404)
-        return Response(status=400, json={"error": e.message})
+            return Response(status_code=404)
+        return JSONResponse(status_code=400, content={"error": e.message})
 
     match = data.get("match")
     user = data.get("user")
     answer = data.get("answer")
 
-    status = PlayerStatus(user, match)
-    player = SinglePlayer(status, user, match)
+    status = PlayerStatus(user, match, db_session=session)
+    try:
+        player = SinglePlayer(status, user, match, db_session=session)
+    except InternalException as e:
+        return JSONResponse(status_code=400, content={"error": e.message})
+
     try:
         next_q = player.react(answer)
     except MatchOver:
-        PlayScore(match.uid, user.uid, status.current_score()).save_to_ranking()
-        return Response(json={"question": None})
+        PlayScore(
+            match.uid, user.uid, status.current_score(), db_session=session
+        ).save_to_ranking()
+        return JSONResponse(content={"question": None})
 
-    return Response(json={"question": next_q.json, "user": user.uid})
+    return JSONResponse(content={"question": next_q.json, "user": user.uid})
 
 
 @router.post("/sign")
-def sign(user_input):
-    # TODO sign_play_schema
+def sign(user_input: schemas.SignPlay, session: Session = Depends(get_db)):
     try:
-        data = ValidatePlaySign(**user_input).is_valid()
+        user_input = user_input.dict()
+        data = ValidatePlaySign(db_session=session, **user_input).is_valid()
     except (NotFoundObjectError, ValidateError) as e:
         if isinstance(e, NotFoundObjectError):
-            return Response(status=404)
-        return Response(status=400, json={"error": e.message})
+            return Response(status_code=404)
+        return JSONResponse(status_code=400, content={"error": e.message})
 
     user = data.get("user")
-    return Response(json={"user": user.uid})
+    return JSONResponse(content={"user": user.uid})

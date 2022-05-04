@@ -87,6 +87,10 @@ class Match(TableMixin, Base):
     def session(self):
         return self._session
 
+    @session.setter
+    def session(self, v):
+        self._session = v
+
     @property
     def questions(self):
         return [g.ordered_questions for g in self.games]

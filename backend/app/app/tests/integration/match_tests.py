@@ -9,15 +9,19 @@ from app.tests.fixtures import TEST_1
 
 
 class TestCaseBadRequest:
-    def t_creation(self, client: TestClient, superuser_token_headers: dict) -> None:
+    def t_creation(
+        self, client: TestClient, superuser_token_headers: dict, dbsession
+    ) -> None:
         response = client.post(
             f"{settings.API_V1_STR}/matches/new",
-            json={"questions": None},
+            json={"questions": [None]},
             headers=superuser_token_headers,
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def t_update(self, client: TestClient, superuser_token_headers: dict) -> None:
+    def t_update(
+        self, client: TestClient, superuser_token_headers: dict, dbsession
+    ) -> None:
         response = client.put(
             f"{settings.API_V1_STR}/matches/edit/1",
             json={"questions": [1]},

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session, relationship
 from sqlalchemy.schema import UniqueConstraint
 
 from app.db.base import Base
-from app.db.utils import StoreConfig, TableMixin, classproperty
+from app.db.utils import TableMixin
 
 
 class Reaction(TableMixin, Base):
@@ -131,24 +131,21 @@ class ReactionScore:
 
 
 class Reactions:
-    @classproperty
-    def session(self):
-        return StoreConfig().session
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
+        super().__init__(**kwargs)
 
-    @classmethod
-    def count(cls):
-        return cls.session.query(Reaction).count()
+    def count(self):
+        return self._session.query(Reaction).count()
 
-    @classmethod
-    def reaction_of_user_to_question(cls, user, question):
+    def reaction_of_user_to_question(self, user, question):
         return (
-            cls.session.query(Reaction)
+            self._session.query(Reaction)
             .filter_by(user=user, question=question)
             .one_or_none()
         )
 
-    @classmethod
-    def all_reactions_of_user_to_match(cls, user, match, asc=False):
-        qs = cls.session.query(Reaction).filter_by(user=user, match=match)
+    def all_reactions_of_user_to_match(self, user, match, asc=False):
+        qs = self._session.query(Reaction).filter_by(user=user, match=match)
         field = Reaction.uid.asc if asc else Reaction.uid.desc
         return qs.order_by(field())

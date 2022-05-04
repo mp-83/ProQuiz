@@ -1,7 +1,8 @@
-from app.db.base import Base
-from app.db.utils import StoreConfig, TableMixin, classproperty
 from sqlalchemy import Column, ForeignKey, Integer
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Session, relationship
+
+from app.db.base import Base
+from app.db.utils import TableMixin
 
 
 class Ranking(TableMixin, Base):
@@ -17,9 +18,13 @@ class Ranking(TableMixin, Base):
 
     score = Column(Integer, nullable=False)
 
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
+        super().__init__(**kwargs)
+
     @property
     def session(self):
-        return StoreConfig().session
+        return self._session
 
     def save(self):
         self.session.add(self)
@@ -38,14 +43,12 @@ class Ranking(TableMixin, Base):
 
 
 class Rankings:
-    @classproperty
-    def session(self):
-        return StoreConfig().session
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
+        super().__init__(**kwargs)
 
-    @classmethod
-    def of_match(cls, match_uid):
-        return cls.session.query(Ranking).filter_by(match_uid=match_uid).all()
+    def of_match(self, match_uid):
+        return self._session.query(Ranking).filter_by(match_uid=match_uid).all()
 
-    @classmethod
-    def all(cls):
-        return cls.session.query(Ranking).all()
+    def all(self):
+        return self._session.query(Ranking).all()

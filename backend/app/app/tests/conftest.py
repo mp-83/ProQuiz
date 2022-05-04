@@ -157,15 +157,23 @@ def count_database_queries(dbengine):
 
 @pytest.fixture(name="trivia_match")
 def create_fixture_test(dbsession):
-    match = Match().save()
-    first_game = Game(match_uid=match.uid, index=1).save()
-    second_game = Game(match_uid=match.uid, index=2).save()
+    match = Match(db_session=dbsession).save()
+    first_game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
+    second_game = Game(match_uid=match.uid, index=2, db_session=dbsession).save()
     for i, q in enumerate(TEST_1, start=1):
         if i < 3:
-            new_question = Question(game_uid=first_game.uid, text=q["text"], position=i)
+            new_question = Question(
+                game_uid=first_game.uid,
+                text=q["text"],
+                position=i,
+                db_session=dbsession,
+            )
         else:
             new_question = Question(
-                game_uid=second_game.uid, text=q["text"], position=(i - 2)
+                game_uid=second_game.uid,
+                text=q["text"],
+                position=(i - 2),
+                db_session=dbsession,
             )
         new_question.create_with_answers(q["answers"])
 

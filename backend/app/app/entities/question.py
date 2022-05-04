@@ -98,6 +98,7 @@ class Question(TableMixin, Base):
                     text=_answer["text"],
                     position=position,
                     is_correct=position == 0,
+                    db_session=self._session,
                 )
             )
         self._session.commit()
@@ -129,7 +130,7 @@ class Question(TableMixin, Base):
         return {
             "text": self.text,
             "position": self.position,
-            "answers": self.answers,
+            "answers": self.answers_list,
         }
 
 

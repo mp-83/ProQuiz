@@ -28,11 +28,12 @@ class RetrieveObject:
 
 
 class ValidatePlayLand:
-    def __init__(self, **kwargs):
-        self.match_uhash = kwargs.get("match_uhash")
+    def __init__(self, match_uhash: str, db_session: Session):
+        self.match_uhash = match_uhash
+        self._session = db_session
 
     def valid_match(self):
-        match = Matches.get(uhash=self.match_uhash)
+        match = Matches(db_session=self._session).get(uhash=self.match_uhash)
         if not match:
             raise NotFoundObjectError()
 
@@ -46,11 +47,12 @@ class ValidatePlayLand:
 
 
 class ValidatePlayCode:
-    def __init__(self, **kwargs):
-        self.match_code = kwargs.get("match_code")
+    def __init__(self, match_code: str, db_session: Session):
+        self.match_code = match_code
+        self._session = db_session
 
     def valid_match(self):
-        match = Matches.get(code=self.match_code)
+        match = Matches(db_session=self._session).get(code=self.match_code)
         if not match:
             raise NotFoundObjectError()
 
@@ -64,14 +66,17 @@ class ValidatePlayCode:
 
 
 class ValidatePlaySign:
-    def __init__(self, email, token):
+    def __init__(self, email: str, token: str, db_session: Session):
         self.original_email = email
         self.token = token
+        self._session = db_session
 
     def valid_user(self):
         email_digest = WordDigest(self.original_email).value()
         token_digest = WordDigest(self.token).value()
-        user = Users.get(email_digest=email_digest, token_digest=token_digest)
+        user = Users(db_session=self._session).get(
+            email_digest=email_digest, token_digest=token_digest
+        )
         if user:
             return user
         raise NotFoundObjectError("Invalid email-token")
@@ -81,19 +86,22 @@ class ValidatePlaySign:
 
 
 class ValidatePlayStart:
-    def __init__(self, **kwargs):
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
         self.match_uid = kwargs.get("match_uid")
         self.user_uid = kwargs.get("user_uid")
         self.password = kwargs.get("password")
 
     def valid_user(self):
-        user = Users.get(uid=self.user_uid)
+        user = Users(db_session=self._session).get(uid=self.user_uid)
         if self.user_uid and not user:
             raise NotFoundObjectError()
         return user
 
     def valid_match(self):
-        return RetrieveObject(self.match_uid, otype="match").get()
+        return RetrieveObject(
+            self.match_uid, otype="match", db_session=self._session
+        ).get()
 
     def is_valid(self):
         """Verifies match accessibility"""
@@ -120,7 +128,8 @@ class ValidatePlayStart:
 
 
 class ValidatePlayNext:
-    def __init__(self, **kwargs):
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
         self.match_uid = kwargs.get("match_uid")
         self.answer_uid = kwargs.get("answer_uid")
         self.user_uid = kwargs.get("user_uid")
@@ -130,22 +139,24 @@ class ValidatePlayNext:
     def valid_reaction(self):
         user = self._data.get("user")
         if not user:
-            user = Users.get(uid=self.user_uid)
+            user = Users(db_session=self._session).get(uid=self.user_uid)
 
         question = self._data.get("question")
         if not question:
-            question = Questions.get(uid=self.question_uid)
+            question = Questions(db_session=self._session).get(uid=self.question_uid)
 
-        reaction = Reactions.reaction_of_user_to_question(user, question)
+        reaction = Reactions(db_session=self._session).reaction_of_user_to_question(
+            user, question
+        )
         if reaction and reaction.answer:
             raise ValidateError("Duplicate Reactions")
 
     def valid_answer(self):
-        answer = Answers.get(uid=self.answer_uid)
+        answer = Answers(db_session=self._session).get(uid=self.answer_uid)
         if answer is None:
             raise NotFoundObjectError("Unexisting answer")
 
-        question = Questions.get(uid=self.question_uid)
+        question = Questions(db_session=self._session).get(uid=self.question_uid)
         if question and answer in question.answers:
             self._data["answer"] = answer
             return
@@ -153,7 +164,7 @@ class ValidatePlayNext:
         raise ValidateError("Invalid answer")
 
     def valid_user(self):
-        user = Users.get(uid=self.user_uid)
+        user = Users(db_session=self._session).get(uid=self.user_uid)
         if user:
             self._data["user"] = user
             return
@@ -161,7 +172,9 @@ class ValidatePlayNext:
         raise NotFoundObjectError()
 
     def valid_match(self):
-        match = RetrieveObject(self.match_uid, otype="match").get()
+        match = RetrieveObject(
+            self.match_uid, otype="match", db_session=self._session
+        ).get()
         self._data["match"] = match
 
     def is_valid(self):
