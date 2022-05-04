@@ -1,81 +1,102 @@
+from fastapi import status
+from fastapi.testclient import TestClient
+
+from app.core.config import settings
 from app.entities import Answer, Question, Questions
 
 
 class TestCaseQuestionEP:
-    def t_unexistentQuestion(self, testapp):
-        testapp.get("/question/30", status=404)
+    def t_unexistentQuestion(self, client: TestClient, dbsession):
+        response = client.get(f"{settings.API_V1_STR}/questions/30")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def t_fetchingSingleQuestion(self, testapp):
-        question = Question(text="Text", position=0).save()
-        response = testapp.get(f"/question/{question.uid}", status=200)
-        assert response.json["text"] == "Text"
-        assert response.json["answers"] == []
+    def t_fetchingSingleQuestion(self, client: TestClient, dbsession):
+        question = Question(text="Text", position=0, db_session=dbsession).save()
+        response = client.get(f"{settings.API_V1_STR}/questions/{question.uid}")
+        assert response.ok
+        assert response.json()["text"] == "Text"
+        assert response.json()["answers_list"] == []
 
-    def t_createNewQuestion(self, testapp):
+    def t_createNewQuestion(
+        self, client: TestClient, superuser_token_headers: dict, dbsession
+    ):
         # CSRF token is needed also in this case
-        response = testapp.post_json(
-            "/question/new",
-            {
+        response = client.post(
+            f"{settings.API_V1_STR}/questions/new",
+            json={
                 "text": "eleven pm",
                 "position": 2,
             },
-            status=200,
-            headers={"X-CSRF-Token": testapp.get_csrf_token()},
+            headers=superuser_token_headers,
         )
-        assert Questions.count() == 1
-        assert response.json["text"] == "eleven pm"
-        assert response.json["position"] == 2
+        assert response.ok
+        assert Questions(db_session=dbsession).count() == 1
+        assert response.json()["text"] == "eleven pm"
+        assert response.json()["position"] == 2
 
-    def t_invalidText(self, testapp):
-        testapp.post_json(
-            "/question/new",
-            {"text": None},
-            status=400,
-            headers={"X-CSRF-Token": testapp.get_csrf_token()},
+    def t_invalidText(
+        self, client: TestClient, superuser_token_headers: dict, dbsession
+    ):
+        response = client.post(
+            f"{settings.API_V1_STR}/questions/new",
+            json={"text": None, "position": 1},
+            headers=superuser_token_headers,
         )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def t_changeTextAndPositionOfAQuestion(self, testapp):
-        question = Question(text="Text", position=0).save()
-        response = testapp.patch_json(
-            f"/question/edit/{question.uid}",
-            {
+    def t_changeTextAndPositionOfAQuestion(
+        self, client: TestClient, superuser_token_headers: dict, dbsession
+    ):
+        question = Question(text="Text", position=0, db_session=dbsession).save()
+        response = client.put(
+            f"{settings.API_V1_STR}/questions/edit/{question.uid}",
+            json={
                 "text": "Edited text",
                 "position": 2,
             },
-            status=200,
-            headers={"X-CSRF-Token": testapp.get_csrf_token()},
+            headers=superuser_token_headers,
         )
+        assert response.ok
+        assert response.json()["text"] == "Edited text"
+        assert response.json()["position"] == 2
 
-        assert response.json["text"] == "Edited text"
-        assert response.json["position"] == 2
-
-    def t_positionCannotBeNegative(self, testapp):
-        question = Question(text="Text", position=0).save()
-        testapp.patch_json(
-            f"/question/edit/{question.uid}",
-            {"position": -1},
-            status=400,
-            headers={"X-CSRF-Token": testapp.get_csrf_token()},
+    def t_positionCannotBeNegative(
+        self, client: TestClient, superuser_token_headers: dict, dbsession
+    ):
+        question = Question(text="Text", position=0, db_session=dbsession).save()
+        response = client.put(
+            f"{settings.API_V1_STR}/questions/edit/{question.uid}",
+            json={"position": -1},
+            headers=superuser_token_headers,
         )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def t_editingUnexistentQuestion(self, testapp):
-        # the empty dictionary is still needed to prevent a
-        # json.decoder.JSONDecodeError
-        testapp.patch_json(
-            "/question/edit/40",
-            {"text": "text", "position": 1},
-            status=404,
-            headers={"X-CSRF-Token": testapp.get_csrf_token()},
+    def t_editingUnexistentQuestion(
+        self, client: TestClient, superuser_token_headers: dict, dbsession
+    ):
+        response = client.put(
+            f"{settings.API_V1_STR}/questions/edit/40",
+            json={"text": "text", "position": 1},
+            headers=superuser_token_headers,
         )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def t_updateAnswerTextAndPosition(self, testapp):
-        question = Question(text="new-question", position=0).save()
-        a1 = Answer(question_uid=question.uid, text="Answer1", position=0).save()
-        a2 = Answer(question_uid=question.uid, text="Answer2", position=1).save()
+    def t_updateAnswerTextAndPosition(
+        self, client: TestClient, superuser_token_headers: dict, dbsession
+    ):
+        question = Question(
+            text="new-question", position=0, db_session=dbsession
+        ).save()
+        a1 = Answer(
+            question_uid=question.uid, text="Answer1", position=0, db_session=dbsession
+        ).save()
+        a2 = Answer(
+            question_uid=question.uid, text="Answer2", position=1, db_session=dbsession
+        ).save()
 
-        testapp.patch_json(
-            f"/question/edit/{question.uid}",
-            {
+        response = client.put(
+            f"{settings.API_V1_STR}/questions/edit/{question.uid}",
+            json={
                 "answers": [
                     {
                         "uid": a2.uid,
@@ -84,8 +105,7 @@ class TestCaseQuestionEP:
                     {"uid": a1.uid, "text": a1.text},
                 ]
             },
-            status=200,
-            headers={"X-CSRF-Token": testapp.get_csrf_token()},
+            headers=superuser_token_headers,
         )
-
+        assert response.ok
         assert question.answers_by_position[0].uid == a2.uid

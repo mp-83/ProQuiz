@@ -1,41 +1,47 @@
 import logging
 
+from fastapi import APIRouter, Depends, Response, status
+from sqlalchemy.orm import Session
+
+from app import schemas
+from app.db.session import get_db
 from app.entities import Question
 from app.exceptions import NotFoundObjectError
-from app.core.security import login_required
 from app.validation.logical import RetrieveObject
-from fastapi import APIRouter, Response, status
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-@login_required
-@router.get("/{uid}")
-def get_question(uid: int, response: Response):
+@router.get("/{uid}", response_model=schemas.Question)
+def get_question(uid: int, session: Session = Depends(get_db)):
     try:
-        question = RetrieveObject(uid=uid, otype="question").get()
+        question = RetrieveObject(uid=uid, otype="question", db_session=session).get()
     except NotFoundObjectError:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
-    return question.json
+    return question
 
 
-@login_required
-@router.post("/new")
-def new_question(user_input):
-    created_question = Question(**user_input).save()
-    return created_question.json
+@router.post("/new", response_model=schemas.Question)
+def new_question(
+    user_input: schemas.QuestionCreate, session: Session = Depends(get_db)
+):
+    user_input = user_input.dict()
+    created_question = Question(**user_input, db_session=session).save()
+    return created_question
 
 
-@login_required
-@router.put("/edit/{uid}")
-def edit_question(uid, user_input, response: Response):
+@router.put("/edit/{uid}", response_model=schemas.Question)
+def edit_question(
+    uid, user_input: schemas.QuestionEdit, session: Session = Depends(get_db)
+):
     try:
-        question = RetrieveObject(uid=uid, otype="question").get()
+        question = RetrieveObject(uid=uid, otype="question", db_session=session).get()
     except NotFoundObjectError:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
-    question.update(**user_input)
-    return question.json
+    user_input = user_input.dict()
+    question.update(session, **user_input)
+    return question

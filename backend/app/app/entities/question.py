@@ -59,10 +59,13 @@ class Question(TableMixin, Base):
         self._session.refresh(self)
         return self
 
-    def update(self, **kwargs):
-        for k, v in kwargs.items():
+    def update(self, db_session, **data):
+        self._session = db_session
+        for k, v in data.items():
             if k == "answers":
                 self.update_answers(v)
+            elif k in ["text", "position"] and v is None:
+                continue
             elif hasattr(self, k):
                 setattr(self, k, v)
 
