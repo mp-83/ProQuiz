@@ -31,10 +31,10 @@ class Question(BaseModel):
 
 class QuestionCreate(BaseModel):
     text: str
-    position: int
+    position: Optional[int]
     time: int = None
     content_url: str = None
-    game_uid: Optional[int]
+    game: Optional[int]
     answers: List[SimpleAnswer] = []
 
     @validator("position")

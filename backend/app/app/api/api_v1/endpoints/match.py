@@ -63,6 +63,7 @@ def create_match(
                     text=_answer["text"],
                     position=p,
                     is_correct=position == 0,
+                    db_session=session,
                 )
             )
 
