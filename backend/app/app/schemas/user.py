@@ -10,6 +10,9 @@ class UserBase(BaseModel):
     is_superuser: bool = False
     full_name: Optional[str] = None
 
+    class Config:
+        orm_mode = True
+
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
@@ -42,5 +45,3 @@ class User(BaseModel):
     password_hash: str = None
     key: str = None
     is_admin: bool = False
-
-

@@ -15,7 +15,7 @@ from app.schemas.play import (  # noqa: F401
     StartPlay,
 )
 from app.schemas.question import Question, QuestionCreate, QuestionEdit  # noqa: F401
-from app.schemas.ranking import Ranking  # noqa: F401
+from app.schemas.ranking import MatchRanking  # noqa: F401
 from app.schemas.reaction import Reaction  # noqa: F401
 from app.schemas.user import User, UserCreate, UserInDB, UserUpdate  # noqa: F401
 

@@ -1,14 +1,33 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
-from app.schemas.match import Match
-from app.schemas.user import User
+
+
+class Match(BaseModel):
+    name: str
+    uid: int
+
+    class Config:
+        orm_mode = True
+
+
+class User(BaseModel):
+    name: Optional[str]
+    uid: int
+
+    class Config:
+        orm_mode = True
 
 
 class Ranking(BaseModel):
     uid: int
     match: Match
     user: User
-    score: Optional[int]
+    score: Optional[float]
+
+    class Config:
+        orm_mode = True
 
 
+class MatchRanking(BaseModel):
+    rankings: List[Ranking]

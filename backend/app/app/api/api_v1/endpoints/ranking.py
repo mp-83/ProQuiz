@@ -1,16 +1,18 @@
 import logging
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app import schemas
+from app.db.session import get_db
 from app.entities import Rankings
-from app.core.security import login_required
-from fastapi import APIRouter, Response, status
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-@login_required
-@router.get("")
-def match_rankings(self, user_input):
-    match_uid = user_input["match_uid"]
-    rankings = Rankings.of_match(match_uid)
-    return {"rankings": [rank.json for rank in rankings]}
+@router.get("/{match_uid}", response_model=schemas.MatchRanking)
+def match_rankings(match_uid: int, session: Session = Depends(get_db)):
+    rankings = Rankings(db_session=session).of_match(match_uid)
+    return {"rankings": rankings}
