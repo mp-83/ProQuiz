@@ -1,18 +1,18 @@
 import logging
 
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app import schemas
+from app.db.session import get_db
 from app.entities import Users
-from app.core.security import login_required
-from app.validation.syntax import player_list_schema
-from fastapi import APIRouter, Response, status
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-@login_required
-@router.get("/players")
-def list_players(user_input):
-    match_uid = user_input["match_uid"]
-    all_players = Users.players_of_match(match_uid)
-    return Response(json={"players": [u.json for u in all_players]})
+@router.get("/{match_uid}", response_model=schemas.Players)
+def list_players(match_uid: int, session: Session = Depends(get_db)):
+    all_players = Users(db_session=session).players_of_match(match_uid)
+    return {"players": all_players}

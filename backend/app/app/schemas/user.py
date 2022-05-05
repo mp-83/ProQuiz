@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr
 
@@ -14,6 +14,18 @@ class UserBase(BaseModel):
         orm_mode = True
 
 
+class Player(BaseModel):
+    full_name: Optional[str] = None
+    is_active: Optional[bool] = True
+
+    class Config:
+        orm_mode = True
+
+
+class Players(BaseModel):
+    players: List[Player]
+
+
 # Properties to receive via API on creation
 class UserCreate(UserBase):
     email: EmailStr
@@ -23,18 +35,6 @@ class UserCreate(UserBase):
 # Properties to receive via API on update
 class UserUpdate(UserBase):
     password: Optional[str] = None
-
-
-class UserInDBBase(UserBase):
-    id: Optional[int] = None
-
-    class Config:
-        orm_mode = True
-
-
-# Additional properties stored in DB
-class UserInDB(UserInDBBase):
-    hashed_password: str
 
 
 class User(BaseModel):
