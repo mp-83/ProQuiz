@@ -28,7 +28,6 @@ class Game(TableMixin, Base):
     def save(self):
         self._session.add(self)
         self._session.commit()
-        self._session.refresh(self)
         return self
 
     def first_question(self):

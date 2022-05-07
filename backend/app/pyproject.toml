@@ -21,8 +21,9 @@ gunicorn = "^20.0.4"
 jinja2 = "^2.11.2"
 psycopg2-binary = "^2.8.5"
 alembic = "^1.4.2"
-sqlalchemy = "^1.3.16"
+sqlalchemy = "^1.4.30"
 pytest = "^7.0"
+pytest-mock = "ˆ3.7.0"
 redis = "ˆ4.2.2"
 python-jose = {extras = ["cryptography"], version = "^3.1.0"}
 cerberus = "ˆ1.3.2"
@@ -45,4 +46,3 @@ line_length = 88
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
-

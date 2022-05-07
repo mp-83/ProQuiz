@@ -78,5 +78,5 @@ class Answers:
     def count(self):
         return self._session.query(Answer).count()
 
-    def get(self, uid):
-        return self._session.query(Answer).filter_by(uid=uid).one_or_none()
+    def get(self, **filters):
+        return self._session.query(Answer).filter_by(**filters).one_or_none()

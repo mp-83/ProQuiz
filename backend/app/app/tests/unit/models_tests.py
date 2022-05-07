@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 from math import isclose
 
 import pytest
-from app.db.utils import StoreConfig
+from sqlalchemy.exc import IntegrityError, InvalidRequestError
+
 from app.constants import MATCH_HASH_LEN, MATCH_PASSWORD_LEN
 from app.entities import (
     Answer,
@@ -20,7 +21,6 @@ from app.entities.match import MatchCode, MatchHash, MatchPassword
 from app.entities.reaction import ReactionScore
 from app.entities.user import UserFactory
 from app.exceptions import NotUsableQuestionError
-from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 
 class TestCaseUserFactory:
@@ -28,7 +28,9 @@ class TestCaseUserFactory:
         monkeypatch.setenv(
             "SIGNED_KEY", "3ba57f9a004e42918eee6f73326aa89d", prepend=None
         )
-        signed_user = UserFactory(original_email="test@progame.io").fetch()
+        signed_user = UserFactory(
+            original_email="test@progame.io", db_session=dbsession
+        ).fetch()
         assert signed_user.email == "916a55cf753a5c847b861df2bdbbd8de@progame.io"
         assert signed_user.email_digest == "916a55cf753a5c847b861df2bdbbd8de"
 
@@ -39,27 +41,30 @@ class TestCaseUserFactory:
         signed_user = User(
             email_digest="916a55cf753a5c847b861df2bdbbd8de",
             token_digest="2357e975e4daaee0348474750b792660",
+            db_session=dbsession,
         ).save()
         assert signed_user is not None
         assert (
-            UserFactory(original_email="test@progame.io", token="25111961").fetch()
+            UserFactory(
+                original_email="test@progame.io", token="25111961", db_session=dbsession
+            ).fetch()
             == signed_user
         )
 
     def t_fetchUnsignedUserShouldReturnNewUserEveryTime(self, dbsession, mocker):
         # called twice to showcase the expected behaviour
         mocker.patch(
-            "codechallenge.entities.user.uuid4",
+            "app.entities.user.uuid4",
             return_value=mocker.Mock(hex="3ba57f9a004e42918eee6f73326aa89d"),
         )
-        unsigned_user = UserFactory().fetch()
+        unsigned_user = UserFactory(db_session=dbsession).fetch()
         assert unsigned_user.email == "uns-3ba57f9a004e42918eee6f73326aa89d@progame.io"
         assert not unsigned_user.token_digest
         mocker.patch(
-            "codechallenge.entities.user.uuid4",
+            "app.entities.user.uuid4",
             return_value=mocker.Mock(hex="eee84145094cc69e4f816fd9f435e6b3"),
         )
-        unsigned_user = UserFactory().fetch()
+        unsigned_user = UserFactory(db_session=dbsession).fetch()
         assert unsigned_user.email == "uns-eee84145094cc69e4f816fd9f435e6b3@progame.io"
         assert not unsigned_user.token_digest
 
@@ -69,13 +74,13 @@ class TestCaseUserFactory:
         monkeypatch.setenv(
             "SIGNED_KEY", "3ba57f9a004e42918eee6f73326aa89d", prepend=None
         )
-        signed_user = UserFactory(signed=True).fetch()
+        signed_user = UserFactory(signed=True, db_session=dbsession).fetch()
         assert signed_user.email == "9a1cfb41abc50c3f37630b673323cef5@progame.io"
         assert signed_user.email_digest == "9a1cfb41abc50c3f37630b673323cef5"
 
     def t_createNewInternalUser(self, dbsession):
         internal_user = UserFactory(
-            email="user@test.project", password="password"
+            email="user@test.project", password="password", db_session=dbsession
         ).fetch()
         assert internal_user.email == "user@test.project"
         assert internal_user.check_password("password")
@@ -83,48 +88,74 @@ class TestCaseUserFactory:
 
     def t_fetchExistingInternalUser(self, dbsession):
         new_internal_user = UserFactory(
-            email="internal@progame.io", password="password"
+            email="internal@progame.io", password="password", db_session=dbsession
         ).fetch()
-        existing_user = UserFactory(email=new_internal_user.email).fetch()
+        existing_user = UserFactory(
+            email=new_internal_user.email, db_session=dbsession
+        ).fetch()
         assert existing_user == new_internal_user
 
 
 class TestCaseQuestion:
-    def t_theQuestionAtPosition(self, fillTestingDB):
-        question = Question().at_position(0)
+    @pytest.fixture
+    def samples(self, dbsession):
+        dbsession.add_all(
+            [
+                Question(text="q1.text", position=0, db_session=dbsession),
+                Question(text="q2.text", position=1, db_session=dbsession),
+                Question(text="q3.text", position=2, db_session=dbsession),
+            ]
+        )
+        dbsession.commit()
+        yield
+
+    def t_theQuestionAtPosition(self, samples, dbsession):
+        question = Question(db_session=dbsession).at_position(0)
         assert question.text == "q1.text"
         assert question.create_timestamp is not None
 
-    def t_newCreatedAnswersShouldBeAvailableFromTheQuestion(self, fillTestingDB):
-        question = Question().at_position(0)
-        Answer(question=question, text="question2.answer1", position=1).save()
-        Answer(question=question, text="question2.answer2", position=2).save()
-        assert Answers.count() == 2
+    def t_newCreatedAnswersShouldBeAvailableFromTheQuestion(self, samples, dbsession):
+        question = Questions(db_session=dbsession).get(position=0)
+        Answer(
+            question=question,
+            text="question2.answer1",
+            position=1,
+            db_session=dbsession,
+        ).save()
+        Answer(
+            question=question,
+            text="question2.answer2",
+            position=2,
+            db_session=dbsession,
+        ).save()
+        assert Answers(db_session=dbsession).count() == 2
         assert question.answers[0].question_uid == question.uid
 
-    def t_editingTextOfExistingQuestion(self, fillTestingDB):
-        question = Question().at_position(1)
-        question.update(text="new-text")
+    def t_editingTextOfExistingQuestion(self, samples, dbsession):
+        question = Questions(db_session=dbsession).get(position=1)
+        question.update(dbsession, text="new-text")
         assert question.text == "new-text"
 
-    def t_createQuestionWithoutPosition(self, fillTestingDB):
-        new_question = Question(text="new-question", position=1).save()
+    def t_createQuestionWithoutPosition(self, samples, dbsession):
+        new_question = Question(
+            text="new-question", position=1, db_session=dbsession
+        ).save()
         assert new_question.is_open
         assert new_question.is_template
 
-    def t_allAnswersOfAQuestionMustDiffer(self, fillTestingDB):
-        question = Question().at_position(1)
+    def t_allAnswersOfAQuestionMustDiffer(self, samples, dbsession):
+        question = Question(db_session=dbsession).at_position(1)
+        question.set_session(dbsession)
         with pytest.raises((IntegrityError, InvalidRequestError)):
             question.answers.extend(
                 [
-                    Answer(text="question2.answer1", position=1),
-                    Answer(text="question2.answer1", position=2),
+                    Answer(text="question2.answer1", position=1, db_session=dbsession),
+                    Answer(text="question2.answer1", position=2, db_session=dbsession),
                 ]
             )
             question.save()
 
-        current_session = StoreConfig().session
-        current_session.rollback()
+        dbsession.rollback()
 
     def t_createManyQuestionsAtOnce(self, dbsession):
         data = {
@@ -139,20 +170,29 @@ class TestCaseQuestion:
             ],
             "position": 0,
         }
-        new_question = Question(text=data["text"], position=data["position"])
+        new_question = Question(
+            text=data["text"], position=data["position"], db_session=dbsession
+        )
         new_question.create_with_answers(data["answers"])
 
         expected = {e["text"] for e in data["answers"]}
         assert new_question
         assert {e.text for e in new_question.answers} == expected
-        assert Answer.with_text("The machine was undergoing repair").is_correct
+        assert (
+            Answers(db_session=dbsession)
+            .get(text="The machine was undergoing repair")
+            .is_correct
+        )
 
     def t_cloningQuestion(self, dbsession):
-        new_question = Question(text="new-question", position=0).save()
+        new_question = Question(
+            text="new-question", position=0, db_session=dbsession
+        ).save()
         Answer(
             question_uid=new_question.uid,
             text="The machine was undergoing repair",
             position=0,
+            db_session=dbsession,
         ).save()
         cloned = new_question.clone()
         assert new_question.uid != cloned.uid
@@ -160,18 +200,32 @@ class TestCaseQuestion:
 
     def t_questionsAnswersAreOrderedByDefault(self, dbsession):
         # the reverse relation fields .answers is ordered by default
-        question = Question(text="new-question", position=0).save()
-        Answer(question_uid=question.uid, text="Answer1", position=0).save()
-        Answer(question_uid=question.uid, text="Answer2", position=1).save()
+        question = Question(
+            text="new-question", position=0, db_session=dbsession
+        ).save()
+        Answer(
+            question_uid=question.uid, text="Answer1", position=0, db_session=dbsession
+        ).save()
+        Answer(
+            question_uid=question.uid, text="Answer2", position=1, db_session=dbsession
+        ).save()
 
         assert question.answers[0].text == "Answer1"
         assert question.answers[1].text == "Answer2"
 
     def t_updateAnswers(self, dbsession):
-        question = Question(text="new-question", position=0).save()
-        a1 = Answer(question_uid=question.uid, text="Answer1", position=0).save()
-        a2 = Answer(question_uid=question.uid, text="Answer2", position=1).save()
-        a3 = Answer(question_uid=question.uid, text="Answer3", position=2).save()
+        question = Question(
+            text="new-question", position=0, db_session=dbsession
+        ).save()
+        a1 = Answer(
+            question_uid=question.uid, text="Answer1", position=0, db_session=dbsession
+        ).save()
+        a2 = Answer(
+            question_uid=question.uid, text="Answer2", position=1, db_session=dbsession
+        ).save()
+        a3 = Answer(
+            question_uid=question.uid, text="Answer3", position=2, db_session=dbsession
+        ).save()
 
         ans_2_json = a2.json
         ans_2_json.update(text="Answer text 2")
@@ -183,34 +237,47 @@ class TestCaseQuestion:
 
 class TestCaseMatchModel:
     def t_questionsPropertyReturnsTheExpectedResults(self, dbsession):
-        match = Match().save()
-        first_game = Game(match_uid=match.uid, index=0).save()
-        Question(text="Where is London?", game_uid=first_game.uid, position=0).save()
-        second_game = Game(match_uid=match.uid, index=1).save()
-        Question(text="Where is Vienna?", game_uid=second_game.uid, position=0).save()
+        match = Match(db_session=dbsession).save()
+        first_game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
+        Question(
+            text="Where is London?",
+            game_uid=first_game.uid,
+            position=0,
+            db_session=dbsession,
+        ).save()
+        second_game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
+        Question(
+            text="Where is Vienna?",
+            game_uid=second_game.uid,
+            position=0,
+            db_session=dbsession,
+        ).save()
         assert match.questions[0][0].text == "Where is London?"
         assert match.questions[0][0].game == first_game
         assert match.questions[1][0].text == "Where is Vienna?"
         assert match.questions[1][0].game == second_game
 
     def t_createMatchWithHash(self, dbsession):
-        match = Match(with_code=False).save()
+        match = Match(with_code=False, db_session=dbsession).save()
         assert match.uhash is not None
         assert len(match.uhash) == MATCH_HASH_LEN
 
     def t_createRestrictedMatch(self, dbsession):
-        match = Match(is_restricted=True).save()
+        match = Match(is_restricted=True, db_session=dbsession).save()
         assert match.uhash
         assert len(match.password) == MATCH_PASSWORD_LEN
 
     def t_updateTextExistingQuestion(self, dbsession):
-        match = Match().save()
-        first_game = Game(match_uid=match.uid, index=1).save()
+        match = Match(db_session=dbsession).save()
+        first_game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         question = Question(
-            text="Where is London?", game_uid=first_game.uid, position=0
+            text="Where is London?",
+            game_uid=first_game.uid,
+            position=0,
+            db_session=dbsession,
         ).save()
 
-        n = Questions.count()
+        n = Questions(db_session=dbsession).count()
         match.update_questions(
             [
                 {
@@ -219,42 +286,60 @@ class TestCaseMatchModel:
                 }
             ],
         )
-        no_new_questions = n == Questions.count()
+        no_new_questions = n == Questions(db_session=dbsession).count()
         assert no_new_questions
         assert question.text == "What is the capital of Norway?"
 
     def t_createMatchUsingTemplateQuestions(self, dbsession):
         question_ids = [
-            Question(text="Where is London?", position=0).save().uid,
-            Question(text="Where is Vienna?", position=1).save().uid,
+            Question(text="Where is London?", position=0, db_session=dbsession)
+            .save()
+            .uid,
+            Question(text="Where is Vienna?", position=1, db_session=dbsession)
+            .save()
+            .uid,
         ]
         Answer(
-            question_uid=question_ids[0], text="question2.answer1", position=1
+            question_uid=question_ids[0],
+            text="question2.answer1",
+            position=1,
+            db_session=dbsession,
         ).save()
 
-        new_match = Match().save()
-        questions_cnt = Questions.count()
-        answers_cnt = Answers.count()
+        new_match = Match(db_session=dbsession).save()
+        questions_cnt = Questions(db_session=dbsession).count()
+        answers_cnt = Answers(db_session=dbsession).count()
         new_match.import_template_questions(*question_ids)
-        assert Questions.count() == questions_cnt + 2
-        assert Answers.count() == answers_cnt + 0
+        assert Questions(db_session=dbsession).count() == questions_cnt + 2
+        assert Answers(db_session=dbsession).count() == answers_cnt + 0
 
     def t_cannotUseIdsOfQuestionAlreadyAssociateToAGame(self, dbsession):
-        match = Match().save()
-        first_game = Game(match_uid=match.uid, index=2).save()
+        match = Match(db_session=dbsession).save()
+        first_game = Game(match_uid=match.uid, index=2, db_session=dbsession).save()
         question = Question(
-            text="Where is London?", game_uid=first_game.uid, position=3
+            text="Where is London?",
+            game_uid=first_game.uid,
+            position=3,
+            db_session=dbsession,
         ).save()
         question_ids = [question.uid]
         with pytest.raises(NotUsableQuestionError):
             match.import_template_questions(*question_ids)
 
     def t_matchCannotBePlayedIfAreNoLeftAttempts(self, dbsession):
-        match = Match().save()
-        game = Game(match_uid=match.uid, index=2).save()
-        user = User(email="user@test.project").save()
-        question = Question(text="1+1 is = to", position=0, game_uid=game.uid).save()
-        Reaction(question=question, user=user, match=match, game_uid=game.uid).save()
+        match = Match(db_session=dbsession).save()
+        game = Game(match_uid=match.uid, index=2, db_session=dbsession).save()
+        user = User(email="user@test.project", db_session=dbsession).save()
+        question = Question(
+            text="1+1 is = to", position=0, game_uid=game.uid, db_session=dbsession
+        ).save()
+        Reaction(
+            question=question,
+            user=user,
+            match=match,
+            game_uid=game.uid,
+            db_session=dbsession,
+        ).save()
 
         assert match.reactions[0].user == user
         assert match.left_attempts(user) == 0
@@ -264,12 +349,12 @@ class TestCaseMatchHash:
     def t_hashMustBeUniqueForEachMatch(self, dbsession, mocker):
         # the first call return a value already used
         random_method = mocker.patch(
-            "codechallenge.entities.match.choices",
+            "app.entities.match.choices",
             side_effect=["LINK-HASH1", "LINK-HASH2"],
         )
-        Match(uhash="LINK-HASH1").save()
+        Match(uhash="LINK-HASH1", db_session=dbsession).save()
 
-        MatchHash().get_hash()
+        MatchHash(db_session=dbsession).get_hash()
         assert random_method.call_count == 2
 
 
@@ -277,12 +362,12 @@ class TestCaseMatchPassword:
     def t_passwordUniqueForEachMatch(self, dbsession, mocker):
         # the first call return a value already used
         random_method = mocker.patch(
-            "codechallenge.entities.match.choices",
+            "app.entities.match.choices",
             side_effect=["00321", "34550"],
         )
-        Match(uhash="AEDRF", password="00321").save()
+        Match(uhash="AEDRF", password="00321", db_session=dbsession).save()
 
-        MatchPassword(uhash="AEDRF").get_value()
+        MatchPassword(uhash="AEDRF", db_session=dbsession).get_value()
         assert random_method.call_count == 2
 
 
@@ -290,55 +375,62 @@ class TestCaseMatchCode:
     def t_codeUniqueForEachMatchAtThatTime(self, dbsession, mocker):
         tomorrow = datetime.now() + timedelta(days=1)
         random_method = mocker.patch(
-            "codechallenge.entities.match.choices",
+            "app.entities.match.choices",
             side_effect=["8363", "7775"],
         )
-        Match(code=8363, expires=tomorrow).save()
+        Match(code=8363, expires=tomorrow, db_session=dbsession).save()
 
-        MatchCode().get_code()
+        MatchCode(db_session=dbsession).get_code()
         assert random_method.call_count == 2
 
 
 class TestCaseGameModel:
     def t_raiseErrorWhenTwoGamesOfMatchHaveSamePosition(self, dbsession):
-        new_match = Match().save()
-        new_game = Game(index=1, match_uid=new_match.uid).save()
+        new_match = Match(db_session=dbsession).save()
+        new_game = Game(index=1, match_uid=new_match.uid, db_session=dbsession).save()
         with pytest.raises((IntegrityError, InvalidRequestError)):
-            Game(index=1, match_uid=new_game.match.uid).save()
+            Game(index=1, match_uid=new_game.match.uid, db_session=dbsession).save()
 
         dbsession.rollback()
 
     def t_orderedQuestionsMethod(self, dbsession, emitted_queries):
-        match = Match().save()
-        game = Game(match_uid=match.uid, index=1).save()
+        match = Match(db_session=dbsession).save()
+        game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         question_2 = Question(
-            text="Where is London?", game_uid=game.uid, position=1
+            text="Where is London?", game_uid=game.uid, position=1, db_session=dbsession
         ).save()
         question_1 = Question(
-            text="Where is Lisboa?", game_uid=game.uid, position=0
+            text="Where is Lisboa?", game_uid=game.uid, position=0, db_session=dbsession
         ).save()
         question_4 = Question(
-            text="Where is Paris?", game_uid=game.uid, position=3
+            text="Where is Paris?", game_uid=game.uid, position=3, db_session=dbsession
         ).save()
         question_3 = Question(
-            text="Where is Berlin?", game_uid=game.uid, position=2
+            text="Where is Berlin?", game_uid=game.uid, position=2, db_session=dbsession
         ).save()
 
-        assert len(emitted_queries) == 7
+        assert len(emitted_queries) == 9
         assert game.ordered_questions[0] == question_1
         assert game.ordered_questions[1] == question_2
         assert game.ordered_questions[2] == question_3
         assert game.ordered_questions[3] == question_4
-        assert len(emitted_queries) == 8
+        assert len(emitted_queries) == 10
 
 
 class TestCaseReactionModel:
     def t_cannotExistsTwoReactionsOfTheSameUserAtSameTime(self, dbsession):
-        match = Match().save()
-        game = Game(match_uid=match.uid, index=0).save()
-        user = User(email="user@test.project").save()
-        question = Question(text="new-question", position=0, game_uid=game.uid).save()
-        answer = Answer(question=question, text="question2.answer1", position=1).save()
+        match = Match(db_session=dbsession).save()
+        game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
+        user = User(email="user@test.project", db_session=dbsession).save()
+        question = Question(
+            text="new-question", position=0, game_uid=game.uid, db_session=dbsession
+        ).save()
+        answer = Answer(
+            question=question,
+            text="question2.answer1",
+            position=1,
+            db_session=dbsession,
+        ).save()
 
         now = datetime.now()
         with pytest.raises((IntegrityError, InvalidRequestError)):
@@ -349,6 +441,7 @@ class TestCaseReactionModel:
                 user_uid=user.uid,
                 create_timestamp=now,
                 game_uid=game.uid,
+                db_session=dbsession,
             ).save()
             Reaction(
                 match_uid=match.uid,
@@ -357,21 +450,25 @@ class TestCaseReactionModel:
                 user_uid=user.uid,
                 create_timestamp=now,
                 game_uid=game.uid,
+                db_session=dbsession,
             ).save()
         dbsession.rollback()
 
     def t_ifQuestionChangesThenAlsoFKIsUpdatedAndAffectsReaction(self, dbsession):
-        match = Match().save()
-        game = Game(match_uid=match.uid, index=0).save()
-        user = User(email="user@test.project").save()
-        question = Question(text="1+1 is = to", position=0).save()
-        answer = Answer(question=question, text="2", position=1).save()
+        match = Match(db_session=dbsession).save()
+        game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
+        user = User(email="user@test.project", db_session=dbsession).save()
+        question = Question(text="1+1 is = to", position=0, db_session=dbsession).save()
+        answer = Answer(
+            question=question, text="2", position=1, db_session=dbsession
+        ).save()
         reaction = Reaction(
             match_uid=match.uid,
             question_uid=question.uid,
             answer_uid=answer.uid,
             user_uid=user.uid,
             game_uid=game.uid,
+            db_session=dbsession,
         ).save()
         question.text = "1+2 is = to"
         question.save()
@@ -379,29 +476,45 @@ class TestCaseReactionModel:
         assert reaction.question.text == "1+2 is = to"
 
     def t_whenQuestionIsElapsedAnswerIsNotRecorded(self, dbsession):
-        match = Match().save()
-        game = Game(match_uid=match.uid, index=0).save()
-        user = User(email="user@test.project").save()
-        question = Question(text="3*3 = ", time=0, position=0).save()
+        match = Match(db_session=dbsession).save()
+        game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
+        user = User(email="user@test.project", db_session=dbsession).save()
+        question = Question(
+            text="3*3 = ", time=0, position=0, db_session=dbsession
+        ).save()
         reaction = Reaction(
-            match=match, question=question, user=user, game_uid=game.uid
+            match=match,
+            question=question,
+            user=user,
+            game_uid=game.uid,
+            db_session=dbsession,
         ).save()
 
-        answer = Answer(question=question, text="9", position=1).save()
+        answer = Answer(
+            question=question, text="9", position=1, db_session=dbsession
+        ).save()
         reaction.record_answer(answer)
 
         assert reaction.answer is None
 
     def t_recordAnswerInTime(self, dbsession):
-        match = Match().save()
-        game = Game(match_uid=match.uid, index=0).save()
-        user = User(email="user@test.project").save()
-        question = Question(text="1+1 =", time=2, position=0).save()
+        match = Match(db_session=dbsession).save()
+        game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
+        user = User(email="user@test.project", db_session=dbsession).save()
+        question = Question(
+            text="1+1 =", time=2, position=0, db_session=dbsession
+        ).save()
         reaction = Reaction(
-            match=match, question=question, user=user, game_uid=game.uid
+            match=match,
+            question=question,
+            user=user,
+            game_uid=game.uid,
+            db_session=dbsession,
         ).save()
 
-        answer = Answer(question=question, text="2", position=1).save()
+        answer = Answer(
+            question=question, text="2", position=1, db_session=dbsession
+        ).save()
         reaction.record_answer(answer)
 
         assert reaction.answer
@@ -412,15 +525,21 @@ class TestCaseReactionModel:
         assert isclose(reaction.score, 0.999, rel_tol=0.05)
 
     def t_reactionTimingIsRecordedAlsoForOpenQuestions(self, dbsession):
-        match = Match().save()
-        game = Game(match_uid=match.uid, index=0).save()
-        user = User(email="user@test.project").save()
-        question = Question(text="Where is Miami", position=0).save()
+        match = Match(db_session=dbsession).save()
+        game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
+        user = User(email="user@test.project", db_session=dbsession).save()
+        question = Question(
+            text="Where is Miami", position=0, db_session=dbsession
+        ).save()
         reaction = Reaction(
-            match=match, question=question, user=user, game_uid=game.uid
+            match=match,
+            question=question,
+            user=user,
+            game_uid=game.uid,
+            db_session=dbsession,
         ).save()
 
-        open_answer = OpenAnswer(text="Florida").save()
+        open_answer = OpenAnswer(text="Florida", db_session=dbsession).save()
         reaction.record_answer(open_answer)
         assert question.is_open
         assert reaction.answer
@@ -429,17 +548,23 @@ class TestCaseReactionModel:
         assert not reaction.score
 
     def t_allReactionsOfUser(self, dbsession):
-        match = Match().save()
-        game = Game(match_uid=match.uid, index=0).save()
-        user = User(email="user@test.project").save()
-        q1 = Question(text="t1", position=0).save()
-        q2 = Question(text="t2", position=1).save()
-        r1 = Reaction(match=match, question=q1, user=user, game_uid=game.uid).save()
-        r2 = Reaction(match=match, question=q2, user=user, game_uid=game.uid).save()
+        match = Match(db_session=dbsession).save()
+        game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
+        user = User(email="user@test.project", db_session=dbsession).save()
+        q1 = Question(text="t1", position=0, db_session=dbsession).save()
+        q2 = Question(text="t2", position=1, db_session=dbsession).save()
+        r1 = Reaction(
+            match=match, question=q1, user=user, game_uid=game.uid, db_session=dbsession
+        ).save()
+        r2 = Reaction(
+            match=match, question=q2, user=user, game_uid=game.uid, db_session=dbsession
+        ).save()
 
-        reactions = Reactions.all_reactions_of_user_to_match(
-            user, match, asc=False
-        ).all()
+        reactions = (
+            Reactions(db_session=dbsession)
+            .all_reactions_of_user_to_match(user, match, asc=False)
+            .all()
+        )
         assert len(reactions) == 2
         assert reactions[0] == r2
         assert reactions[1] == r1

@@ -125,7 +125,7 @@ class AuthenticatedRequest:
 
 
 @pytest.fixture(name="emitted_queries")
-def count_database_queries(dbengine):
+def count_database_queries():
     """
     Return a list of the SQL statement executed by the code under test
 
@@ -133,6 +133,7 @@ def count_database_queries(dbengine):
     executed
     """
     queries = []
+    _engine = test_engine
 
     def before_cursor_execute(
         conn, cursor, statement, parameters, context, executemany
@@ -146,13 +147,13 @@ def count_database_queries(dbengine):
         if sql_t not in queries:
             queries.append(sql_t)
 
-    event.listen(dbengine, "before_cursor_execute", before_cursor_execute)
-    event.listen(dbengine, "after_cursor_execute", after_cursor_execute)
+    event.listen(_engine, "before_cursor_execute", before_cursor_execute)
+    event.listen(_engine, "after_cursor_execute", after_cursor_execute)
 
     yield queries
 
-    event.remove(dbengine, "before_cursor_execute", before_cursor_execute)
-    event.listen(dbengine, "after_cursor_execute", after_cursor_execute)
+    event.remove(_engine, "before_cursor_execute", before_cursor_execute)
+    event.listen(_engine, "after_cursor_execute", after_cursor_execute)
 
 
 @pytest.fixture(name="trivia_match")

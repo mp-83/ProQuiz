@@ -1,7 +1,9 @@
+from sqlalchemy import Column, String, select
+from sqlalchemy.orm import Session
+
 from app.constants import OPEN_ANSWER_TEXT_MAX_LENGTH, URL_LENGTH
 from app.db.base import Base
-from app.db.utils import StoreConfig, TableMixin, classproperty
-from sqlalchemy import Column, String, select
+from app.db.utils import TableMixin
 
 
 class OpenAnswer(TableMixin, Base):
@@ -11,29 +13,27 @@ class OpenAnswer(TableMixin, Base):
     content_url = Column(String(URL_LENGTH))
     # reactions: implicit backward relation
 
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
+        super().__init__(**kwargs)
+
     @property
     def level(self):
         return
 
-    @property
-    def session(self):
-        return StoreConfig().session
-
     def save(self):
-        self.session.add(self)
-        self.session.commit()
+        self._session.add(self)
+        self._session.commit()
         return self
 
 
 class OpenAnswers:
-    @classproperty
-    def session(self):
-        return StoreConfig().session
+    def __init__(self, db_session: Session, **kwargs):
+        self._session = db_session
+        super().__init__(**kwargs)
 
-    @classmethod
-    def count(cls):
-        return cls.session.execute(select(OpenAnswer)).count()
+    def count(self):
+        return self._session.execute(select(OpenAnswer)).count()
 
-    @classmethod
-    def all(cls):
-        return cls.session.execute(select(OpenAnswer)).all()
+    def all(self):
+        return self._session.execute(select(OpenAnswer)).all()

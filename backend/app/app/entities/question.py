@@ -28,6 +28,9 @@ class Question(TableMixin, Base):
         self._session = db_session
         super().__init__(**kwargs)
 
+    def set_session(self, s):
+        self._session = s
+
     @property
     def is_open(self):
         return len(self.answers) == 0
@@ -52,7 +55,6 @@ class Question(TableMixin, Base):
 
         self._session.add(self)
         self._session.commit()
-        self._session.refresh(self)
         return self
 
     def refresh(self):
@@ -112,8 +114,8 @@ class Question(TableMixin, Base):
             game_uid=self.game.uid if self.game else None,
             text=self.text,
             position=self.position,
-        )
-        self._session.add(new)
+            db_session=self._session,
+        ).save()
         for _answer in self.answers:
             self._session.add(
                 Answer(
@@ -122,6 +124,7 @@ class Question(TableMixin, Base):
                     position=_answer.position,
                     is_correct=_answer.position,
                     level=_answer.level,
+                    db_session=self._session,
                 )
             )
         if not many:
