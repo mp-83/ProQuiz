@@ -1,15 +1,8 @@
 from datetime import datetime, timedelta
 
 import pytest
-from app.entities import (
-    Answer,
-    Game,
-    Match,
-    Question,
-    Questions,
-    Reaction,
-    User,
-)
+
+from app.entities import Answer, Game, Match, Question, Reaction, User
 from app.entities.user import UserFactory, WordDigest
 from app.exceptions import NotFoundObjectError, ValidateError
 from app.validation.logical import (
@@ -27,33 +20,38 @@ from app.validation.logical import (
 class TestCaseRetrieveObject:
     def t_objectNotFound(self, dbsession):
         with pytest.raises(NotFoundObjectError):
-            RetrieveObject(uid=1, otype="match").get()
+            RetrieveObject(uid=1, otype="match", db_session=dbsession).get()
 
     def t_objectIsOfCorrectType(self, dbsession):
-        user = UserFactory().fetch()
-        obj = RetrieveObject(uid=user.uid, otype="user").get()
+        user = UserFactory(db_session=dbsession).fetch()
+        obj = RetrieveObject(uid=user.uid, otype="user", db_session=dbsession).get()
         assert obj == user
 
 
 class TestCaseLandEndPoint:
     def t_matchDoesNotExists(self, dbsession):
         with pytest.raises(NotFoundObjectError):
-            ValidatePlayLand(match_uhash="wrong-hash").valid_match()
+            ValidatePlayLand(
+                match_uhash="wrong-hash", db_session=dbsession
+            ).valid_match()
 
 
 class TestCaseCodeEndPoint:
     def t_wrongCode(self, dbsession):
         with pytest.raises(NotFoundObjectError):
-            ValidatePlayCode(match_code="2222").valid_match()
+            ValidatePlayCode(match_code="2222", db_session=dbsession).valid_match()
 
     def t_matchActiveness(self, dbsession):
         ten_hours_ago = datetime.now() - timedelta(hours=40)
         two_hours_ago = datetime.now() - timedelta(hours=3600)
         match = Match(
-            with_code=True, from_time=ten_hours_ago, to_time=two_hours_ago
+            with_code=True,
+            from_time=ten_hours_ago,
+            to_time=two_hours_ago,
+            db_session=dbsession,
         ).save()
         with pytest.raises(ValidateError) as err:
-            ValidatePlayCode(match_code=match.code).valid_match()
+            ValidatePlayCode(match_code=match.code, db_session=dbsession).valid_match()
 
         assert err.value.message == "Expired match"
 
@@ -65,41 +63,56 @@ class TestCaseSignEndPoint:
         email_digest = WordDigest(original_email).value()
         token_digest = WordDigest("01112021").value()
         email = f"{email_digest}@progame.io"
-        User(email=email, email_digest=email_digest, token_digest=token_digest).save()
+        User(
+            email=email,
+            email_digest=email_digest,
+            token_digest=token_digest,
+            db_session=dbsession,
+        ).save()
         with pytest.raises(NotFoundObjectError):
-            ValidatePlaySign(original_email, "25121980").is_valid()
+            ValidatePlaySign(
+                original_email, "25121980", db_session=dbsession
+            ).is_valid()
 
 
 class TestCaseStartEndPoint:
     def t_publicUserRestrictedMatch(self, dbsession):
-        match = Match(is_restricted=True).save()
-        user = User(email="user@test.project").save()
+        match = Match(is_restricted=True, db_session=dbsession).save()
+        user = User(email="user@test.project", db_session=dbsession).save()
         with pytest.raises(ValidateError) as err:
             ValidatePlayStart(
-                match_uid=match.uid, user_uid=user.uid, password=match.password
+                match_uid=match.uid,
+                user_uid=user.uid,
+                password=match.password,
+                db_session=dbsession,
             ).is_valid()
 
         assert err.value.message == "User cannot access this match"
 
     def t_privateMatchRequiresPassword(self, dbsession):
-        match = Match(is_restricted=True).save()
-        user = UserFactory(signed=True).fetch()
+        match = Match(is_restricted=True, db_session=dbsession).save()
+        user = UserFactory(signed=True, db_session=dbsession).fetch()
         with pytest.raises(ValidateError) as err:
             ValidatePlayStart(
-                match_uid=match.uid, user_uid=user.uid, password=""
+                match_uid=match.uid,
+                user_uid=user.uid,
+                password="",
+                db_session=dbsession,
             ).is_valid()
 
         assert err.value.message == "Password is required for private matches"
 
     def t_userDoesNotExists(self, dbsession):
         with pytest.raises(NotFoundObjectError):
-            ValidatePlayStart(user_uid=1).valid_user()
+            ValidatePlayStart(user_uid=1, db_session=dbsession).valid_user()
 
     def t_invalidPassword(self, dbsession):
-        match = Match(is_restricted=True).save()
-        UserFactory(signed=True).fetch()
+        match = Match(is_restricted=True, db_session=dbsession).save()
+        UserFactory(signed=True, db_session=dbsession).fetch()
         with pytest.raises(ValidateError) as err:
-            ValidatePlayStart(match_uid=match.uid, password="Invalid").is_valid()
+            ValidatePlayStart(
+                match_uid=match.uid, password="Invalid", db_session=dbsession
+            ).is_valid()
 
         assert err.value.message == "Password mismatch"
 
@@ -107,13 +120,15 @@ class TestCaseStartEndPoint:
 class TestCaseNextEndPoint:
     def t_cannotAcceptSameReactionAgain(self, dbsession):
         # despite the delay between the two (which respects the DB constraint)
-        match = Match().save()
-        game = Game(match_uid=match.uid, index=0).save()
+        match = Match(db_session=dbsession).save()
+        game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         question = Question(
-            text="Where is London?", game_uid=game.uid, position=0
+            text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession
         ).save()
-        answer = Answer(question=question, text="UK", position=1).save()
-        user = UserFactory(email="user@test.project").fetch()
+        answer = Answer(
+            question=question, text="UK", position=1, db_session=dbsession
+        ).save()
+        user = UserFactory(email="user@test.project", db_session=dbsession).fetch()
 
         Reaction(
             match=match,
@@ -121,35 +136,44 @@ class TestCaseNextEndPoint:
             user=user,
             game_uid=game.uid,
             answer_uid=answer.uid,
+            db_session=dbsession,
         ).save()
 
         with pytest.raises(ValidateError):
             ValidatePlayNext(
-                user_uid=user.uid, question_uid=question.uid
+                user_uid=user.uid, question_uid=question.uid, db_session=dbsession
             ).valid_reaction()
 
-    def t_answerDoesNotBelongToQuestion(self, fillTestingDB, dbsession):
+    def t_answerDoesNotBelongToQuestion(self, dbsession):
         # simulate a more realistic case
-        question = Questions.get(uid=1)
-        answer = Answer(question_uid=question.uid, text="UK", position=1).save()
+        match = Match(db_session=dbsession).save()
+        game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
+        question = Question(
+            text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession
+        ).save()
+        answer = Answer(
+            question_uid=question.uid, text="UK", position=1, db_session=dbsession
+        ).save()
         with pytest.raises(ValidateError):
-            ValidatePlayNext(answer_uid=answer.uid, question_uid=10).valid_answer()
+            ValidatePlayNext(
+                answer_uid=answer.uid, question_uid=10, db_session=dbsession
+            ).valid_answer()
 
     def t_answerDoesNotExists(self, dbsession):
         with pytest.raises(NotFoundObjectError):
-            ValidatePlayNext(answer_uid=10000).valid_answer()
+            ValidatePlayNext(answer_uid=10000, db_session=dbsession).valid_answer()
 
     def t_userDoesNotExists(self, dbsession):
         with pytest.raises(NotFoundObjectError):
-            ValidatePlayNext(user_uid=1).valid_user()
+            ValidatePlayNext(user_uid=1, db_session=dbsession).valid_user()
 
     def t_matchDoesNotExists(self, dbsession):
         with pytest.raises(NotFoundObjectError):
-            ValidatePlayNext(match_uid=1).valid_match()
+            ValidatePlayNext(match_uid=1, db_session=dbsession).valid_match()
 
 
 class TestCaseCreateMatch:
-    def t_fromTimeGreaterThanToTime(self, dbsession):
+    def t_fromTimeGreaterThanToTime(self):
         # to avoid from_time to be < datetime.now() when
         # the check is performed, the value is increased
         # by two seconds (or we mock datetime.now)
@@ -161,7 +185,7 @@ class TestCaseCreateMatch:
 
         assert e.value.message == "to-time must be greater than from-time"
 
-    def t_fromTimeIsExpired(self, dbsession):
+    def t_fromTimeIsExpired(self):
         with pytest.raises(ValidateError) as e:
             ValidateNewCodeMatch(
                 from_time=(datetime.now() - timedelta(seconds=1)),
@@ -174,4 +198,4 @@ class TestCaseCreateMatch:
 class TestCaseImportFromYaml:
     def t_matchDoesNotExists(self, dbsession):
         with pytest.raises(NotFoundObjectError):
-            ValidateMatchImport(match_uid=1).valid_match()
+            ValidateMatchImport(match_uid=1, db_session=dbsession).valid_match()

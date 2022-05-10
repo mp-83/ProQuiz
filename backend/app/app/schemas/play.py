@@ -27,7 +27,7 @@ class LandPlay(BaseModel):
     def valid(cls, v):
         rex = "[" + f"{HASH_POPULATION}" + "]{" + f"{MATCH_HASH_LEN}" + "}"
         if not re.match(rex, v):
-            raise ValueError(f"Invalid match_uhash {v}")
+            raise ValueError(f"uHash {v} does not match regex")
         return v
 
 
@@ -38,7 +38,7 @@ class CodePlay(BaseModel):
     def valid(cls, v):
         rex = "[" + f"{CODE_POPULATION}" + "]{" + f"{MATCH_CODE_LEN}" + "}"
         if not re.match(rex, v):
-            raise ValidationError()
+            raise ValueError(f"Code {v} does not match regex")
         return v
 
 
@@ -57,7 +57,7 @@ class StartPlay(BaseModel):
     def valid(cls, v):
         rex = "[" + f"{PASSWORD_POPULATION}" + "]{" + f"{MATCH_PASSWORD_LEN}" + "}"
         if not re.match(rex, v):
-            raise ValidationError()
+            raise ValueError(f"Password {v} does not match regex")
         return v
 
 

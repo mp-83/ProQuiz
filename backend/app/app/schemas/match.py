@@ -30,7 +30,7 @@ class Match(BaseModel):
 class MatchCreate(BaseModel):
     name: str = None
     with_code: Optional[bool]
-    times: Optional[int]
+    times: Optional[int] = None
     from_time: Optional[datetime]
     to_time: Optional[datetime]
     is_restricted: Optional[bool]
@@ -67,8 +67,8 @@ class MatchYamlImport(BaseModel):
 
         try:
             return yaml.load(value, yaml.Loader)
-        except yaml.scanner.ScannerError:
-            return ""
+        except yaml.parser.ParserError as err:
+            raise ValueError("Content cannot be coerced") from err
 
     @classmethod
     def coerce_to_b64content(cls, value):

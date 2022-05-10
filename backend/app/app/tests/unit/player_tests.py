@@ -424,7 +424,7 @@ class TestCaseSinglePlayer:
         ).save()
         user = User(email="user@test.project", db_session=dbsession).save()
 
-        match.to_time = datetime.now() + timedelta(microseconds=5000)
+        match.to_time = datetime.now() + timedelta(microseconds=7000)
         match.save()
         status = PlayerStatus(user, match, db_session=dbsession)
         player = SinglePlayer(status, user, match, db_session=dbsession)
