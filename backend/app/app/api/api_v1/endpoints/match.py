@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from app import schemas
 from app.core.security import login_required
 from app.domain_entities import Answer, Game, Match, Matches, Question
 from app.domain_entities.db.session import get_db
 from app.exceptions import NotFoundObjectError, ValidateError
+from app.validation import schemas
 from app.validation.logical import (
     RetrieveObject,
     ValidateEditMatch,

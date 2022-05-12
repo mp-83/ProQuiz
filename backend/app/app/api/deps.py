@@ -4,11 +4,12 @@ from jose import jwt
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from app import domain_service, schemas
+from app import domain_service
 from app.core import security
 from app.core.config import settings
 from app.domain_entities import User
 from app.domain_entities.db.session import get_db
+from app.validation import schemas
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"

@@ -3,9 +3,9 @@ import logging
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app import schemas
 from app.domain_entities import Users
 from app.domain_entities.db.session import get_db
+from app.validation import schemas
 
 logger = logging.getLogger(__name__)
 

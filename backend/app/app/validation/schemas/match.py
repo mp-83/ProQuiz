@@ -6,7 +6,7 @@ from typing import List, Optional
 import yaml
 from pydantic import BaseModel, validator
 
-from app.schemas.question import Question, QuestionCreate
+from app.validation.schemas.question import Question, QuestionCreate
 
 
 class Match(BaseModel):

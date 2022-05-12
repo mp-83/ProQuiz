@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from app import domain_service
 from app.core.config import settings
 from app.domain_entities.user import User
-from app.schemas.user import UserCreate, UserUpdate
 from app.tests.utilities.utils import random_email, random_lower_string
+from app.validation.schemas import UserCreate, UserUpdate
 
 
 def user_authentication_headers(

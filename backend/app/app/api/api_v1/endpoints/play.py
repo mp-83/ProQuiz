@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from app import schemas
 from app.domain_entities.db.session import get_db
 from app.domain_entities.user import UserFactory
 from app.exceptions import (
@@ -15,6 +14,7 @@ from app.exceptions import (
     ValidateError,
 )
 from app.play.single_player import PlayerStatus, PlayScore, SinglePlayer
+from app.validation import schemas
 from app.validation.logical import (
     ValidatePlayCode,
     ValidatePlayLand,
