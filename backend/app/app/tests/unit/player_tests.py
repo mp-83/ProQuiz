@@ -2,16 +2,8 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.domain_entities import (
-    Answer,
-    Game,
-    Match,
-    Question,
-    Rankings,
-    Reaction,
-    Reactions,
-    User,
-)
+from app.domain_entities import Answer, Game, Match, Question, Reaction, Reactions, User
+from app.domain_service.data_transfer.ranking import RankingDTO
 from app.domain_service.play import (
     GameFactory,
     PlayerStatus,
@@ -568,4 +560,4 @@ class TestCasePlayScore:
         user = User(email="user@test.project", db_session=dbsession).save()
         PlayScore(match.uid, user.uid, 5.5, db_session=dbsession).save_to_ranking()
 
-        assert len(Rankings(db_session=dbsession).all()) == 1
+        assert len(RankingDTO(session=dbsession).all()) == 1
