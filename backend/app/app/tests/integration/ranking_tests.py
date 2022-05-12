@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.entities import Match, Ranking
-from app.entities.user import UserFactory
+from app.domain_entities import Match, Ranking
+from app.domain_entities.user import UserFactory
 
 
 class TestCaseRankingEndpoints:

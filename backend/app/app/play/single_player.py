@@ -1,4 +1,4 @@
-from app.entities import Ranking, Reaction, Reactions
+from app.domain_entities import Ranking, Reaction, Reactions
 from app.exceptions import (
     GameError,
     GameOver,

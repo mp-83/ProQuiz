@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app import schemas
 from app.db.session import get_db
-from app.entities import Rankings
+from app.domain_entities import Rankings
 
 logger = logging.getLogger(__name__)
 

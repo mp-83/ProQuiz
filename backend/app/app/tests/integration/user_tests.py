@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.entities import Game, Match, Question, Reaction
-from app.entities.user import UserFactory
+from app.domain_entities import Game, Match, Question, Reaction
+from app.domain_entities.user import UserFactory
 
 
 class TestCaseUser:

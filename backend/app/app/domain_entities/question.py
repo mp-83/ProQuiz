@@ -5,7 +5,7 @@ from sqlalchemy.schema import UniqueConstraint
 from app.constants import QUESTION_TEXT_MAX_LENGTH, URL_LENGTH
 from app.db.base import Base
 from app.db.utils import TableMixin
-from app.entities.answer import Answer
+from app.domain_entities.answer import Answer
 
 
 class Question(TableMixin, Base):

@@ -16,8 +16,8 @@ from app.constants import (
 )
 from app.db.base import Base
 from app.db.utils import TableMixin
-from app.entities.game import Game
-from app.entities.question import Question, Questions
+from app.domain_entities.game import Game
+from app.domain_entities.question import Question, Questions
 from app.exceptions import NotUsableQuestionError
 
 

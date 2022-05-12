@@ -13,7 +13,7 @@ from app.core import security
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import get_db
-from app.entities import Game, Match, Question, User
+from app.domain_entities import Game, Match, Question, User
 from app.main import app
 from app.tests.fixtures import TEST_1
 from app.tests.utilities.user import authentication_token_from_email
@@ -34,8 +34,8 @@ def reset_db():
 
 
 def override_get_db():
-    _maker = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-    yield _maker()
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+    yield session_factory()
 
 
 app.dependency_overrides[get_db] = override_get_db

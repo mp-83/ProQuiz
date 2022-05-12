@@ -2,8 +2,8 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app.entities import Answers, Matches, Questions, Reactions, Users
-from app.entities.user import WordDigest
+from app.domain_entities import Answers, Matches, Questions, Reactions, Users
+from app.domain_entities.user import WordDigest
 from app.exceptions import NotFoundObjectError, ValidateError
 
 

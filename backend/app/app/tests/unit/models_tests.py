@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 from app.constants import MATCH_HASH_LEN, MATCH_PASSWORD_LEN
-from app.entities import (
+from app.domain_entities import (
     Answer,
     Answers,
     Game,
@@ -17,9 +17,9 @@ from app.entities import (
     Reactions,
     User,
 )
-from app.entities.match import MatchCode, MatchHash, MatchPassword
-from app.entities.reaction import ReactionScore
-from app.entities.user import UserFactory
+from app.domain_entities.match import MatchCode, MatchHash, MatchPassword
+from app.domain_entities.reaction import ReactionScore
+from app.domain_entities.user import UserFactory
 from app.exceptions import NotUsableQuestionError
 
 
@@ -54,14 +54,14 @@ class TestCaseUserFactory:
     def t_fetchUnsignedUserShouldReturnNewUserEveryTime(self, dbsession, mocker):
         # called twice to showcase the expected behaviour
         mocker.patch(
-            "app.entities.user.uuid4",
+            "app.domain_entities.user.uuid4",
             return_value=mocker.Mock(hex="3ba57f9a004e42918eee6f73326aa89d"),
         )
         unsigned_user = UserFactory(db_session=dbsession).fetch()
         assert unsigned_user.email == "uns-3ba57f9a004e42918eee6f73326aa89d@progame.io"
         assert not unsigned_user.token_digest
         mocker.patch(
-            "app.entities.user.uuid4",
+            "app.domain_entities.user.uuid4",
             return_value=mocker.Mock(hex="eee84145094cc69e4f816fd9f435e6b3"),
         )
         unsigned_user = UserFactory(db_session=dbsession).fetch()
@@ -349,7 +349,7 @@ class TestCaseMatchHash:
     def t_hashMustBeUniqueForEachMatch(self, dbsession, mocker):
         # the first call return a value already used
         random_method = mocker.patch(
-            "app.entities.match.choices",
+            "app.domain_entities.match.choices",
             side_effect=["LINK-HASH1", "LINK-HASH2"],
         )
         Match(uhash="LINK-HASH1", db_session=dbsession).save()
@@ -362,7 +362,7 @@ class TestCaseMatchPassword:
     def t_passwordUniqueForEachMatch(self, dbsession, mocker):
         # the first call return a value already used
         random_method = mocker.patch(
-            "app.entities.match.choices",
+            "app.domain_entities.match.choices",
             side_effect=["00321", "34550"],
         )
         Match(uhash="AEDRF", password="00321", db_session=dbsession).save()
@@ -375,7 +375,7 @@ class TestCaseMatchCode:
     def t_codeUniqueForEachMatchAtThatTime(self, dbsession, mocker):
         tomorrow = datetime.now() + timedelta(days=1)
         random_method = mocker.patch(
-            "app.entities.match.choices",
+            "app.domain_entities.match.choices",
             side_effect=["8363", "7775"],
         )
         Match(code=8363, expires=tomorrow, db_session=dbsession).save()

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.entities import (
+from app.domain_entities import (
     Answer,
     Game,
     Match,

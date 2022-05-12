@@ -4,7 +4,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.entities import Game, Match, Question, Reaction, User
+from app.domain_entities import Game, Match, Question, Reaction, User
 from app.tests.fixtures import TEST_1
 
 

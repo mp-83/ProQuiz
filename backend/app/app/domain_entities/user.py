@@ -17,7 +17,7 @@ from app.constants import (
 )
 from app.db.base import Base
 from app.db.utils import TableMixin
-from app.entities import Reaction
+from app.domain_entities import Reaction
 
 
 class WordDigest:

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app import schemas
 from app.core.security import login_required
 from app.db.session import get_db
-from app.entities import Answer, Game, Match, Matches, Question
+from app.domain_entities import Answer, Game, Match, Matches, Question
 from app.exceptions import NotFoundObjectError, ValidateError
 from app.validation.logical import (
     RetrieveObject,

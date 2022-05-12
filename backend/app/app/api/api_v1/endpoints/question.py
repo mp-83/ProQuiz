@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app import schemas
 from app.db.session import get_db
-from app.entities import Question
+from app.domain_entities import Question
 from app.exceptions import NotFoundObjectError
 from app.validation.logical import RetrieveObject
 

@@ -1,8 +1,11 @@
 from datetime import datetime, timezone
 
+from fastapi import Depends
 from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import declarative_mixin
+from sqlalchemy.orm import Session, declarative_mixin
+
+from app.db.session import get_db
 
 
 def t_now():
@@ -41,6 +44,9 @@ class TableMixin:
     @declared_attr
     def __tablename__(self):
         return self.__name__.lower()
+
+    def save_to(self, value, session: Session = Depends(get_db)):
+        pass
 
 
 class classproperty(property):

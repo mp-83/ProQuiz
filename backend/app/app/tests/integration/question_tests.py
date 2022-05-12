@@ -2,7 +2,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.entities import Answer, Question, Questions
+from app.domain_entities import Answer, Question, Questions
 
 
 class TestCaseQuestionEP:

@@ -1,4 +1,4 @@
-# from app.entities import User
+# from app.domain_entities import User
 # from fastapi import status
 # from fastapi.testclient import TestClient
 #

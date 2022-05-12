@@ -4,8 +4,8 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.entities import Answer, Game, Match, Question, Rankings, User
-from app.entities.user import UserFactory, WordDigest
+from app.domain_entities import Answer, Game, Match, Question, Rankings, User
+from app.domain_entities.user import UserFactory, WordDigest
 
 
 class TestCaseBadRequest:

@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.entities import Answer, Game, Match, Question, Reaction, User
-from app.entities.user import UserFactory, WordDigest
+from app.domain_entities import Answer, Game, Match, Question, Reaction, User
+from app.domain_entities.user import UserFactory, WordDigest
 from app.exceptions import NotFoundObjectError, ValidateError
 from app.validation.logical import (
     RetrieveObject,
