@@ -5,9 +5,9 @@ from sqlalchemy.orm import Session
 
 from app.domain_entities import Question
 from app.domain_entities.db.session import get_db
+from app.domain_service.validation import syntax
+from app.domain_service.validation.logical import RetrieveObject
 from app.exceptions import NotFoundObjectError
-from app.validation import syntax
-from app.validation.logical.generic import RetrieveObject
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +27,7 @@ def get_question(uid: int, session: Session = Depends(get_db)):
 @router.post("/new", response_model=syntax.Question)
 def new_question(user_input: syntax.QuestionCreate, session: Session = Depends(get_db)):
     user_input = user_input.dict()
-    created_question = Question(**user_input, db_session=session).save()
-    return created_question
+    return Question(**user_input, db_session=session).save()
 
 
 @router.put("/edit/{uid}", response_model=syntax.Question)

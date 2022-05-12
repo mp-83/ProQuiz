@@ -10,7 +10,7 @@ from app.api import deps
 from app.core import security
 from app.core.config import settings
 from app.domain_entities import User
-from app.validation import syntax
+from app.domain_service.validation import syntax
 
 router = APIRouter()
 

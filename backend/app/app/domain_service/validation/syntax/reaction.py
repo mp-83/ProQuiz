@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from app.validation.syntax import Answer, Game, Match, Question
+from app.domain_service.validation.syntax import Answer, Game, Match, Question
 
 
 class Reaction(BaseModel):

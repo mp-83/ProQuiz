@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.domain_entities import Users
 from app.domain_entities.db.session import get_db
-from app.validation import syntax
+from app.domain_service.validation import syntax
 
 logger = logging.getLogger(__name__)
 

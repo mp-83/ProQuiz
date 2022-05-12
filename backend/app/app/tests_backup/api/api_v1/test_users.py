@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from app import domain_service
 from app.core.config import settings
+from app.domain_service.validation.syntax import UserCreate
 from app.tests.utils.utils import random_email, random_lower_string
-from app.validation.syntax import UserCreate
 
 
 def test_get_users_superuser_me(

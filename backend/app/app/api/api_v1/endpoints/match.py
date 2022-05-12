@@ -7,10 +7,13 @@ from sqlalchemy.orm import Session
 from app.core.security import login_required
 from app.domain_entities import Answer, Game, Match, Matches, Question
 from app.domain_entities.db.session import get_db
+from app.domain_service.validation import syntax
+from app.domain_service.validation.logical import (
+    RetrieveObject,
+    ValidateEditMatch,
+    ValidateMatchImport,
+)
 from app.exceptions import NotFoundObjectError, ValidateError
-from app.validation import syntax
-from app.validation.logical.generic import RetrieveObject
-from app.validation.logical.match import ValidateEditMatch, ValidateMatchImport
 
 logger = logging.getLogger(__name__)
 

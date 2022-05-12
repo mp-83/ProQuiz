@@ -2,8 +2,8 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from app.domain_service.validation.logical import RetrieveObject
 from app.exceptions import ValidateError
-from app.validation.logical.generic import RetrieveObject
 
 
 class ValidateEditMatch:
