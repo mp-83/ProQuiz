@@ -1,8 +1,8 @@
 from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import Session, relationship
 
-from app.db.base import Base
-from app.db.utils import TableMixin
+from app.domain_entities.db.base import Base
+from app.domain_entities.db.utils import TableMixin
 
 
 class Ranking(TableMixin, Base):

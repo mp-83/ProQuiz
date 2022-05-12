@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app import schemas
-from app.db.session import get_db
+from app.domain_entities.db.session import get_db
 from app.domain_entities.user import UserFactory
 from app.exceptions import (
     InternalException,

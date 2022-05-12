@@ -2,7 +2,7 @@ import logging
 
 from tenacity import after_log, before_log, retry, stop_after_attempt, wait_fixed
 
-from app.db.session import session_factory
+from app.domain_entities.db.session import session_factory
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

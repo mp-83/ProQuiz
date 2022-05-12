@@ -1,7 +1,7 @@
 import logging
 
-from app.db.init_db import init_db
-from app.db.session import session_factory
+from app.domain_entities.db.init_db import init_db
+from app.domain_entities.db.session import session_factory
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

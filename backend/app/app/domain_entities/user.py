@@ -15,9 +15,9 @@ from app.constants import (
     PASSWORD_HASH_LENGTH,
     USER_NAME_MAX_LENGTH,
 )
-from app.db.base import Base
-from app.db.utils import TableMixin
 from app.domain_entities import Reaction
+from app.domain_entities.db.base import Base
+from app.domain_entities.db.utils import TableMixin
 
 
 class WordDigest:

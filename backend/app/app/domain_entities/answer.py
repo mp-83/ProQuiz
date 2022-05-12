@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session, relationship
 from sqlalchemy.schema import UniqueConstraint
 
 from app.constants import ANSWER_TEXT_MAX_LENGTH, URL_LENGTH
-from app.db.base import Base
-from app.db.utils import StoreConfig, TableMixin
+from app.domain_entities.db.base import Base
+from app.domain_entities.db.utils import StoreConfig, TableMixin
 
 
 class Answer(TableMixin, Base):

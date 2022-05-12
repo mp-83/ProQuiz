@@ -5,7 +5,7 @@ from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import Session, declarative_mixin
 
-from app.db.session import get_db
+from app.domain_entities.db.session import get_db
 
 
 def t_now():

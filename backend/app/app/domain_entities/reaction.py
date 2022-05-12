@@ -4,8 +4,8 @@ from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.schema import UniqueConstraint
 
-from app.db.base import Base
-from app.db.utils import TableMixin
+from app.domain_entities.db.base import Base
+from app.domain_entities.db.utils import TableMixin
 
 
 class Reaction(TableMixin, Base):

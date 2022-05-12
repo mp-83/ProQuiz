@@ -14,8 +14,8 @@ from app.constants import (
     MATCH_PASSWORD_LEN,
     PASSWORD_POPULATION,
 )
-from app.db.base import Base
-from app.db.utils import TableMixin
+from app.domain_entities.db.base import Base
+from app.domain_entities.db.utils import TableMixin
 from app.domain_entities.game import Game
 from app.domain_entities.question import Question, Questions
 from app.exceptions import NotUsableQuestionError

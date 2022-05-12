@@ -2,8 +2,8 @@ from sqlalchemy import Column, String, select
 from sqlalchemy.orm import Session
 
 from app.constants import OPEN_ANSWER_TEXT_MAX_LENGTH, URL_LENGTH
-from app.db.base import Base
-from app.db.utils import TableMixin
+from app.domain_entities.db.base import Base
+from app.domain_entities.db.utils import TableMixin
 
 
 class OpenAnswer(TableMixin, Base):

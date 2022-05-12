@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.db.session import session_factory
+from app.domain_entities.db.session import session_factory
 from app.main import app
 
 

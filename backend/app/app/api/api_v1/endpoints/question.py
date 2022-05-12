@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from app import schemas
-from app.db.session import get_db
 from app.domain_entities import Question
+from app.domain_entities.db.session import get_db
 from app.exceptions import NotFoundObjectError
 from app.validation.logical import RetrieveObject
 
