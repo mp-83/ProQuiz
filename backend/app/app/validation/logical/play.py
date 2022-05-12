@@ -1,30 +1,9 @@
-from datetime import datetime
-
 from sqlalchemy.orm import Session
 
 from app.domain_entities import Answers, Matches, Questions, Reactions, Users
 from app.domain_entities.user import WordDigest
 from app.exceptions import NotFoundObjectError, ValidateError
-
-
-class RetrieveObject:
-    def __init__(self, uid: int, otype: str, db_session: Session):
-        self.object_uid = uid
-        self.otype = otype
-        self.db_session = db_session
-
-    def get(self):
-        klass = {
-            "answer": Answers,
-            "match": Matches,
-            "question": Questions,
-            "user": Users,
-        }.get(self.otype)
-
-        obj = klass(self.db_session).get(uid=self.object_uid)
-        if obj:
-            return obj
-        raise NotFoundObjectError()
+from app.validation.logical.generic import RetrieveObject
 
 
 class ValidatePlayLand:
@@ -184,49 +163,3 @@ class ValidatePlayNext:
         self.valid_match()
         self.valid_reaction()
         return self._data
-
-
-class ValidateEditMatch:
-    def __init__(self, match_uid, db_session: Session):
-        self.match_uid = match_uid
-        self._session = db_session
-
-    def valid_match(self):
-        match = RetrieveObject(
-            self.match_uid, otype="match", db_session=self._session
-        ).get()
-        if not match.is_started:
-            return match
-
-        raise ValidateError("Match started. Cannot be edited")
-
-    def is_valid(self):
-        return self.valid_match()
-
-
-class ValidateNewCodeMatch:
-    def __init__(self, from_time, to_time):
-        self.from_time = from_time
-        self.to_time = to_time
-
-    def is_valid(self):
-        now = datetime.now()
-        if self.from_time < now:
-            raise ValidateError("from-time must be greater than now")
-
-        if self.to_time < self.from_time:
-            raise ValidateError("to-time must be greater than from-time")
-
-
-class ValidateMatchImport:
-    def __init__(self, match_uid, db_session: Session):
-        self.match_uid = match_uid
-        self._session = db_session
-
-    def valid_match(self):
-        return RetrieveObject(
-            self.match_uid, otype="match", db_session=self._session
-        ).get()
-
-    def is_valid(self):
-        return self.valid_match()

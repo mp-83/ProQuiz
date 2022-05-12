@@ -7,7 +7,7 @@ from app.domain_entities import Question
 from app.domain_entities.db.session import get_db
 from app.exceptions import NotFoundObjectError
 from app.validation import syntax
-from app.validation.logical import RetrieveObject
+from app.validation.logical.generic import RetrieveObject
 
 logger = logging.getLogger(__name__)
 

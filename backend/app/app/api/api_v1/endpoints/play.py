@@ -15,7 +15,7 @@ from app.exceptions import (
 )
 from app.play.single_player import PlayerStatus, PlayScore, SinglePlayer
 from app.validation import syntax
-from app.validation.logical import (
+from app.validation.logical.play import (
     ValidatePlayCode,
     ValidatePlayLand,
     ValidatePlayNext,

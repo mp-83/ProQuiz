@@ -5,10 +5,9 @@ import pytest
 from app.domain_entities import Answer, Game, Match, Question, Reaction, User
 from app.domain_entities.user import UserFactory, WordDigest
 from app.exceptions import NotFoundObjectError, ValidateError
-from app.validation.logical import (
-    RetrieveObject,
-    ValidateMatchImport,
-    ValidateNewCodeMatch,
+from app.validation.logical.generic import RetrieveObject
+from app.validation.logical.match import ValidateMatchImport, ValidateNewCodeMatch
+from app.validation.logical.play import (
     ValidatePlayCode,
     ValidatePlayLand,
     ValidatePlayNext,
