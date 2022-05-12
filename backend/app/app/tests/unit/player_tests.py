@@ -12,19 +12,19 @@ from app.domain_entities import (
     Reactions,
     User,
 )
+from app.domain_service.play import (
+    GameFactory,
+    PlayerStatus,
+    PlayScore,
+    QuestionFactory,
+    SinglePlayer,
+)
 from app.exceptions import (
     GameError,
     GameOver,
     MatchError,
     MatchNotPlayableError,
     MatchOver,
-)
-from app.play.single_player import (
-    GameFactory,
-    PlayerStatus,
-    PlayScore,
-    QuestionFactory,
-    SinglePlayer,
 )
 
 

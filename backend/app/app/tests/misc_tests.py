@@ -1,5 +1,6 @@
 import pytest
-from app.play.cache import ClientFactory
+
+from app.domain_service.play import ClientFactory
 
 
 class TestCaseCache:

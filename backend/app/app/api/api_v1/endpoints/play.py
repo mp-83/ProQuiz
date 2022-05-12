@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.domain_entities.db.session import get_db
 from app.domain_entities.user import UserFactory
+from app.domain_service.play import PlayerStatus, PlayScore, SinglePlayer
 from app.domain_service.validation import syntax
 from app.domain_service.validation.logical import (
     ValidatePlayCode,
@@ -21,7 +22,6 @@ from app.exceptions import (
     NotFoundObjectError,
     ValidateError,
 )
-from app.play.single_player import PlayerStatus, PlayScore, SinglePlayer
 
 logger = logging.getLogger(__name__)
 
