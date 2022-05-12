@@ -8,7 +8,7 @@ from app.core.security import login_required
 from app.domain_entities import Answer, Game, Match, Matches, Question
 from app.domain_entities.db.session import get_db
 from app.exceptions import NotFoundObjectError, ValidateError
-from app.validation import schemas
+from app.validation import syntax
 from app.validation.logical import (
     RetrieveObject,
     ValidateEditMatch,
@@ -27,7 +27,7 @@ def list_matches(session: Session = Depends(get_db)):
     return {"matches": [m.json for m in all_matches]}
 
 
-@router.get("/{uid}", response_model=schemas.Match)
+@router.get("/{uid}", response_model=syntax.Match)
 def get_match(
     uid: int,
     session: Session = Depends(get_db),
@@ -40,9 +40,9 @@ def get_match(
     return match
 
 
-@router.post("/new", response_model=schemas.Match)
+@router.post("/new", response_model=syntax.Match)
 def create_match(
-    user_input: schemas.MatchCreate,
+    user_input: syntax.MatchCreate,
     session: Session = Depends(get_db),
 ):
     user_input = user_input.dict()
@@ -73,10 +73,10 @@ def create_match(
 
 
 @login_required
-@router.put("/edit/{uid}", response_model=schemas.Match)
+@router.put("/edit/{uid}", response_model=syntax.Match)
 def edit_match(
     uid: int,
-    user_input: schemas.MatchEdit,
+    user_input: syntax.MatchEdit,
     session: Session = Depends(get_db),
 ):
     try:
@@ -94,9 +94,9 @@ def edit_match(
 
 
 @login_required
-@router.post("/yaml_import", response_model=schemas.Match)
+@router.post("/yaml_import", response_model=syntax.Match)
 def match_yaml_import(
-    user_input: schemas.MatchYamlImport,
+    user_input: syntax.MatchYamlImport,
     session: Session = Depends(get_db),
 ):
     user_input = user_input.dict()

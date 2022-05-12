@@ -4,14 +4,14 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError
 
-from app.validation import schemas
+from app.validation import syntax
 
 
 class TestCaseNullable:
     def t_nullableValues(self):
         for schema, field in [
-            (schemas.LandPlay, "match_uhash"),
-            (schemas.CodePlay, "match_code"),
+            (syntax.LandPlay, "match_uhash"),
+            (syntax.CodePlay, "match_code"),
         ]:
             try:
                 schema(**{field: None})
@@ -23,55 +23,55 @@ class TestCasePlaySchemas:
     def t_matchUHashDoesNotMatchRegex(self):
         value = "IJD34KOP"
         try:
-            schemas.LandPlay(**{"match_uhash": value})
+            syntax.LandPlay(**{"match_uhash": value})
         except ValidationError as err:
             assert err.errors()[0]["msg"] == f"uHash {value} does not match regex"
 
     def t_matchWrongCode(self):
         value = "34569"
         try:
-            schemas.CodePlay(**{"match_code": value})
+            syntax.CodePlay(**{"match_code": value})
         except ValidationError as err:
             assert err.errors()[0]["msg"] == f"Code {value} does not match regex"
 
     def t_validStartPayloadWithoutUser(self):
-        assert schemas.StartPlay(**{"match_uid": 1})
+        assert syntax.StartPlay(**{"match_uid": 1})
 
     def t_validStartPayloadWithoutPassword(self):
-        assert schemas.StartPlay(**{"match_uid": 1, "user_uid": 1})
+        assert syntax.StartPlay(**{"match_uid": 1, "user_uid": 1})
 
     def t_startPayloadWithPassword(self):
         password = "IJD34KOP"
         try:
-            schemas.StartPlay(**{"match_uid": 1, "user_uid": 1, "password": password})
+            syntax.StartPlay(**{"match_uid": 1, "user_uid": 1, "password": password})
         except ValidationError as err:
             assert err.errors()[0]["msg"] == f"Password {password} does not match regex"
 
     def t_validNextPayload(self):
-        assert schemas.NextPlay(
+        assert syntax.NextPlay(
             **{"match_uid": 1, "user_uid": 2, "answer_uid": 3, "question_uid": 4}
         )
 
     def t_allRequiredByDefault(self):
         try:
-            schemas.NextPlay(**{"match_uid": 1, "user_uid": 2, "answer_uid": 3})
+            syntax.NextPlay(**{"match_uid": 1, "user_uid": 2, "answer_uid": 3})
         except ValidationError as err:
             assert err.errors()[0]["loc"] == ("question_uid",)
             assert err.errors()[0]["msg"] == "field required"
 
     def t_emailAndBirthDate(self):
-        assert schemas.SignPlay(**{"email": "user@pp.com", "token": "12022021"})
+        assert syntax.SignPlay(**{"email": "user@pp.com", "token": "12022021"})
 
     def t_invalidBirthDateNull(self):
         try:
-            schemas.SignPlay(**{"email": "user@pp.com", "token": None})
+            syntax.SignPlay(**{"email": "user@pp.com", "token": None})
         except ValidationError as err:
             assert err.errors()[0]["loc"] == ("token",)
             assert err.errors()[0]["msg"] == "none is not an allowed value"
 
     def t_invalidEmailNull(self):
         try:
-            schemas.SignPlay(**{"email": None, "token": "11012014"})
+            syntax.SignPlay(**{"email": None, "token": "11012014"})
         except ValidationError as err:
             assert err.errors()[0]["loc"] == ("email",)
             assert err.errors()[0]["msg"] == "none is not an allowed value"
@@ -79,24 +79,24 @@ class TestCasePlaySchemas:
 
 class TestCaseQuestionSchema:
     def t_templateQuestion(self):
-        assert schemas.QuestionCreate(
+        assert syntax.QuestionCreate(
             **{"text": "".join("a" for _ in range(400)), "position": 1}
         )
 
     def t_gameQuestion(self):
-        assert schemas.QuestionCreate(
+        assert syntax.QuestionCreate(
             **{"text": "".join("a" for _ in range(400)), "position": 1, "game_uid": "1"}
         )
 
     def t_editQuestion(self):
-        assert schemas.QuestionEdit(
+        assert syntax.QuestionEdit(
             **{"text": "".join("a" for _ in range(400)), "position": 1, "game_uid": "1"}
         )
 
 
 class TestCaseMatchSchema:
     def t_createPayloadWithQuestions(self):
-        schema = schemas.MatchCreate(
+        schema = syntax.MatchCreate(
             **{
                 "name": "new match",
                 "times": "2",
@@ -121,7 +121,7 @@ class TestCaseMatchSchema:
 
     def t_expirationValuesCannotBeNone(self):
         try:
-            schemas.MatchCreate(
+            syntax.MatchCreate(
                 **{
                     "name": "new match",
                     "with_code": "true",
@@ -137,7 +137,7 @@ class TestCaseMatchSchema:
             assert err.errors()[1]["msg"] == "none is not an allowed value"
 
     def t_expirationValuesMustBeDatetimeIsoFormatted(self):
-        schema = schemas.MatchCreate(
+        schema = syntax.MatchCreate(
             **{
                 "name": "new match",
                 "times": "2",
@@ -160,10 +160,10 @@ class TestCaseMatchSchema:
         }
         for value in [1, None, "10"]:
             document.update(times=value)
-            assert schemas.MatchCreate(**document)
+            assert syntax.MatchCreate(**document)
 
     def t_allowForPartialUpdate(self):
-        schema = schemas.MatchEdit(**{"is_restricted": False})
+        schema = syntax.MatchEdit(**{"is_restricted": False})
         assert schema
         assert not schema.dict()["is_restricted"]
 
@@ -189,7 +189,7 @@ class TestCaseYamlSchema:
         yield b64string
 
     def t_validYamlContent(self, valid_encoded_yaml_content):
-        schema = schemas.MatchYamlImport(
+        schema = syntax.MatchYamlImport(
             **{"uid": 1, "data": valid_encoded_yaml_content}
         )
         assert schema
@@ -239,13 +239,13 @@ class TestCaseYamlSchema:
         b64string = f"data:application/x-yaml;base64,{b64content}"
 
         try:
-            schemas.MatchYamlImport(**{"uid": 1, "data": b64string})
+            syntax.MatchYamlImport(**{"uid": 1, "data": b64string})
         except ValidationError as err:
             assert err.errors()[0]["msg"] == "Content cannot be coerced"
 
     def t_invalidContentPadding(self, valid_encoded_yaml_content):
         try:
-            schemas.MatchYamlImport(
+            syntax.MatchYamlImport(
                 **{"uid": 1, "data": valid_encoded_yaml_content[:-1]}
             )
         except ValidationError as err:
@@ -264,7 +264,7 @@ class TestCaseYamlSchema:
         b64string = f"data:application/x-yaml;base64,{b64content}"
 
         try:
-            schemas.MatchYamlImport(**{"uid": 1, "data": b64string})
+            syntax.MatchYamlImport(**{"uid": 1, "data": b64string})
         except ValidationError as err:
             assert err.errors()[0]["loc"] == ("data", "questions", 0, "text")
             assert err.errors()[0]["msg"] == "none is not an allowed value"
@@ -280,7 +280,7 @@ class TestCaseYamlSchema:
         b64content = b64encode(document.encode("utf-8")).decode()
         b64string = f"data:application/x-yaml;base64,{b64content}"
 
-        schema = schemas.MatchYamlImport(**{"uid": 1, "data": b64string})
+        schema = syntax.MatchYamlImport(**{"uid": 1, "data": b64string})
         assert schema
         assert schema.dict() == {"uid": 1, "data": {"questions": []}}
 
@@ -295,7 +295,7 @@ class TestCaseYamlSchema:
             ]
         }
 
-        result = schemas.MatchYamlImport.to_expected_mapping(value)
+        result = syntax.MatchYamlImport.to_expected_mapping(value)
         assert result == {
             "questions": [
                 {
@@ -321,7 +321,7 @@ class TestCaseYamlSchema:
 class TestCaseUserSchema:
     def t_emptyUserNameAndPassword(self):
         # arguments are too short
-        # is_valid = schemas({"email": "", "password": "pass"})
+        # is_valid = syntax({"email": "", "password": "pass"})
         # assert not is_valid
         pass
 

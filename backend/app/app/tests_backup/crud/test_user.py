@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app import domain_service
 from app.core.security import verify_password
 from app.tests.utils.utils import random_email, random_lower_string
-from app.validation.schemas import UserCreate, UserUpdate
+from app.validation.syntax import UserCreate, UserUpdate
 
 
 def test_create_user(db: Session) -> None:

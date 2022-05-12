@@ -9,7 +9,7 @@ from app.core import security
 from app.core.config import settings
 from app.domain_entities import User
 from app.domain_entities.db.session import get_db
-from app.validation import schemas
+from app.validation import syntax
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -23,7 +23,7 @@ def get_current_user(
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
-        token_data = schemas.TokenPayload(**payload)
+        token_data = syntax.TokenPayload(**payload)
     except (jwt.JWTError, ValidationError) as err:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

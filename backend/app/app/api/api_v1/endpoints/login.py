@@ -10,12 +10,12 @@ from app.api import deps
 from app.core import security
 from app.core.config import settings
 from app.domain_entities import User
-from app.validation import schemas
+from app.validation import syntax
 
 router = APIRouter()
 
 
-@router.post("/login/access-token", response_model=schemas.Token)
+@router.post("/login/access-token", response_model=syntax.Token)
 def login_access_token(
     db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
@@ -38,7 +38,7 @@ def login_access_token(
     }
 
 
-@router.post("/login/test-token", response_model=schemas.User)
+@router.post("/login/test-token", response_model=syntax.User)
 def test_token(current_user: User = Depends(deps.get_current_user)) -> Any:
     """
     Test access token
@@ -46,7 +46,7 @@ def test_token(current_user: User = Depends(deps.get_current_user)) -> Any:
     return current_user
 
 
-# @router.post("/password-recovery/{email}", response_model=schemas.Msg)
+# @router.post("/password-recovery/{email}", response_model=syntax.Msg)
 # def recover_password(email: str, db: Session = Depends(deps.get_db)) -> Any:
 #     """
 #     Password Recovery

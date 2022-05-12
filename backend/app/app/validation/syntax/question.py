@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, validator
 
-from app.validation.schemas import Answer
+from app.validation.syntax import Answer
 
 
 class SimpleAnswer(BaseModel):

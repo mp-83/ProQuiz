@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app import domain_service
 from app.tests.utils.user import create_random_user
 from app.tests.utils.utils import random_lower_string
-from app.validation.schemas import ItemCreate, ItemUpdate
+from app.validation.syntax import ItemCreate, ItemUpdate
 
 
 def test_create_item(db: Session) -> None:

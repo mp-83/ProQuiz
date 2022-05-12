@@ -14,7 +14,7 @@ from app.exceptions import (
     ValidateError,
 )
 from app.play.single_player import PlayerStatus, PlayScore, SinglePlayer
-from app.validation import schemas
+from app.validation import syntax
 from app.validation.logical import (
     ValidatePlayCode,
     ValidatePlayLand,
@@ -28,13 +28,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/h/{match_uhash}", response_model=schemas.PlaySchemaBase)
+@router.post("/h/{match_uhash}", response_model=syntax.PlaySchemaBase)
 def land(
     match_uhash: str,
     session: Session = Depends(get_db),
 ):
     try:
-        match_uhash = schemas.LandPlay(match_uhash=match_uhash).dict()["match_uhash"]
+        match_uhash = syntax.LandPlay(match_uhash=match_uhash).dict()["match_uhash"]
     except ValidationError as e:
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -54,8 +54,8 @@ def land(
     return JSONResponse(content={"match": match.uid})
 
 
-@router.post("/code", response_model=schemas.PlaySchemaBase)
-def code(user_input: schemas.CodePlay, session: Session = Depends(get_db)):
+@router.post("/code", response_model=syntax.PlaySchemaBase)
+def code(user_input: syntax.CodePlay, session: Session = Depends(get_db)):
     match_code = user_input.dict()["match_code"]
     try:
         data = ValidatePlayCode(match_code=match_code, db_session=session).is_valid()
@@ -70,7 +70,7 @@ def code(user_input: schemas.CodePlay, session: Session = Depends(get_db)):
 
 
 @router.post("/start")
-def start(user_input: schemas.StartPlay, session: Session = Depends(get_db)):
+def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
     user_input = user_input.dict()
     try:
         data = ValidatePlayStart(db_session=session, **user_input).is_valid()
@@ -100,7 +100,7 @@ def start(user_input: schemas.StartPlay, session: Session = Depends(get_db)):
 
 
 @router.post("/next")
-def next(user_input: schemas.NextPlay, session: Session = Depends(get_db)):
+def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
     user_input = user_input.dict()
     try:
         data = ValidatePlayNext(db_session=session, **user_input).is_valid()
@@ -131,7 +131,7 @@ def next(user_input: schemas.NextPlay, session: Session = Depends(get_db)):
 
 
 @router.post("/sign")
-def sign(user_input: schemas.SignPlay, session: Session = Depends(get_db)):
+def sign(user_input: syntax.SignPlay, session: Session = Depends(get_db)):
     try:
         user_input = user_input.dict()
         data = ValidatePlaySign(db_session=session, **user_input).is_valid()
