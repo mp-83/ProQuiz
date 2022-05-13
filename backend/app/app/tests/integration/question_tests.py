@@ -3,7 +3,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import Answer
+from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 
 
@@ -11,6 +11,7 @@ class TestCaseQuestionEP:
     @pytest.fixture(autouse=True)
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
+        self.answer_dto = AnswerDTO(session=dbsession)
 
     def t_unexistentQuestion(self, client: TestClient, dbsession):
         response = client.get(f"{settings.API_V1_STR}/questions/30")
@@ -97,12 +98,14 @@ class TestCaseQuestionEP:
             text="new-question", position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        a1 = Answer(
+        a1 = self.answer_dto.new(
             question_uid=question.uid, text="Answer1", position=0, db_session=dbsession
-        ).save()
-        a2 = Answer(
+        )
+        self.answer_dto.save(a1)
+        a2 = self.answer_dto.new(
             question_uid=question.uid, text="Answer2", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(a2)
 
         response = client.put(
             f"{settings.API_V1_STR}/questions/edit/{question.uid}",

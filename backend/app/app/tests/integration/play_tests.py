@@ -5,8 +5,9 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import Answer, Game, Match, User
+from app.domain_entities import Game, Match, User
 from app.domain_entities.user import UserFactory, WordDigest
+from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.ranking import RankingDTO
 
@@ -171,6 +172,7 @@ class TestCasePlayNext:
     @pytest.fixture(autouse=True)
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
+        self.answer_dto = AnswerDTO(session=dbsession)
 
     def t_duplicateSameReaction(
         self, client: TestClient, superuser_token_headers: dict, dbsession, trivia_match
@@ -253,9 +255,10 @@ class TestCasePlayNext:
             db_session=dbsession,
         )
         self.question_dto.save(question)
-        answer = Answer(
+        answer = self.answer_dto.new(
             question=question, text="UK", position=1, level=2, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(answer)
         user = User(email="user@test.project", db_session=dbsession).save()
         response = client.post(
             f"{settings.API_V1_STR}/play/next",

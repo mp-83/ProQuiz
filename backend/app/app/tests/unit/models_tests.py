@@ -5,19 +5,11 @@ import pytest
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 from app.constants import MATCH_HASH_LEN, MATCH_PASSWORD_LEN
-from app.domain_entities import (
-    Answer,
-    Answers,
-    Game,
-    Match,
-    OpenAnswer,
-    Reaction,
-    Reactions,
-    User,
-)
+from app.domain_entities import Game, Match, OpenAnswer, Reaction, Reactions, User
 from app.domain_entities.match import MatchCode, MatchHash, MatchPassword
 from app.domain_entities.reaction import ReactionScore
 from app.domain_entities.user import UserFactory
+from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.exceptions import NotUsableQuestionError
 
@@ -99,6 +91,7 @@ class TestCaseQuestion:
     @pytest.fixture(autouse=True)
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
+        self.answer_dto = AnswerDTO(session=dbsession)
 
     @pytest.fixture
     def samples(self, dbsession):
@@ -118,25 +111,22 @@ class TestCaseQuestion:
 
     def t_newCreatedAnswersShouldBeAvailableFromTheQuestion(self, samples, dbsession):
         question = self.question_dto.get(position=0)
-        Answer(
+        answer = self.answer_dto.new(
             question=question,
             text="question2.answer1",
             position=1,
             db_session=dbsession,
-        ).save()
-        Answer(
+        )
+        self.answer_dto.save(answer)
+        answer = self.answer_dto.new(
             question=question,
             text="question2.answer2",
             position=2,
             db_session=dbsession,
-        ).save()
-        assert Answers(db_session=dbsession).count() == 2
+        )
+        self.answer_dto.save(answer)
+        assert self.answer_dto.count() == 2
         assert question.answers[0].question_uid == question.uid
-
-    def t_editingTextOfExistingQuestion(self, samples, dbsession):
-        question = self.question_dto.get(position=1)
-        question.update(dbsession, text="new-text")
-        assert question.text == "new-text"
 
     def t_createQuestionWithoutPosition(self, samples, dbsession):
         new_question = self.question_dto.new(
@@ -148,15 +138,18 @@ class TestCaseQuestion:
 
     def t_allAnswersOfAQuestionMustDiffer(self, samples, dbsession):
         question = self.question_dto.get(position=1)
-        question.set_session(dbsession)
         with pytest.raises((IntegrityError, InvalidRequestError)):
             question.answers.extend(
                 [
-                    Answer(text="question2.answer1", position=1, db_session=dbsession),
-                    Answer(text="question2.answer1", position=2, db_session=dbsession),
+                    self.answer_dto.new(
+                        text="question2.answer1", position=1, db_session=dbsession
+                    ),
+                    self.answer_dto.new(
+                        text="question2.answer1", position=2, db_session=dbsession
+                    ),
                 ]
             )
-            question.save()
+            self.question_dto.save(question)
 
         dbsession.rollback()
 
@@ -181,23 +174,20 @@ class TestCaseQuestion:
         expected = {e["text"] for e in data["answers"]}
         assert new_question
         assert {e.text for e in new_question.answers} == expected
-        assert (
-            Answers(db_session=dbsession)
-            .get(text="The machine was undergoing repair")
-            .is_correct
-        )
+        assert self.answer_dto.get(text="The machine was undergoing repair").is_correct
 
     def t_cloningQuestion(self, dbsession):
         new_question = self.question_dto.new(
             text="new-question", position=0, db_session=dbsession
         )
         self.question_dto.save(new_question)
-        Answer(
+        answer = self.answer_dto.new(
             question_uid=new_question.uid,
             text="The machine was undergoing repair",
             position=0,
             db_session=dbsession,
-        ).save()
+        )
+        self.answer_dto.save(answer)
         cloned = new_question.clone()
         assert new_question.uid != cloned.uid
         assert new_question.answers[0] != cloned.answers[0]
@@ -208,12 +198,14 @@ class TestCaseQuestion:
             text="new-question", position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        Answer(
+        answer = self.answer_dto.new(
             question_uid=question.uid, text="Answer1", position=0, db_session=dbsession
-        ).save()
-        Answer(
+        )
+        self.answer_dto.save(answer)
+        answer = self.answer_dto.new(
             question_uid=question.uid, text="Answer2", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(answer)
 
         assert question.answers[0].text == "Answer1"
         assert question.answers[1].text == "Answer2"
@@ -223,15 +215,18 @@ class TestCaseQuestion:
             text="new-question", position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        a1 = Answer(
+        a1 = self.answer_dto.new(
             question_uid=question.uid, text="Answer1", position=0, db_session=dbsession
-        ).save()
-        a2 = Answer(
+        )
+        self.answer_dto.save(a1)
+        a2 = self.answer_dto.new(
             question_uid=question.uid, text="Answer2", position=1, db_session=dbsession
-        ).save()
-        a3 = Answer(
+        )
+        self.answer_dto.save(a2)
+        a3 = self.answer_dto.new(
             question_uid=question.uid, text="Answer3", position=2, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(a3)
 
         ans_2_json = a2.json
         ans_2_json.update(text="Answer text 2")
@@ -245,6 +240,7 @@ class TestCaseMatchModel:
     @pytest.fixture(autouse=True)
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
+        self.answer_dto = AnswerDTO(session=dbsession)
 
     def t_questionsPropertyReturnsTheExpectedResults(self, dbsession):
         match = Match(db_session=dbsession).save()
@@ -313,19 +309,20 @@ class TestCaseMatchModel:
         self.question_dto.add_many([question_1, question_2])
 
         self.question_dto.add_many([question_1, question_2])
-        Answer(
+        answer = self.answer_dto.new(
             question_uid=question_1.uid,
             text="question2.answer1",
             position=1,
             db_session=dbsession,
-        ).save()
+        )
+        self.answer_dto.save(answer)
 
         new_match = Match(db_session=dbsession).save()
         questions_cnt = self.question_dto.count()
-        answers_cnt = Answers(db_session=dbsession).count()
+        answers_cnt = self.answer_dto.count()
         new_match.import_template_questions(question_1.uid, question_2.uid)
         assert self.question_dto.count() == questions_cnt + 2
-        assert Answers(db_session=dbsession).count() == answers_cnt + 0
+        assert self.answer_dto.count() == answers_cnt + 0
 
     def t_cannotUseIdsOfQuestionAlreadyAssociateToAGame(self, dbsession):
         match = Match(db_session=dbsession).save()
@@ -445,6 +442,7 @@ class TestCaseReactionModel:
     @pytest.fixture(autouse=True)
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
+        self.answer_dto = AnswerDTO(session=dbsession)
 
     def t_cannotExistsTwoReactionsOfTheSameUserAtSameTime(self, dbsession):
         match = Match(db_session=dbsession).save()
@@ -454,12 +452,13 @@ class TestCaseReactionModel:
             text="new-question", position=0, game_uid=game.uid, db_session=dbsession
         )
         self.question_dto.save(question)
-        answer = Answer(
+        answer = self.answer_dto.new(
             question=question,
             text="question2.answer1",
             position=1,
             db_session=dbsession,
-        ).save()
+        )
+        self.answer_dto.save(answer)
 
         now = datetime.now()
         with pytest.raises((IntegrityError, InvalidRequestError)):
@@ -491,9 +490,10 @@ class TestCaseReactionModel:
             text="1+1 is = to", position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        answer = Answer(
+        answer = self.answer_dto.new(
             question=question, text="2", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(answer)
         reaction = Reaction(
             match_uid=match.uid,
             question_uid=question.uid,
@@ -523,9 +523,10 @@ class TestCaseReactionModel:
             db_session=dbsession,
         ).save()
 
-        answer = Answer(
+        answer = self.answer_dto.new(
             question=question, text="9", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(answer)
         reaction.record_answer(answer)
 
         assert reaction.answer is None
@@ -546,9 +547,10 @@ class TestCaseReactionModel:
             db_session=dbsession,
         ).save()
 
-        answer = Answer(
+        answer = self.answer_dto.new(
             question=question, text="2", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(answer)
         reaction.record_answer(answer)
 
         assert reaction.answer

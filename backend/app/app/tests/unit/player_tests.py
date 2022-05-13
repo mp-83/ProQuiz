@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.domain_entities import Answer, Game, Match, Reaction, Reactions, User
+from app.domain_entities import Game, Match, Reaction, Reactions, User
+from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.ranking import RankingDTO
 from app.domain_service.play import (
@@ -367,6 +368,7 @@ class TestCaseSinglePlayer:
     @pytest.fixture(autouse=True)
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
+        self.answer_dto = AnswerDTO(session=dbsession)
 
     def t_reactionIsCreatedAsSoonAsQuestionIsReturned(self, dbsession):
         match = Match(db_session=dbsession).save()
@@ -398,9 +400,10 @@ class TestCaseSinglePlayer:
             db_session=dbsession,
         )
         self.question_dto.save(first)
-        answer = Answer(
+        answer = self.answer_dto.new(
             question=first, text="UK", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(answer)
         second = self.question_dto.new(
             text="Where is Paris?",
             game_uid=first_game.uid,
@@ -452,9 +455,10 @@ class TestCaseSinglePlayer:
             db_session=dbsession,
         )
         self.question_dto.save(question)
-        answer = Answer(
+        answer = self.answer_dto.new(
             question=question, text="UK", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(answer)
         user = User(email="user@test.project", db_session=dbsession).save()
 
         match.to_time = datetime.now() + timedelta(microseconds=8000)
@@ -497,9 +501,10 @@ class TestCaseSinglePlayer:
             db_session=dbsession,
         )
         self.question_dto.save(question)
-        answer = Answer(
+        answer = self.answer_dto.new(
             question=question, text="UK", position=1, level=2, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(answer)
         user = User(email="user@test.project", db_session=dbsession).save()
 
         status = PlayerStatus(user, match, db_session=dbsession)
@@ -521,9 +526,10 @@ class TestCaseSinglePlayer:
             db_session=dbsession,
         )
         self.question_dto.save(first)
-        first_answer = Answer(
+        first_answer = self.answer_dto.new(
             question=first, text="UK", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(first_answer)
         second = self.question_dto.new(
             text="Where is Paris?",
             game_uid=first_game.uid,
@@ -531,9 +537,10 @@ class TestCaseSinglePlayer:
             db_session=dbsession,
         )
         self.question_dto.save(second)
-        second_answer = Answer(
+        second_answer = self.answer_dto.new(
             question=second, text="France", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(second_answer)
         third = self.question_dto.new(
             text="Where is Dublin?",
             game_uid=first_game.uid,
@@ -541,9 +548,10 @@ class TestCaseSinglePlayer:
             db_session=dbsession,
         )
         self.question_dto.save(third)
-        third_answer = Answer(
+        third_answer = self.answer_dto.new(
             question=third, text="Ireland", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(third_answer)
 
         user = User(email="user@test.project", db_session=dbsession).save()
 
@@ -568,6 +576,7 @@ class TestCaseResumeMatch:
     @pytest.fixture(autouse=True)
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
+        self.answer_dto = AnswerDTO(session=dbsession)
 
     def t_matchCanBeResumedWhenThereIsStillOneQuestionToDisplay(self, dbsession):
         match = Match(db_session=dbsession).save()
@@ -578,9 +587,10 @@ class TestCaseResumeMatch:
             position=0,
             db_session=dbsession,
         ).save()
-        answer = Answer(
+        answer = self.answer_dto.new(
             question=question, text="UK", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(answer)
         question = self.question_dto.new(
             text="Where is Moscow?",
             game_uid=first_game.uid,

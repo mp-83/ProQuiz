@@ -2,8 +2,10 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.domain_entities import Answer, Game, Match, Question, Reaction, User
+from app.domain_entities import Game, Match, Reaction, User
 from app.domain_entities.user import UserFactory, WordDigest
+from app.domain_service.data_transfer.answer import AnswerDTO
+from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.validation.logical import (
     RetrieveObject,
     ValidateMatchImport,
@@ -118,16 +120,23 @@ class TestCaseStartEndPoint:
 
 
 class TestCaseNextEndPoint:
+    @pytest.fixture(autouse=True)
+    def setUp(self, dbsession):
+        self.question_dto = QuestionDTO(session=dbsession)
+        self.answer_dto = AnswerDTO(session=dbsession)
+
     def t_cannotAcceptSameReactionAgain(self, dbsession):
         # despite the delay between the two (which respects the DB constraint)
         match = Match(db_session=dbsession).save()
         game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
-        question = Question(
+        question = self.question_dto.new(
             text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession
-        ).save()
-        answer = Answer(
+        )
+        self.question_dto.save(question)
+        answer = self.answer_dto.new(
             question=question, text="UK", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(answer)
         user = UserFactory(email="user@test.project", db_session=dbsession).fetch()
 
         Reaction(
@@ -148,12 +157,14 @@ class TestCaseNextEndPoint:
         # simulate a more realistic case
         match = Match(db_session=dbsession).save()
         game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
-        question = Question(
+        question = self.question_dto.new(
             text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession
-        ).save()
-        answer = Answer(
+        )
+        self.question_dto.save(question)
+        answer = self.answer_dto.new(
             question_uid=question.uid, text="UK", position=1, db_session=dbsession
-        ).save()
+        )
+        self.answer_dto.save(answer)
         with pytest.raises(ValidateError):
             ValidatePlayNext(
                 answer_uid=answer.uid, question_uid=10, db_session=dbsession
