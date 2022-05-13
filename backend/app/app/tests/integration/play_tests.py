@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta, timezone
 
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import Answer, Game, Match, Question, User
+from app.domain_entities import Answer, Game, Match, User
 from app.domain_entities.user import UserFactory, WordDigest
+from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.ranking import RankingDTO
 
 
@@ -73,6 +75,10 @@ class TestCasePlaySign:
 
 
 class TestCasePlayStart:
+    @pytest.fixture(autouse=True)
+    def setUp(self, dbsession):
+        self.question_dto = QuestionDTO(session=dbsession)
+
     def t_unexistentMatch(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
@@ -101,9 +107,11 @@ class TestCasePlayStart:
     ):
         match = Match(is_restricted=False, db_session=dbsession).save()
         game = Game(match_uid=match.uid, db_session=dbsession).save()
-        question = Question(
+        question = self.question_dto.new(
             game_uid=game.uid, text="1+1 is = to", position=0, db_session=dbsession
-        ).save()
+        )
+        self.question_dto.save(question)
+
         UserFactory(signed=match.is_restricted, db_session=dbsession).fetch()
 
         response = client.post(
@@ -140,9 +148,10 @@ class TestCasePlayStart:
     ):
         match = Match(is_restricted=True, db_session=dbsession).save()
         game = Game(match_uid=match.uid, db_session=dbsession).save()
-        question = Question(
+        question = self.question_dto.new(
             game_uid=game.uid, text="1+1 is = to", position=0, db_session=dbsession
-        ).save()
+        )
+        self.question_dto.save(question)
         user = UserFactory(signed=match.is_restricted, db_session=dbsession).fetch()
 
         response = client.post(
@@ -159,6 +168,10 @@ class TestCasePlayStart:
 
 
 class TestCasePlayNext:
+    @pytest.fixture(autouse=True)
+    def setUp(self, dbsession):
+        self.question_dto = QuestionDTO(session=dbsession)
+
     def t_duplicateSameReaction(
         self, client: TestClient, superuser_token_headers: dict, dbsession, trivia_match
     ):
@@ -232,13 +245,14 @@ class TestCasePlayNext:
     ):
         match = Match(db_session=dbsession).save()
         first_game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
-        question = Question(
+        question = self.question_dto.new(
             text="Where is London?",
             game_uid=first_game.uid,
             position=0,
             time=2,
             db_session=dbsession,
-        ).save()
+        )
+        self.question_dto.save(question)
         answer = Answer(
             question=question, text="UK", position=1, level=2, db_session=dbsession
         ).save()

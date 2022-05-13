@@ -1,11 +1,17 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import Game, Match, Question, Reaction
+from app.domain_entities import Game, Match, Reaction
 from app.domain_entities.user import UserFactory
+from app.domain_service.data_transfer.question import QuestionDTO
 
 
 class TestCaseUser:
+    @pytest.fixture(autouse=True)
+    def setUp(self, dbsession):
+        self.question_dto = QuestionDTO(session=dbsession)
+
     def t_list_all_players(self, client: TestClient, dbsession):
         first_match = Match(db_session=dbsession).save()
         first_game = Game(
@@ -15,12 +21,15 @@ class TestCaseUser:
         second_game = Game(
             match_uid=second_match.uid, index=0, db_session=dbsession
         ).save()
-        question_1 = Question(
+        question_1 = self.question_dto.new(
             text="3*3 = ", time=0, position=0, db_session=dbsession
-        ).save()
-        question_2 = Question(
+        )
+        self.question_dto.save(question_1)
+
+        question_2 = self.question_dto.new(
             text="1+1 = ", time=1, position=1, db_session=dbsession
-        ).save()
+        )
+        self.question_dto.save(question_2)
 
         user_1 = UserFactory(db_session=dbsession).fetch()
         user_2 = UserFactory(db_session=dbsession).fetch()

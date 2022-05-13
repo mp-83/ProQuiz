@@ -1,17 +1,24 @@
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import Answer, Question, Questions
+from app.domain_entities import Answer
+from app.domain_service.data_transfer.question import QuestionDTO
 
 
 class TestCaseQuestionEP:
+    @pytest.fixture(autouse=True)
+    def setUp(self, dbsession):
+        self.question_dto = QuestionDTO(session=dbsession)
+
     def t_unexistentQuestion(self, client: TestClient, dbsession):
         response = client.get(f"{settings.API_V1_STR}/questions/30")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def t_fetchingSingleQuestion(self, client: TestClient, dbsession):
-        question = Question(text="Text", position=0, db_session=dbsession).save()
+        question = self.question_dto.new(text="Text", position=0, db_session=dbsession)
+        self.question_dto.save(question)
         response = client.get(f"{settings.API_V1_STR}/questions/{question.uid}")
         assert response.ok
         assert response.json()["text"] == "Text"
@@ -30,7 +37,7 @@ class TestCaseQuestionEP:
             headers=superuser_token_headers,
         )
         assert response.ok
-        assert Questions(db_session=dbsession).count() == 1
+        assert self.question_dto.count() == 1
         assert response.json()["text"] == "eleven pm"
         assert response.json()["position"] == 2
 
@@ -47,7 +54,8 @@ class TestCaseQuestionEP:
     def t_changeTextAndPositionOfAQuestion(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
-        question = Question(text="Text", position=0, db_session=dbsession).save()
+        question = self.question_dto.new(text="Text", position=0, db_session=dbsession)
+        self.question_dto.save(question)
         response = client.put(
             f"{settings.API_V1_STR}/questions/edit/{question.uid}",
             json={
@@ -63,7 +71,8 @@ class TestCaseQuestionEP:
     def t_positionCannotBeNegative(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
-        question = Question(text="Text", position=0, db_session=dbsession).save()
+        question = self.question_dto.new(text="Text", position=0, db_session=dbsession)
+        self.question_dto.save(question)
         response = client.put(
             f"{settings.API_V1_STR}/questions/edit/{question.uid}",
             json={"position": -1},
@@ -84,9 +93,10 @@ class TestCaseQuestionEP:
     def t_updateAnswerTextAndPosition(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
-        question = Question(
+        question = self.question_dto.new(
             text="new-question", position=0, db_session=dbsession
-        ).save()
+        )
+        self.question_dto.save(question)
         a1 = Answer(
             question_uid=question.uid, text="Answer1", position=0, db_session=dbsession
         ).save()

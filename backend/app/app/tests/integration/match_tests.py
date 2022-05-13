@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import Game, Match, Question, Reaction, User
+from app.domain_entities import Game, Match, Reaction, User
+from app.domain_service.data_transfer.question import QuestionDTO
 from app.tests.fixtures import TEST_1
 
 
@@ -31,6 +33,10 @@ class TestCaseBadRequest:
 
 
 class TestCaseMatchEndpoints:
+    @pytest.fixture(autouse=True)
+    def setUp(self, dbsession):
+        self.question_dto = QuestionDTO(session=dbsession)
+
     def t_successfulCreationOfAMatch(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
@@ -74,19 +80,22 @@ class TestCaseMatchEndpoints:
         match_name = "New Match"
         match = Match(name=match_name, db_session=dbsession).save()
         first_game = Game(match_uid=match.uid, db_session=dbsession).save()
-        Question(
+        question = self.question_dto.new(
             text="Where is London?",
             game_uid=first_game.uid,
             position=0,
             db_session=dbsession,
-        ).save()
+        )
+        self.question_dto.save(question)
+
         second_game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
-        Question(
+        question = self.question_dto.new(
             text="Where is Vienna?",
             game_uid=second_game.uid,
             position=0,
             db_session=dbsession,
-        ).save()
+        )
+        self.question_dto.save(question)
 
         response = client.get(f"{settings.API_V1_STR}/matches/{match.uid}")
         assert response.ok
@@ -117,12 +126,13 @@ class TestCaseMatchEndpoints:
         match_name = "New Match"
         match = Match(name=match_name, db_session=dbsession).save()
         first_game = Game(match_uid=match.uid, db_session=dbsession).save()
-        question = Question(
+        question = self.question_dto.new(
             text="Where is London?",
             game_uid=first_game.uid,
             position=0,
             db_session=dbsession,
-        ).save()
+        )
+        self.question_dto.save(question)
         user = User(email="t@t.com", db_session=dbsession).save()
         Reaction(match=match, question=question, user=user, db_session=dbsession).save()
         response = client.put(
@@ -137,12 +147,13 @@ class TestCaseMatchEndpoints:
     ):
         match = Match(db_session=dbsession).save()
         first_game = Game(match_uid=match.uid, db_session=dbsession).save()
-        Question(
+        question = self.question_dto.new(
             text="Where is London?",
             game_uid=first_game.uid,
             position=0,
             db_session=dbsession,
-        ).save()
+        )
+        self.question_dto.save(question)
         payload = {
             "times": 10,
             "questions": [
