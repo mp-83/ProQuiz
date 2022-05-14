@@ -11,10 +11,12 @@ from sqlalchemy.pool import StaticPool
 
 from app.core import security
 from app.core.config import settings
-from app.domain_entities import Game, Question, User
+from app.domain_entities import User
 from app.domain_entities.db.base import Base
 from app.domain_entities.db.session import get_db
+from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
+from app.domain_service.data_transfer.question import QuestionDTO
 from app.main import app
 from app.tests.fixtures import TEST_1
 from app.tests.utilities.user import authentication_token_from_email
@@ -162,27 +164,40 @@ def match_dto(dbsession):
     yield MatchDTO(session=dbsession)
 
 
+@pytest.fixture
+def game_dto(dbsession):
+    yield GameDTO(session=dbsession)
+
+
+@pytest.fixture
+def question_dto(dbsession):
+    yield QuestionDTO(session=dbsession)
+
+
 @pytest.fixture(name="trivia_match")
-def create_fixture_test(dbsession, match_dto):
+def create_fixture_test(dbsession, match_dto, game_dto, question_dto):
     match = match_dto.save(match_dto.new())
-    first_game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
-    second_game = Game(match_uid=match.uid, index=2, db_session=dbsession).save()
-    for i, q in enumerate(TEST_1, start=1):
+
+    first_game = game_dto.new(match_uid=match.uid, index=1)
+    game_dto.save(first_game)
+    second_game = game_dto.new(match_uid=match.uid, index=2)
+    game_dto.save(second_game)
+    for i, question_dict in enumerate(TEST_1, start=1):
         if i < 3:
-            new_question = Question(
+            new_question = question_dto.new(
                 game_uid=first_game.uid,
-                text=q["text"],
+                text=question_dict["text"],
                 position=i,
                 db_session=dbsession,
             )
         else:
-            new_question = Question(
+            new_question = question_dto.new(
                 game_uid=second_game.uid,
-                text=q["text"],
+                text=question_dict["text"],
                 position=(i - 2),
                 db_session=dbsession,
             )
-        new_question.create_with_answers(q["answers"])
+        question_dto.create_with_answers(new_question, question_dict["answers"])
 
     yield match
 

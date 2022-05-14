@@ -2,9 +2,10 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.domain_entities import Game, User
+from app.domain_entities import User
 from app.domain_entities.user import UserFactory, WordDigest
 from app.domain_service.data_transfer.answer import AnswerDTO
+from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
@@ -28,6 +29,7 @@ class TestCaseBase:
         self.answer_dto = AnswerDTO(session=dbsession)
         self.reaction_dto = ReactionDTO(session=dbsession)
         self.match_dto = MatchDTO(session=dbsession)
+        self.game_dto = GameDTO(session=dbsession)
 
 
 class TestCaseRetrieveObject:
@@ -138,7 +140,8 @@ class TestCaseNextEndPoint(TestCaseBase):
     def t_cannotAcceptSameReactionAgain(self, dbsession):
         # despite the delay between the two (which respects the DB constraint)
         match = self.match_dto.save(self.match_dto.new())
-        game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
+        game = self.game_dto.new(match_uid=match.uid, index=0)
+        self.game_dto.save(game)
         question = self.question_dto.new(
             text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession
         )
@@ -167,7 +170,8 @@ class TestCaseNextEndPoint(TestCaseBase):
     def t_answerDoesNotBelongToQuestion(self, dbsession):
         # simulate a more realistic case
         match = self.match_dto.save(self.match_dto.new())
-        game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
+        game = self.game_dto.new(match_uid=match.uid, index=0)
+        self.game_dto.save(game)
         question = self.question_dto.new(
             text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession
         )

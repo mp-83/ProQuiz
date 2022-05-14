@@ -5,7 +5,8 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import Game, User
+from app.domain_entities import User
+from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
@@ -40,6 +41,7 @@ class TestCaseMatchEndpoints:
         self.question_dto = QuestionDTO(session=dbsession)
         self.reaction_dto = ReactionDTO(session=dbsession)
         self.match_dto = MatchDTO(session=dbsession)
+        self.game_dto = GameDTO(session=dbsession)
 
     def t_successfulCreationOfAMatch(
         self, client: TestClient, superuser_token_headers: dict, dbsession
@@ -84,8 +86,8 @@ class TestCaseMatchEndpoints:
         match_name = "New Match"
         match = self.match_dto.new(name=match_name)
         self.match_dto.save(match)
-        self.match_dto.save(match)
-        first_game = Game(match_uid=match.uid, db_session=dbsession).save()
+        first_game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(first_game)
         question = self.question_dto.new(
             text="Where is London?",
             game_uid=first_game.uid,
@@ -94,7 +96,8 @@ class TestCaseMatchEndpoints:
         )
         self.question_dto.save(question)
 
-        second_game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
+        second_game = self.game_dto.new(match_uid=match.uid, index=1)
+        self.game_dto.save(second_game)
         question = self.question_dto.new(
             text="Where is Vienna?",
             game_uid=second_game.uid,
@@ -132,10 +135,11 @@ class TestCaseMatchEndpoints:
         match_name = "New Match"
         match = self.match_dto.new(name=match_name)
         self.match_dto.save(match)
-        first_game = Game(match_uid=match.uid, db_session=dbsession).save()
+        game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(game)
         question = self.question_dto.new(
             text="Where is London?",
-            game_uid=first_game.uid,
+            game_uid=game.uid,
             position=0,
             db_session=dbsession,
         )
@@ -157,10 +161,11 @@ class TestCaseMatchEndpoints:
     ):
         match = self.match_dto.new()
         self.match_dto.save(match)
-        first_game = Game(match_uid=match.uid, db_session=dbsession).save()
+        game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(game)
         question = self.question_dto.new(
             text="Where is London?",
-            game_uid=first_game.uid,
+            game_uid=game.uid,
             position=0,
             db_session=dbsession,
         )
@@ -169,7 +174,7 @@ class TestCaseMatchEndpoints:
             "times": 10,
             "questions": [
                 {
-                    "game": first_game.index,
+                    "game": game.index,
                     "text": "What is the capital of Sweden?",
                     "answers": [
                         {"text": "Stockolm"},
@@ -186,7 +191,7 @@ class TestCaseMatchEndpoints:
         )
         assert response.ok
         assert len(match.questions[0]) == 2
-        assert len(first_game.ordered_questions) == 2
+        assert len(game.ordered_questions) == 2
         self.match_dto.refresh(match)
         assert match.times == 10
 

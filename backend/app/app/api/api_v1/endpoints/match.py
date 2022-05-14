@@ -5,8 +5,9 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.core.security import login_required
-from app.domain_entities import Answer, Game, Question
+from app.domain_entities import Answer, Question
 from app.domain_entities.db.session import get_db
+from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.validation import syntax
 from app.domain_service.validation.logical import (
@@ -51,7 +52,10 @@ def create_match(
     match_dto = MatchDTO(session=session)
     new_match = match_dto.new(**user_input)
     match_dto.save(new_match)
-    new_game = Game(db_session=session, match_uid=new_match.uid).save()
+
+    game_dto = GameDTO(session=session)
+    new_game = game_dto.new(match_uid=new_match.uid)
+    game_dto.save(new_game)
     for position, question in enumerate(questions):
         new = Question(
             db_session=session,
