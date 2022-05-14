@@ -35,6 +35,12 @@ class UserDTO:
         return self._session.query(self.klass).all()
 
     def fetch(self, **kwargs):
+        original_email = kwargs.pop("original_email", "")
+        signed = kwargs.pop("signed", None) or original_email
+        email = kwargs.get("email")
+        password = kwargs.get("password")
+        token = kwargs.get("token", "")
+
         return UserFactory(db_session=self._session).fetch()
 
 
@@ -55,42 +61,50 @@ class UserFactory:
         self.signed = kwargs.pop("signed", None) or self.original_email
         self._session = kwargs.pop("db_session", None)
         self.email = kwargs.get("email")
-        self.kwargs = kwargs
+        self.password = kwargs.get("password")
+        self.token = kwargs.get("token", "")
+
         self.user_dto = UserDTO(session=self._session)
 
-    def exists(self, email_digest, token_digest):
+    def existing_user(self, email_digest, token_digest):
         return self.user_dto.get(email_digest=email_digest, token_digest=token_digest)
 
-    def fetch(self):
-        if self.email:
-            email_digest = WordDigest(self.email).value()
-            password = self.kwargs.get("password")
+    def internal_user(self):
+        email_digest = WordDigest(self.email).value()
 
-            internal_user = self.user_dto.get(email=self.email)
-            return internal_user or self.user_dto.save(
-                self.user_dto.new(
-                    email=self.email,
-                    email_digest=email_digest,
-                    password=password,
-                    db_session=self._session,
-                )
+        internal_user = self.user_dto.get(email=self.email)
+        return internal_user or self.user_dto.save(
+            self.user_dto.new(
+                email=self.email,
+                email_digest=email_digest,
+                password=self.password,
+                db_session=self._session,
             )
+        )
 
-        if not self.signed:
-            email_digest = uuid4().hex
-            email = f"uns-{email_digest}@progame.io"
-            new_user = self.user_dto.new(email=email)
-            return self.user_dto.save(new_user)
+    def unsigned_user(self):
+        email_digest = uuid4().hex
+        email = f"uns-{email_digest}@progame.io"
+        new_user = self.user_dto.new(email=email)
+        return self.user_dto.save(new_user)
 
-        token = self.kwargs.get("token", "")
-        email_digest = WordDigest(self.original_email).value()
-        token_digest = WordDigest(token).value()
-        user = self.exists(email_digest, token_digest)
-        if user:
-            return user
-
+    def signed_user(self, email_digest, token_digest):
         user = self.user_dto.new()
         user.email = f"{email_digest}@progame.io"
         user.email_digest = email_digest
         user.token_digest = token_digest
         return self.user_dto.save(user)
+
+    def fetch(self):
+        if self.email:
+            return self.internal_user()
+
+        if not self.signed:
+            return self.unsigned_user()
+
+        email_digest = WordDigest(self.original_email).value()
+        token_digest = WordDigest(self.token).value()
+        if self.existing_user(email_digest, token_digest):
+            return self.existing_user(email_digest, token_digest)
+
+        return self.signed_user(email_digest, token_digest)

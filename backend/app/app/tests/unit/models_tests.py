@@ -17,7 +17,7 @@ from app.domain_service.data_transfer.match import (
 )
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
-from app.domain_service.data_transfer.user import UserFactory
+from app.domain_service.data_transfer.user import UserDTO, UserFactory
 from app.exceptions import NotUsableQuestionError
 
 
