@@ -24,4 +24,4 @@ class ReactionDTO:
     def all_reactions_of_user_to_match(self, user, match, asc=False):
         qs = self._session.query(self.klass).filter_by(user=user, match=match)
         field = Reaction.uid.asc if asc else Reaction.uid.desc
-        return qs.order_by(field())
+        return qs.order_by(field())  # todo to fix field

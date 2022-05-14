@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import Game, Match
+from app.domain_entities import Game
 from app.domain_entities.user import UserFactory
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
@@ -14,12 +14,12 @@ class TestCaseUser:
         self.question_dto = QuestionDTO(session=dbsession)
         self.reaction_dto = ReactionDTO(session=dbsession)
 
-    def t_list_all_players(self, client: TestClient, dbsession):
-        first_match = Match(db_session=dbsession).save()
+    def t_list_all_players(self, client: TestClient, dbsession, match_dto):
+        first_match = match_dto.save(match_dto.new())
         first_game = Game(
             match_uid=first_match.uid, index=0, db_session=dbsession
         ).save()
-        second_match = Match(db_session=dbsession).save()
+        second_match = match_dto.save(match_dto.new())
         second_game = Game(
             match_uid=second_match.uid, index=0, db_session=dbsession
         ).save()

@@ -1,6 +1,5 @@
 from datetime import datetime
 from random import choices
-from uuid import uuid1
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, select
 from sqlalchemy.orm import Session
@@ -43,45 +42,6 @@ class Match(TableMixin, Base):
     times = Column(Integer, default=1)
     # when True games should be played in order
     order = Column(Boolean, default=True)
-
-    def __init__(self, db_session: Session = None, **data):
-        """
-        Initiate the instance
-
-        UUID based on the host ID and current time
-        the first 23 chars, are the ones based on
-        the time, therefore the ones that change
-        every tick and guarantee the uniqueness
-        """
-        self._session = db_session
-        expires = data.pop("expires", None)
-        if not data.get("to_time"):
-            self.to_time = expires
-
-        if not data.get("from_time"):
-            self.from_time = datetime.now()
-
-        _name = data.get("name")
-        if _name is None or _name == "":
-            uuid_time_substring = "{}".format(uuid1())[:23]
-            data["name"] = f"M-{uuid_time_substring}"
-
-        with_code = data.pop("with_code", False)
-        if with_code:
-            self.code = MatchCode(db_session=self.session).get_code()
-
-        with_hash = not with_code
-        if with_hash:
-            self.uhash = MatchHash(db_session=self.session).get_hash()
-
-        if data.get("is_restricted"):
-            self.uhash = (
-                data.get("uhash") or MatchHash(db_session=self._session).get_hash()
-            )
-            self.password = MatchPassword(
-                db_session=self.session, uhash=self.uhash
-            ).get_value()
-        super().__init__(**data)
 
     @property
     def session(self):

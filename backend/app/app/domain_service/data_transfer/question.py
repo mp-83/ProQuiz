@@ -51,3 +51,6 @@ class QuestionDTO:
             )
         self._session.commit()
         return self
+
+    def questions_with_ids(self, *ids):
+        return self._session.query(Question).filter(Question.uid.in_(ids))

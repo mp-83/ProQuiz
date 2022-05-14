@@ -2,9 +2,10 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.domain_entities import Game, Match, User
+from app.domain_entities import Game, User
 from app.domain_entities.user import UserFactory, WordDigest
 from app.domain_service.data_transfer.answer import AnswerDTO
+from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.domain_service.validation.logical import (
@@ -18,6 +19,15 @@ from app.domain_service.validation.logical import (
     ValidatePlayStart,
 )
 from app.exceptions import NotFoundObjectError, ValidateError
+
+
+class TestCaseBase:
+    @pytest.fixture(autouse=True)
+    def setUp(self, dbsession):
+        self.question_dto = QuestionDTO(session=dbsession)
+        self.answer_dto = AnswerDTO(session=dbsession)
+        self.reaction_dto = ReactionDTO(session=dbsession)
+        self.match_dto = MatchDTO(session=dbsession)
 
 
 class TestCaseRetrieveObject:
@@ -39,7 +49,7 @@ class TestCaseLandEndPoint:
             ).valid_match()
 
 
-class TestCaseCodeEndPoint:
+class TestCaseCodeEndPoint(TestCaseBase):
     def t_wrongCode(self, dbsession):
         with pytest.raises(NotFoundObjectError):
             ValidatePlayCode(match_code="2222", db_session=dbsession).valid_match()
@@ -47,12 +57,13 @@ class TestCaseCodeEndPoint:
     def t_matchActiveness(self, dbsession):
         ten_hours_ago = datetime.now() - timedelta(hours=40)
         two_hours_ago = datetime.now() - timedelta(hours=3600)
-        match = Match(
-            with_code=True,
-            from_time=ten_hours_ago,
-            to_time=two_hours_ago,
-            db_session=dbsession,
-        ).save()
+        match = self.match_dto.save(
+            self.match_dto.new(
+                with_code=True,
+                from_time=ten_hours_ago,
+                to_time=two_hours_ago,
+            )
+        )
         with pytest.raises(ValidateError) as err:
             ValidatePlayCode(match_code=match.code, db_session=dbsession).valid_match()
 
@@ -78,9 +89,10 @@ class TestCaseSignEndPoint:
             ).is_valid()
 
 
-class TestCaseStartEndPoint:
+class TestCaseStartEndPoint(TestCaseBase):
     def t_publicUserRestrictedMatch(self, dbsession):
-        match = Match(is_restricted=True, db_session=dbsession).save()
+        match = self.match_dto.new(is_restricted=True)
+        self.match_dto.save(match)
         user = User(email="user@test.project", db_session=dbsession).save()
         with pytest.raises(ValidateError) as err:
             ValidatePlayStart(
@@ -93,7 +105,8 @@ class TestCaseStartEndPoint:
         assert err.value.message == "User cannot access this match"
 
     def t_privateMatchRequiresPassword(self, dbsession):
-        match = Match(is_restricted=True, db_session=dbsession).save()
+        match = self.match_dto.new(is_restricted=True)
+        self.match_dto.save(match)
         user = UserFactory(signed=True, db_session=dbsession).fetch()
         with pytest.raises(ValidateError) as err:
             ValidatePlayStart(
@@ -110,7 +123,8 @@ class TestCaseStartEndPoint:
             ValidatePlayStart(user_uid=1, db_session=dbsession).valid_user()
 
     def t_invalidPassword(self, dbsession):
-        match = Match(is_restricted=True, db_session=dbsession).save()
+        match = self.match_dto.new(is_restricted=True)
+        self.match_dto.save(match)
         UserFactory(signed=True, db_session=dbsession).fetch()
         with pytest.raises(ValidateError) as err:
             ValidatePlayStart(
@@ -120,16 +134,10 @@ class TestCaseStartEndPoint:
         assert err.value.message == "Password mismatch"
 
 
-class TestCaseNextEndPoint:
-    @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.question_dto = QuestionDTO(session=dbsession)
-        self.answer_dto = AnswerDTO(session=dbsession)
-        self.reaction_dto = ReactionDTO(session=dbsession)
-
+class TestCaseNextEndPoint(TestCaseBase):
     def t_cannotAcceptSameReactionAgain(self, dbsession):
         # despite the delay between the two (which respects the DB constraint)
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession
@@ -158,7 +166,7 @@ class TestCaseNextEndPoint:
 
     def t_answerDoesNotBelongToQuestion(self, dbsession):
         # simulate a more realistic case
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession

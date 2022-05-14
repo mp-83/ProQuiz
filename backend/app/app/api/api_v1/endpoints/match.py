@@ -5,8 +5,9 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.core.security import login_required
-from app.domain_entities import Answer, Game, Match, Matches, Question
+from app.domain_entities import Answer, Game, Question
 from app.domain_entities.db.session import get_db
+from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.validation import syntax
 from app.domain_service.validation.logical import (
     RetrieveObject,
@@ -23,7 +24,7 @@ router = APIRouter()
 @router.get("/")
 def list_matches(session: Session = Depends(get_db)):
     # TODO: to fix the filtering parameters
-    all_matches = Matches(db_session=session).all_matches(**{})
+    all_matches = MatchDTO(session=session).all_matches(**{})
     return {"matches": [m.json for m in all_matches]}
 
 
@@ -47,7 +48,9 @@ def create_match(
 ):
     user_input = user_input.dict()
     questions = user_input.pop("questions", None) or []
-    new_match = Match(db_session=session, **user_input).save()
+    match_dto = MatchDTO(session=session)
+    new_match = match_dto.new(**user_input)
+    match_dto.save(new_match)
     new_game = Game(db_session=session, match_uid=new_match.uid).save()
     for position, question in enumerate(questions):
         new = Question(

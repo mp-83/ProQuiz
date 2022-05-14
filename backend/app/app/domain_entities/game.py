@@ -21,7 +21,7 @@ class Game(TableMixin, Base):
         UniqueConstraint("match_uid", "index", name="ck_game_match_uid_question"),
     )
 
-    def __init__(self, db_session: Session, **kwargs):
+    def __init__(self, db_session: Session = None, **kwargs):
         self._session = db_session
         super().__init__(**kwargs)
 

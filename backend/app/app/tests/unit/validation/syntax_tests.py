@@ -155,12 +155,15 @@ class TestCaseMatchSchema:
             "name": "new match",
             "times": "2",
             "is_restricted": "true",
+            "with_code": "true",
             "order": "false",
             "questions": [{"text": "text"}],
         }
         for value in [1, None, "10"]:
             document.update(times=value)
-            assert syntax.MatchCreate(**document)
+            schema = syntax.MatchCreate(**document)
+            assert schema
+            assert schema.dict()["with_code"]
 
     def t_allowForPartialUpdate(self):
         schema = syntax.MatchEdit(**{"is_restricted": False})

@@ -2,8 +2,9 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.domain_entities import Game, Match, User
+from app.domain_entities import Game, User
 from app.domain_service.data_transfer.answer import AnswerDTO
+from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.ranking import RankingDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
@@ -23,13 +24,18 @@ from app.exceptions import (
 )
 
 
-class TestCaseQuestionFactory:
+class TestCaseBase:
     @pytest.fixture(autouse=True)
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
+        self.match_dto = MatchDTO(session=dbsession)
+        self.reaction_dto = ReactionDTO(session=dbsession)
+        self.answer_dto = AnswerDTO(session=dbsession)
 
+
+class TestCaseQuestionFactory(TestCaseBase):
     def t_nextQuestionWhenNotOrdered(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(
             match_uid=match.uid, index=1, order=False, db_session=dbsession
         ).save()
@@ -51,7 +57,7 @@ class TestCaseQuestionFactory:
         """Questions are inversely created
         to make the ordering meaningful.
         """
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         second = self.question_dto.new(
             text="Where is London?", game_uid=game.uid, position=1, db_session=dbsession
@@ -67,7 +73,7 @@ class TestCaseQuestionFactory:
         assert question_factory.next() == second
 
     def t_gameOverWhenThereAreNoQuestions(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
 
         question_factory = QuestionFactory(game, *())
@@ -75,7 +81,7 @@ class TestCaseQuestionFactory:
             question_factory.next()
 
     def t_gameIsOverAfterLastQuestion(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is Paris?", game_uid=game.uid, position=0, db_session=dbsession
@@ -88,7 +94,7 @@ class TestCaseQuestionFactory:
             question_factory.next()
 
     def t_isLastQuestion(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is Amsterdam?",
@@ -109,7 +115,7 @@ class TestCaseQuestionFactory:
         assert question_factory.is_last_question
 
     def t_previousQuestion(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         first = self.question_dto.new(
             text="Where is Amsterdam?",
@@ -129,7 +135,7 @@ class TestCaseQuestionFactory:
         assert question_factory.previous() == first
 
     def t_callingPreviousWithoutNext(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is Amsterdam?",
@@ -148,7 +154,7 @@ class TestCaseQuestionFactory:
             question_factory.previous()
 
     def t_callingPreviousRightAfterFirstNext(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is Amsterdam?",
@@ -168,9 +174,9 @@ class TestCaseQuestionFactory:
             question_factory.previous()
 
 
-class TestCaseGameFactory:
+class TestCaseGameFactory(TestCaseBase):
     def t_nextGameWhenOrdered(self, dbsession):
-        match = Match(order=True, db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new(order=True))
         second = Game(match_uid=match.uid, index=2, db_session=dbsession).save()
         first = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
 
@@ -179,7 +185,7 @@ class TestCaseGameFactory:
         assert game_factory.next() == second
 
     def t_matchWithoutGamesThrowsError(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game_factory = GameFactory(match, *())
 
         with pytest.raises(MatchOver):
@@ -188,14 +194,14 @@ class TestCaseGameFactory:
         dbsession.rollback()
 
     def t_matchStarted(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         game_factory = GameFactory(match, *())
 
         assert not game_factory.match_started
 
     def t_isLastGame(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         game_factory = GameFactory(match, *())
@@ -206,7 +212,7 @@ class TestCaseGameFactory:
         assert game_factory.is_last_game
 
     def t_nextOverTwoSessions(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         g1 = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         game_factory = GameFactory(match, g1.uid)
@@ -215,7 +221,7 @@ class TestCaseGameFactory:
         assert game_factory.is_last_game
 
     def t_callingPreviousRightAfterFirstNext(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         game_factory = GameFactory(match, *())
@@ -225,7 +231,7 @@ class TestCaseGameFactory:
             game_factory.previous()
 
     def t_callingPreviousWithoutNext(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         game_factory = GameFactory(match, *())
@@ -234,14 +240,9 @@ class TestCaseGameFactory:
             game_factory.previous()
 
 
-class TestCaseStatus:
-    @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.question_dto = QuestionDTO(session=dbsession)
-        self.reaction_dto = ReactionDTO(session=dbsession)
-
+class TestCaseStatus(TestCaseBase):
     def t_questionsDisplayed(self, dbsession, emitted_queries):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         q1 = self.question_dto.new(
             text="Where is Miami", position=0, game=game, db_session=dbsession
@@ -277,9 +278,10 @@ class TestCaseStatus:
             )
         )
 
+        another_match = self.match_dto.save(self.match_dto.new())
         self.reaction_dto.save(
             self.reaction_dto.new(
-                match=Match(db_session=dbsession).save(),
+                match=another_match,
                 question=q3,
                 user=user,
                 game_uid=game.uid,
@@ -292,7 +294,7 @@ class TestCaseStatus:
         assert len(emitted_queries) == before + 1
 
     def t_questionDisplayedByGame(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         q1 = self.question_dto.new(
             text="Where is Miami", position=0, game=game, db_session=dbsession
@@ -327,9 +329,10 @@ class TestCaseStatus:
                 db_session=dbsession,
             )
         )
+        another_match = self.match_dto.save(self.match_dto.new())
         self.reaction_dto.save(
             self.reaction_dto.new(
-                match=Match(db_session=dbsession).save(),
+                match=another_match,
                 question=q3,
                 user=user,
                 game_uid=game.uid,
@@ -340,7 +343,7 @@ class TestCaseStatus:
         assert status.questions_displayed_by_game(game) == {q2.uid: q2, q1.uid: q1}
 
     def t_allGamesPlayed(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         g1 = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         g2 = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         q1 = self.question_dto.new(
@@ -375,7 +378,7 @@ class TestCaseStatus:
         assert status.all_games_played() == {g1.uid: g1, g2.uid: g2}
 
     def t_matchTotalScore(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         g1 = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         g2 = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         q1 = self.question_dto.new(
@@ -411,15 +414,9 @@ class TestCaseStatus:
         assert status.current_score() == 5.4
 
 
-class TestCaseSinglePlayer:
-    @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.question_dto = QuestionDTO(session=dbsession)
-        self.answer_dto = AnswerDTO(session=dbsession)
-        self.reaction_dto = ReactionDTO(session=dbsession)
-
+class TestCaseSinglePlayer(TestCaseBase):
     def t_reactionIsCreatedAsSoonAsQuestionIsReturned(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         first_game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?",
@@ -439,7 +436,7 @@ class TestCaseSinglePlayer:
         assert self.reaction_dto.count() == 1
 
     def t_reactToFirstQuestion(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         first_game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         first = self.question_dto.new(
             text="Where is London?",
@@ -470,9 +467,8 @@ class TestCaseSinglePlayer:
         assert next_q == second
 
     def t_matchAtStartTime(self, dbsession):
-        match = Match(
-            to_time=datetime.now() - timedelta(microseconds=10), db_session=dbsession
-        ).save()
+        match = self.match_dto.new(to_time=datetime.now() - timedelta(microseconds=10))
+        self.match_dto.save(match)
         first_game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?",
@@ -494,7 +490,7 @@ class TestCaseSinglePlayer:
         # the to_time attribute is set right before the player initialisation
         # to bypass the is_active check inside start() and fail at reaction
         # time (where is expected)
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         first_game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?",
@@ -510,7 +506,7 @@ class TestCaseSinglePlayer:
         user = User(email="user@test.project", db_session=dbsession).save()
 
         match.to_time = datetime.now() + timedelta(microseconds=8000)
-        match.save()
+        self.match_dto.save(match)
         status = PlayerStatus(user, match, db_session=dbsession)
         player = SinglePlayer(status, user, match, db_session=dbsession)
         player.start()
@@ -520,7 +516,7 @@ class TestCaseSinglePlayer:
         assert e.value.message == "Expired match"
 
     def t_matchCannotBePlayedMoreThanMatchTimes(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         user = User(email="user@test.project", db_session=dbsession).save()
         game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         question = self.question_dto.new(
@@ -539,7 +535,7 @@ class TestCaseSinglePlayer:
         dbsession.rollback()
 
     def t_matchOver(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         first_game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?",
@@ -563,7 +559,7 @@ class TestCaseSinglePlayer:
 
     def t_playMatchOverMultipleRequests(self, dbsession):
         # the SinglePlayer is instanced multiple times
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         first_game = Game(
             match_uid=match.uid, index=1, order=False, db_session=dbsession
         ).save()
@@ -620,14 +616,9 @@ class TestCaseSinglePlayer:
             player.react(third_answer)
 
 
-class TestCaseResumeMatch:
-    @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.question_dto = QuestionDTO(session=dbsession)
-        self.answer_dto = AnswerDTO(session=dbsession)
-
+class TestCaseResumeMatch(TestCaseBase):
     def t_matchCanBeResumedWhenThereIsStillOneQuestionToDisplay(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         first_game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?",
@@ -655,7 +646,7 @@ class TestCaseResumeMatch:
         assert player.match_can_be_resumed
 
     def t_matchCanNotBeResumedBecausePublic(self, dbsession):
-        match = Match(is_restricted=False, db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new(is_restricted=False))
         user = User(email="user@test.project", db_session=dbsession).save()
 
         status = PlayerStatus(user, match, db_session=dbsession)
@@ -663,9 +654,9 @@ class TestCaseResumeMatch:
         assert not player.match_can_be_resumed
 
 
-class TestCasePlayScore:
+class TestCasePlayScore(TestCaseBase):
     def t_compute_score(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         user = User(email="user@test.project", db_session=dbsession).save()
         PlayScore(match.uid, user.uid, 5.5, db_session=dbsession).save_to_ranking()
 

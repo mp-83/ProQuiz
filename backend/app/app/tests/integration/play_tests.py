@@ -5,9 +5,10 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import Game, Match, User
+from app.domain_entities import Game, User
 from app.domain_entities.user import UserFactory, WordDigest
 from app.domain_service.data_transfer.answer import AnswerDTO
+from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.ranking import RankingDTO
 
@@ -27,7 +28,9 @@ class TestCaseBadRequest:
 class TestCasePlayLand:
     # the test scenario for land/404 is already tested above
     def t_playLand(self, client: TestClient, superuser_token_headers: dict, dbsession):
-        match = Match(with_code=False, db_session=dbsession).save()
+        match_dto = MatchDTO(session=dbsession)
+        match = match_dto.new(with_code=False)
+        match_dto.save(match)
         response = client.post(
             f"{settings.API_V1_STR}/play/h/{match.uhash}",
             json={},
@@ -40,7 +43,9 @@ class TestCasePlayLand:
 class TestCasePlayCode:
     def t_playCode(self, client: TestClient, superuser_token_headers: dict, dbsession):
         in_one_hour = datetime.now() + timedelta(hours=1)
-        match = Match(with_code=True, expires=in_one_hour, db_session=dbsession).save()
+        match_dto = MatchDTO(session=dbsession)
+        match = match_dto.new(with_code=True, expires=in_one_hour)
+        match_dto.save(match)
         response = client.post(
             f"{settings.API_V1_STR}/play/code",
             json={"match_code": match.code},
@@ -56,7 +61,9 @@ class TestCasePlaySign:
     def t_successfulSignReturnsExisting(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
-        Match(with_code=True, db_session=dbsession).save()
+        match_dto = MatchDTO(session=dbsession)
+        match = match_dto.new(with_code=True)
+        match_dto.save(match)
         email_digest = WordDigest("user@test.io").value()
         token_digest = WordDigest("01112021").value()
         email = f"{email_digest}@progame.io"
@@ -79,6 +86,7 @@ class TestCasePlayStart:
     @pytest.fixture(autouse=True)
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
+        self.match_dto = MatchDTO(session=dbsession)
 
     def t_unexistentMatch(
         self, client: TestClient, superuser_token_headers: dict, dbsession
@@ -94,7 +102,9 @@ class TestCasePlayStart:
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
         one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
-        match = Match(expires=one_hour_ago, db_session=dbsession).save()
+        match = self.match_dto.new(expires=one_hour_ago)
+        self.match_dto.save(match)
+
         user = UserFactory(signed=match.is_restricted, db_session=dbsession).fetch()
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
@@ -106,7 +116,8 @@ class TestCasePlayStart:
     def t_startMatchAndUserIsImplicitlyCreated(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
-        match = Match(is_restricted=False, db_session=dbsession).save()
+        match = self.match_dto.new(is_restricted=False)
+        self.match_dto.save(match)
         game = Game(match_uid=match.uid, db_session=dbsession).save()
         question = self.question_dto.new(
             game_uid=game.uid, text="1+1 is = to", position=0, db_session=dbsession
@@ -131,7 +142,8 @@ class TestCasePlayStart:
     def t_startMatchWithoutQuestion(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
-        match = Match(is_restricted=False, db_session=dbsession).save()
+        match = self.match_dto.new(is_restricted=False)
+        self.match_dto.save(match)
         game = Game(match_uid=match.uid, db_session=dbsession).save()
         user = UserFactory(signed=match.is_restricted, db_session=dbsession).fetch()
 
@@ -147,7 +159,8 @@ class TestCasePlayStart:
     def t_startRestrictedMatchUsingPassword(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
-        match = Match(is_restricted=True, db_session=dbsession).save()
+        match = self.match_dto.new(is_restricted=True)
+        self.match_dto.save(match)
         game = Game(match_uid=match.uid, db_session=dbsession).save()
         question = self.question_dto.new(
             game_uid=game.uid, text="1+1 is = to", position=0, db_session=dbsession
@@ -245,7 +258,9 @@ class TestCasePlayNext:
     def t_completeMatch(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
-        match = Match(db_session=dbsession).save()
+        match_dto = MatchDTO(session=dbsession)
+        match = match_dto.new(with_code=True)
+        match_dto.save(match)
         first_game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?",

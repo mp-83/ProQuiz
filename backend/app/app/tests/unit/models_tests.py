@@ -5,11 +5,16 @@ import pytest
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 from app.constants import MATCH_HASH_LEN, MATCH_PASSWORD_LEN
-from app.domain_entities import Game, Match, OpenAnswer, User
-from app.domain_entities.match import MatchCode, MatchHash, MatchPassword
+from app.domain_entities import Game, OpenAnswer, User
 from app.domain_entities.reaction import ReactionScore
 from app.domain_entities.user import UserFactory
 from app.domain_service.data_transfer.answer import AnswerDTO
+from app.domain_service.data_transfer.match import (
+    MatchCode,
+    MatchDTO,
+    MatchHash,
+    MatchPassword,
+)
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.exceptions import NotUsableQuestionError
@@ -242,9 +247,10 @@ class TestCaseMatchModel:
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
         self.answer_dto = AnswerDTO(session=dbsession)
+        self.match_dto = MatchDTO(session=dbsession)
 
     def t_questionsPropertyReturnsTheExpectedResults(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         first_game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?",
@@ -267,17 +273,17 @@ class TestCaseMatchModel:
         assert match.questions[1][0].game == second_game
 
     def t_createMatchWithHash(self, dbsession):
-        match = Match(with_code=False, db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new(with_code=False))
         assert match.uhash is not None
         assert len(match.uhash) == MATCH_HASH_LEN
 
     def t_createRestrictedMatch(self, dbsession):
-        match = Match(is_restricted=True, db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new(is_restricted=True))
         assert match.uhash
         assert len(match.password) == MATCH_PASSWORD_LEN
 
     def t_updateTextExistingQuestion(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         first_game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?",
@@ -288,7 +294,8 @@ class TestCaseMatchModel:
         self.question_dto.save(question)
 
         n = self.question_dto.count()
-        match.update_questions(
+        self.match_dto.update_questions(
+            match,
             [
                 {
                     "uid": question.uid,
@@ -318,15 +325,17 @@ class TestCaseMatchModel:
         )
         self.answer_dto.save(answer)
 
-        new_match = Match(db_session=dbsession).save()
+        new_match = self.match_dto.save(self.match_dto.new(with_code=False))
         questions_cnt = self.question_dto.count()
         answers_cnt = self.answer_dto.count()
-        new_match.import_template_questions(question_1.uid, question_2.uid)
+        self.match_dto.import_template_questions(
+            new_match, question_1.uid, question_2.uid
+        )
         assert self.question_dto.count() == questions_cnt + 2
         assert self.answer_dto.count() == answers_cnt + 0
 
     def t_cannotUseIdsOfQuestionAlreadyAssociateToAGame(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         first_game = Game(match_uid=match.uid, index=2, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?",
@@ -336,10 +345,10 @@ class TestCaseMatchModel:
         )
         self.question_dto.save(question)
         with pytest.raises(NotUsableQuestionError):
-            match.import_template_questions(question.uid)
+            self.match_dto.import_template_questions(match, question.uid)
 
     def t_matchCannotBePlayedIfAreNoLeftAttempts(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=2, db_session=dbsession).save()
         user = User(email="user@test.project", db_session=dbsession).save()
         question = self.question_dto.new(
@@ -362,39 +371,39 @@ class TestCaseMatchModel:
 
 
 class TestCaseMatchHash:
-    def t_hashMustBeUniqueForEachMatch(self, dbsession, mocker):
+    def t_hashMustBeUniqueForEachMatch(self, dbsession, mocker, match_dto):
         # the first call return a value already used
         random_method = mocker.patch(
-            "app.domain_entities.match.choices",
+            "app.domain_service.data_transfer.match.choices",
             side_effect=["LINK-HASH1", "LINK-HASH2"],
         )
-        Match(uhash="LINK-HASH1", db_session=dbsession).save()
+        match_dto.save(match_dto.new(uhash="LINK-HASH1"))
 
         MatchHash(db_session=dbsession).get_hash()
         assert random_method.call_count == 2
 
 
 class TestCaseMatchPassword:
-    def t_passwordUniqueForEachMatch(self, dbsession, mocker):
+    def t_passwordUniqueForEachMatch(self, dbsession, mocker, match_dto):
         # the first call return a value already used
         random_method = mocker.patch(
-            "app.domain_entities.match.choices",
+            "app.domain_service.data_transfer.match.choices",
             side_effect=["00321", "34550"],
         )
-        Match(uhash="AEDRF", password="00321", db_session=dbsession).save()
+        match_dto.save(match_dto.new(uhash="AEDRF", password="00321"))
 
         MatchPassword(uhash="AEDRF", db_session=dbsession).get_value()
         assert random_method.call_count == 2
 
 
 class TestCaseMatchCode:
-    def t_codeUniqueForEachMatchAtThatTime(self, dbsession, mocker):
+    def t_codeUniqueForEachMatchAtThatTime(self, dbsession, mocker, match_dto):
         tomorrow = datetime.now() + timedelta(days=1)
         random_method = mocker.patch(
-            "app.domain_entities.match.choices",
+            "app.domain_service.data_transfer.match.choices",
             side_effect=["8363", "7775"],
         )
-        Match(code=8363, expires=tomorrow, db_session=dbsession).save()
+        match_dto.save(match_dto.new(code=8363, expires=tomorrow))
 
         MatchCode(db_session=dbsession).get_code()
         assert random_method.call_count == 2
@@ -404,9 +413,10 @@ class TestCaseGameModel:
     @pytest.fixture(autouse=True)
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
+        self.match_dto = MatchDTO(session=dbsession)
 
     def t_raiseErrorWhenTwoGamesOfMatchHaveSamePosition(self, dbsession):
-        new_match = Match(db_session=dbsession).save()
+        new_match = self.match_dto.save(self.match_dto.new())
         new_game = Game(index=1, match_uid=new_match.uid, db_session=dbsession).save()
         with pytest.raises((IntegrityError, InvalidRequestError)):
             Game(index=1, match_uid=new_game.match.uid, db_session=dbsession).save()
@@ -415,7 +425,7 @@ class TestCaseGameModel:
 
     def t_orderedQuestionsMethod(self, dbsession, emitted_queries):
         # Questions are intentionally created unordered
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
         question_2 = self.question_dto.new(
             text="Where is London?", game_uid=game.uid, position=1, db_session=dbsession
@@ -448,9 +458,10 @@ class TestCaseReactionModel:
         self.question_dto = QuestionDTO(session=dbsession)
         self.answer_dto = AnswerDTO(session=dbsession)
         self.reaction_dto = ReactionDTO(session=dbsession)
+        self.match_dto = MatchDTO(session=dbsession)
 
     def t_cannotExistsTwoReactionsOfTheSameUserAtSameTime(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         user = User(email="user@test.project", db_session=dbsession).save()
         question = self.question_dto.new(
@@ -492,7 +503,7 @@ class TestCaseReactionModel:
         dbsession.rollback()
 
     def t_ifQuestionChangesThenAlsoFKIsUpdatedAndAffectsReaction(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         user = User(email="user@test.project", db_session=dbsession).save()
         question = self.question_dto.new(
@@ -518,7 +529,7 @@ class TestCaseReactionModel:
         assert reaction.question.text == "1+2 is = to"
 
     def t_whenQuestionIsElapsedAnswerIsNotRecorded(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         user = User(email="user@test.project", db_session=dbsession).save()
         question = self.question_dto.new(
@@ -543,7 +554,7 @@ class TestCaseReactionModel:
         assert reaction.answer is None
 
     def t_recordAnswerInTime(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         user = User(email="user@test.project", db_session=dbsession).save()
         question = self.question_dto.new(
@@ -573,7 +584,7 @@ class TestCaseReactionModel:
         assert isclose(reaction.score, 0.999, rel_tol=0.05)
 
     def t_reactionTimingIsRecordedAlsoForOpenQuestions(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         user = User(email="user@test.project", db_session=dbsession).save()
         question = self.question_dto.new(
@@ -598,7 +609,7 @@ class TestCaseReactionModel:
         assert not reaction.score
 
     def t_allReactionsOfUser(self, dbsession):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.save(self.match_dto.new())
         game = Game(match_uid=match.uid, index=0, db_session=dbsession).save()
         user = User(email="user@test.project", db_session=dbsession).save()
         q1 = self.question_dto.new(text="t1", position=0, db_session=dbsession)

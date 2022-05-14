@@ -11,9 +11,10 @@ from sqlalchemy.pool import StaticPool
 
 from app.core import security
 from app.core.config import settings
-from app.domain_entities import Game, Match, Question, User
+from app.domain_entities import Game, Question, User
 from app.domain_entities.db.base import Base
 from app.domain_entities.db.session import get_db
+from app.domain_service.data_transfer.match import MatchDTO
 from app.main import app
 from app.tests.fixtures import TEST_1
 from app.tests.utilities.user import authentication_token_from_email
@@ -156,9 +157,14 @@ def count_database_queries():
     event.listen(_engine, "after_cursor_execute", after_cursor_execute)
 
 
+@pytest.fixture
+def match_dto(dbsession):
+    yield MatchDTO(session=dbsession)
+
+
 @pytest.fixture(name="trivia_match")
-def create_fixture_test(dbsession):
-    match = Match(db_session=dbsession).save()
+def create_fixture_test(dbsession, match_dto):
+    match = match_dto.save(match_dto.new())
     first_game = Game(match_uid=match.uid, index=1, db_session=dbsession).save()
     second_game = Game(match_uid=match.uid, index=2, db_session=dbsession).save()
     for i, q in enumerate(TEST_1, start=1):

@@ -5,7 +5,8 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import Game, Match, User
+from app.domain_entities import Game, User
+from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.tests.fixtures import TEST_1
@@ -38,6 +39,7 @@ class TestCaseMatchEndpoints:
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
         self.reaction_dto = ReactionDTO(session=dbsession)
+        self.match_dto = MatchDTO(session=dbsession)
 
     def t_successfulCreationOfAMatch(
         self, client: TestClient, superuser_token_headers: dict, dbsession
@@ -80,7 +82,9 @@ class TestCaseMatchEndpoints:
 
     def t_retriveOneMatchWithAllData(self, client: TestClient, dbsession):
         match_name = "New Match"
-        match = Match(name=match_name, db_session=dbsession).save()
+        match = self.match_dto.new(name=match_name)
+        self.match_dto.save(match)
+        self.match_dto.save(match)
         first_game = Game(match_uid=match.uid, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?",
@@ -126,7 +130,8 @@ class TestCaseMatchEndpoints:
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
         match_name = "New Match"
-        match = Match(name=match_name, db_session=dbsession).save()
+        match = self.match_dto.new(name=match_name)
+        self.match_dto.save(match)
         first_game = Game(match_uid=match.uid, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?",
@@ -150,7 +155,8 @@ class TestCaseMatchEndpoints:
     def t_addQuestionToExistingMatchWithOneGameOnly(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.new()
+        self.match_dto.save(match)
         first_game = Game(match_uid=match.uid, db_session=dbsession).save()
         question = self.question_dto.new(
             text="Where is London?",
@@ -181,13 +187,13 @@ class TestCaseMatchEndpoints:
         assert response.ok
         assert len(match.questions[0]) == 2
         assert len(first_game.ordered_questions) == 2
-        match.refresh()
+        self.match_dto.refresh(match)
         assert match.times == 10
 
     def t_listAllMatches(self, client: TestClient, dbsession):
-        m1 = Match(db_session=dbsession).save()
-        m2 = Match(db_session=dbsession).save()
-        m3 = Match(db_session=dbsession).save()
+        m1 = self.match_dto.save(self.match_dto.new())
+        m2 = self.match_dto.save(self.match_dto.new())
+        m3 = self.match_dto.save(self.match_dto.new())
 
         response = client.get(f"{settings.API_V1_STR}/matches/")
         assert response.json()["matches"] == [m.json for m in [m1, m2, m3]]
@@ -199,7 +205,8 @@ class TestCaseMatchEndpoints:
         yaml_file_handler,
         dbsession,
     ):
-        match = Match(db_session=dbsession).save()
+        match = self.match_dto.new()
+        self.match_dto.save(match)
         base64_content, fname = yaml_file_handler
         superuser_token_headers.update(filename=fname)
         response = client.post(
