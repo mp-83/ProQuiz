@@ -1,15 +1,15 @@
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities.user import UserFactory
 from app.domain_service.data_transfer.ranking import RankingDTO
+from app.domain_service.data_transfer.user import UserDTO
 
 
 class TestCaseRankingEndpoints:
     def t_match_rankings(self, client: TestClient, dbsession, match_dto):
         match = match_dto.save(match_dto.new())
-        user_1 = UserFactory(db_session=dbsession).fetch()
-        user_2 = UserFactory(db_session=dbsession).fetch()
+        user_1 = UserDTO(session=dbsession).fetch()
+        user_2 = UserDTO(session=dbsession).fetch()
 
         rank_1 = RankingDTO(session=dbsession).new(
             match_uid=match.uid, user_uid=user_1.uid, score=4.1

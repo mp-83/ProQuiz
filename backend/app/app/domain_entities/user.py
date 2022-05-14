@@ -93,7 +93,7 @@ class User(TableMixin, Base):
     key = Column(String(KEY_LENGTH))
     is_admin = Column(Boolean, default=False)
 
-    def __init__(self, db_session: Session, **kwargs):
+    def __init__(self, db_session: Session = None, **kwargs):
         self._session = db_session
         password = kwargs.pop("password", None)
         if password:

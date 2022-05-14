@@ -6,12 +6,12 @@ from fastapi.testclient import TestClient
 
 from app.core.config import settings
 from app.domain_entities import User
-from app.domain_entities.user import UserFactory, WordDigest
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.ranking import RankingDTO
+from app.domain_service.data_transfer.user import UserFactory, WordDigest
 
 
 class TestCaseBadRequest:

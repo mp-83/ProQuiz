@@ -7,7 +7,6 @@ from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from app.constants import MATCH_HASH_LEN, MATCH_PASSWORD_LEN
 from app.domain_entities import OpenAnswer, User
 from app.domain_entities.reaction import ReactionScore
-from app.domain_entities.user import UserFactory
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import (
@@ -18,6 +17,7 @@ from app.domain_service.data_transfer.match import (
 )
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
+from app.domain_service.data_transfer.user import UserFactory
 from app.exceptions import NotUsableQuestionError
 
 
@@ -52,14 +52,14 @@ class TestCaseUserFactory:
     def t_fetchUnsignedUserShouldReturnNewUserEveryTime(self, dbsession, mocker):
         # called twice to showcase the expected behaviour
         mocker.patch(
-            "app.domain_entities.user.uuid4",
+            "app.domain_service.data_transfer.user.uuid4",
             return_value=mocker.Mock(hex="3ba57f9a004e42918eee6f73326aa89d"),
         )
         unsigned_user = UserFactory(db_session=dbsession).fetch()
         assert unsigned_user.email == "uns-3ba57f9a004e42918eee6f73326aa89d@progame.io"
         assert not unsigned_user.token_digest
         mocker.patch(
-            "app.domain_entities.user.uuid4",
+            "app.domain_service.data_transfer.user.uuid4",
             return_value=mocker.Mock(hex="eee84145094cc69e4f816fd9f435e6b3"),
         )
         unsigned_user = UserFactory(db_session=dbsession).fetch()

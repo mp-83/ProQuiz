@@ -9,6 +9,7 @@ from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
+from app.domain_service.data_transfer.user import UserDTO
 from app.domain_service.validation.logical import (
     RetrieveObject,
     ValidateMatchImport,
@@ -30,6 +31,7 @@ class TestCaseBase:
         self.reaction_dto = ReactionDTO(session=dbsession)
         self.match_dto = MatchDTO(session=dbsession)
         self.game_dto = GameDTO(session=dbsession)
+        self.user_dto = UserDTO(session=dbsession)
 
 
 class TestCaseRetrieveObject:
