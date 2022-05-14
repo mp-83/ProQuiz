@@ -2,10 +2,11 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.domain_entities import Game, Match, Reaction, Reactions, User
+from app.domain_entities import Game, Match, User
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.ranking import RankingDTO
+from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.domain_service.play import (
     GameFactory,
     PlayerStatus,
@@ -237,6 +238,7 @@ class TestCaseStatus:
     @pytest.fixture(autouse=True)
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
+        self.reaction_dto = ReactionDTO(session=dbsession)
 
     def t_questionsDisplayed(self, dbsession, emitted_queries):
         match = Match(db_session=dbsession).save()
@@ -255,20 +257,35 @@ class TestCaseStatus:
         self.question_dto.save(q3)
         user = User(email="user@test.project", db_session=dbsession).save()
 
-        Reaction(
-            match=match, question=q1, user=user, game_uid=game.uid, db_session=dbsession
-        ).save()
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=match,
+                question=q1,
+                user=user,
+                game_uid=game.uid,
+                db_session=dbsession,
+            )
+        )
 
-        Reaction(
-            match=match, question=q2, user=user, game_uid=game.uid, db_session=dbsession
-        ).save()
-        Reaction(
-            match=Match(db_session=dbsession).save(),
-            question=q3,
-            user=user,
-            game_uid=game.uid,
-            db_session=dbsession,
-        ).save()
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=match,
+                question=q2,
+                user=user,
+                game_uid=game.uid,
+                db_session=dbsession,
+            )
+        )
+
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=Match(db_session=dbsession).save(),
+                question=q3,
+                user=user,
+                game_uid=game.uid,
+                db_session=dbsession,
+            )
+        )
         status = PlayerStatus(user, match, db_session=dbsession)
         before = len(emitted_queries)
         assert status.questions_displayed() == {q2.uid: q2, q1.uid: q1}
@@ -291,20 +308,34 @@ class TestCaseStatus:
         self.question_dto.save(q3)
         user = User(email="user@test.project", db_session=dbsession).save()
 
-        Reaction(
-            match=match, question=q1, user=user, game_uid=game.uid, db_session=dbsession
-        ).save()
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=match,
+                question=q1,
+                user=user,
+                game_uid=game.uid,
+                db_session=dbsession,
+            )
+        )
 
-        Reaction(
-            match=match, question=q2, user=user, game_uid=game.uid, db_session=dbsession
-        ).save()
-        Reaction(
-            match=Match(db_session=dbsession).save(),
-            question=q3,
-            user=user,
-            game_uid=game.uid,
-            db_session=dbsession,
-        ).save()
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=match,
+                question=q2,
+                user=user,
+                game_uid=game.uid,
+                db_session=dbsession,
+            )
+        )
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=Match(db_session=dbsession).save(),
+                question=q3,
+                user=user,
+                game_uid=game.uid,
+                db_session=dbsession,
+            )
+        )
         status = PlayerStatus(user, match, db_session=dbsession)
         assert status.questions_displayed_by_game(game) == {q2.uid: q2, q1.uid: q1}
 
@@ -321,12 +352,24 @@ class TestCaseStatus:
         )
         self.question_dto.save(q2)
         user = User(email="user@test.project", db_session=dbsession).save()
-        Reaction(
-            match=match, question=q1, user=user, game_uid=g1.uid, db_session=dbsession
-        ).save()
-        Reaction(
-            match=match, question=q2, user=user, game_uid=g2.uid, db_session=dbsession
-        ).save()
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=match,
+                question=q1,
+                user=user,
+                game_uid=g1.uid,
+                db_session=dbsession,
+            )
+        )
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=match,
+                question=q2,
+                user=user,
+                game_uid=g2.uid,
+                db_session=dbsession,
+            )
+        )
 
         status = PlayerStatus(user, match, db_session=dbsession)
         assert status.all_games_played() == {g1.uid: g1, g2.uid: g2}
@@ -344,22 +387,26 @@ class TestCaseStatus:
         )
         self.question_dto.save(q2)
         user = User(email="user@test.project", db_session=dbsession).save()
-        Reaction(
-            match=match,
-            question=q1,
-            user=user,
-            game_uid=g1.uid,
-            score=3,
-            db_session=dbsession,
-        ).save()
-        Reaction(
-            match=match,
-            question=q2,
-            user=user,
-            game_uid=g2.uid,
-            score=2.4,
-            db_session=dbsession,
-        ).save()
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=match,
+                question=q1,
+                user=user,
+                game_uid=g1.uid,
+                score=3,
+                db_session=dbsession,
+            )
+        )
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=match,
+                question=q2,
+                user=user,
+                game_uid=g2.uid,
+                score=2.4,
+                db_session=dbsession,
+            )
+        )
         status = PlayerStatus(user, match, db_session=dbsession)
         assert status.current_score() == 5.4
 
@@ -369,6 +416,7 @@ class TestCaseSinglePlayer:
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
         self.answer_dto = AnswerDTO(session=dbsession)
+        self.reaction_dto = ReactionDTO(session=dbsession)
 
     def t_reactionIsCreatedAsSoonAsQuestionIsReturned(self, dbsession):
         match = Match(db_session=dbsession).save()
@@ -388,7 +436,7 @@ class TestCaseSinglePlayer:
 
         assert question_displayed == question
         assert player.current == question_displayed
-        assert Reactions(db_session=dbsession).count() == 1
+        assert self.reaction_dto.count() == 1
 
     def t_reactToFirstQuestion(self, dbsession):
         match = Match(db_session=dbsession).save()

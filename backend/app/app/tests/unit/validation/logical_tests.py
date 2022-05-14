@@ -2,10 +2,11 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.domain_entities import Game, Match, Reaction, User
+from app.domain_entities import Game, Match, User
 from app.domain_entities.user import UserFactory, WordDigest
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.question import QuestionDTO
+from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.domain_service.validation.logical import (
     RetrieveObject,
     ValidateMatchImport,
@@ -124,6 +125,7 @@ class TestCaseNextEndPoint:
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
         self.answer_dto = AnswerDTO(session=dbsession)
+        self.reaction_dto = ReactionDTO(session=dbsession)
 
     def t_cannotAcceptSameReactionAgain(self, dbsession):
         # despite the delay between the two (which respects the DB constraint)
@@ -139,14 +141,15 @@ class TestCaseNextEndPoint:
         self.answer_dto.save(answer)
         user = UserFactory(email="user@test.project", db_session=dbsession).fetch()
 
-        Reaction(
+        reaction = self.reaction_dto.new(
             match=match,
             question=question,
             user=user,
             game_uid=game.uid,
             answer_uid=answer.uid,
             db_session=dbsession,
-        ).save()
+        )
+        self.reaction_dto.save(reaction)
 
         with pytest.raises(ValidateError):
             ValidatePlayNext(

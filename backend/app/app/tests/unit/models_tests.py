@@ -5,12 +5,13 @@ import pytest
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 from app.constants import MATCH_HASH_LEN, MATCH_PASSWORD_LEN
-from app.domain_entities import Game, Match, OpenAnswer, Reaction, Reactions, User
+from app.domain_entities import Game, Match, OpenAnswer, User
 from app.domain_entities.match import MatchCode, MatchHash, MatchPassword
 from app.domain_entities.reaction import ReactionScore
 from app.domain_entities.user import UserFactory
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.question import QuestionDTO
+from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.exceptions import NotUsableQuestionError
 
 
@@ -345,13 +346,16 @@ class TestCaseMatchModel:
             text="1+1 is = to", position=0, game_uid=game.uid, db_session=dbsession
         )
         self.question_dto.save(question)
-        Reaction(
-            question=question,
-            user=user,
-            match=match,
-            game_uid=game.uid,
-            db_session=dbsession,
-        ).save()
+        reaction_dto = ReactionDTO(session=dbsession)
+        reaction_dto.save(
+            reaction_dto.new(
+                question=question,
+                user=user,
+                match=match,
+                game_uid=game.uid,
+                db_session=dbsession,
+            )
+        )
 
         assert match.reactions[0].user == user
         assert match.left_attempts(user) == 0
@@ -443,6 +447,7 @@ class TestCaseReactionModel:
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
         self.answer_dto = AnswerDTO(session=dbsession)
+        self.reaction_dto = ReactionDTO(session=dbsession)
 
     def t_cannotExistsTwoReactionsOfTheSameUserAtSameTime(self, dbsession):
         match = Match(db_session=dbsession).save()
@@ -462,24 +467,28 @@ class TestCaseReactionModel:
 
         now = datetime.now()
         with pytest.raises((IntegrityError, InvalidRequestError)):
-            Reaction(
-                match_uid=match.uid,
-                question_uid=question.uid,
-                answer_uid=answer.uid,
-                user_uid=user.uid,
-                create_timestamp=now,
-                game_uid=game.uid,
-                db_session=dbsession,
-            ).save()
-            Reaction(
-                match_uid=match.uid,
-                question_uid=question.uid,
-                answer_uid=answer.uid,
-                user_uid=user.uid,
-                create_timestamp=now,
-                game_uid=game.uid,
-                db_session=dbsession,
-            ).save()
+            self.reaction_dto.save(
+                self.reaction_dto.new(
+                    match_uid=match.uid,
+                    question_uid=question.uid,
+                    answer_uid=answer.uid,
+                    user_uid=user.uid,
+                    create_timestamp=now,
+                    game_uid=game.uid,
+                    db_session=dbsession,
+                )
+            )
+            self.reaction_dto.save(
+                self.reaction_dto.new(
+                    match_uid=match.uid,
+                    question_uid=question.uid,
+                    answer_uid=answer.uid,
+                    user_uid=user.uid,
+                    create_timestamp=now,
+                    game_uid=game.uid,
+                    db_session=dbsession,
+                )
+            )
         dbsession.rollback()
 
     def t_ifQuestionChangesThenAlsoFKIsUpdatedAndAffectsReaction(self, dbsession):
@@ -494,14 +503,15 @@ class TestCaseReactionModel:
             question=question, text="2", position=1, db_session=dbsession
         )
         self.answer_dto.save(answer)
-        reaction = Reaction(
+        reaction = self.reaction_dto.new(
             match_uid=match.uid,
             question_uid=question.uid,
             answer_uid=answer.uid,
             user_uid=user.uid,
             game_uid=game.uid,
             db_session=dbsession,
-        ).save()
+        )
+        self.reaction_dto.save(reaction)
         question.text = "1+2 is = to"
         self.question_dto.save(question)
 
@@ -515,13 +525,14 @@ class TestCaseReactionModel:
             text="3*3 = ", time=0, position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        reaction = Reaction(
+        reaction = self.reaction_dto.new(
             match=match,
             question=question,
             user=user,
             game_uid=game.uid,
             db_session=dbsession,
-        ).save()
+        )
+        self.reaction_dto.save(reaction)
 
         answer = self.answer_dto.new(
             question=question, text="9", position=1, db_session=dbsession
@@ -539,13 +550,14 @@ class TestCaseReactionModel:
             text="1+1 =", time=2, position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        reaction = Reaction(
+        reaction = self.reaction_dto.new(
             match=match,
             question=question,
             user=user,
             game_uid=game.uid,
             db_session=dbsession,
-        ).save()
+        )
+        self.reaction_dto.save(reaction)
 
         answer = self.answer_dto.new(
             question=question, text="2", position=1, db_session=dbsession
@@ -568,13 +580,14 @@ class TestCaseReactionModel:
             text="Where is Miami", position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        reaction = Reaction(
+        reaction = self.reaction_dto.new(
             match=match,
             question=question,
             user=user,
             game_uid=game.uid,
             db_session=dbsession,
-        ).save()
+        )
+        self.reaction_dto.save(reaction)
 
         open_answer = OpenAnswer(text="Florida", db_session=dbsession).save()
         reaction.record_answer(open_answer)
@@ -592,18 +605,18 @@ class TestCaseReactionModel:
         self.question_dto.save(q1)
         q2 = self.question_dto.new(text="t2", position=1, db_session=dbsession)
         self.question_dto.save(q2)
-        r1 = Reaction(
+        r1 = self.reaction_dto.new(
             match=match, question=q1, user=user, game_uid=game.uid, db_session=dbsession
-        ).save()
-        r2 = Reaction(
-            match=match, question=q2, user=user, game_uid=game.uid, db_session=dbsession
-        ).save()
-
-        reactions = (
-            Reactions(db_session=dbsession)
-            .all_reactions_of_user_to_match(user, match, asc=False)
-            .all()
         )
+        self.reaction_dto.save(r1)
+        r2 = self.reaction_dto.new(
+            match=match, question=q2, user=user, game_uid=game.uid, db_session=dbsession
+        )
+        self.reaction_dto.save(r2)
+
+        reactions = self.reaction_dto.all_reactions_of_user_to_match(
+            user, match, asc=False
+        ).all()
         assert len(reactions) == 2
         assert reactions[0] == r2
         assert reactions[1] == r1

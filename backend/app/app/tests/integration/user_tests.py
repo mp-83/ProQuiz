@@ -2,15 +2,17 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import Game, Match, Reaction
+from app.domain_entities import Game, Match
 from app.domain_entities.user import UserFactory
 from app.domain_service.data_transfer.question import QuestionDTO
+from app.domain_service.data_transfer.reaction import ReactionDTO
 
 
 class TestCaseUser:
     @pytest.fixture(autouse=True)
     def setUp(self, dbsession):
         self.question_dto = QuestionDTO(session=dbsession)
+        self.reaction_dto = ReactionDTO(session=dbsession)
 
     def t_list_all_players(self, client: TestClient, dbsession):
         first_match = Match(db_session=dbsession).save()
@@ -34,49 +36,61 @@ class TestCaseUser:
         user_1 = UserFactory(db_session=dbsession).fetch()
         user_2 = UserFactory(db_session=dbsession).fetch()
         user_3 = UserFactory(db_session=dbsession).fetch()
-        Reaction(
-            match=first_match,
-            question=question_1,
-            user=user_1,
-            game_uid=first_game.uid,
-            db_session=dbsession,
-        ).save()
-        Reaction(
-            match=first_match,
-            question=question_2,
-            user=user_1,
-            game_uid=first_game.uid,
-            db_session=dbsession,
-        ).save()
-        Reaction(
-            match=first_match,
-            question=question_1,
-            user=user_2,
-            game_uid=first_game.uid,
-            db_session=dbsession,
-        ).save()
-        Reaction(
-            match=first_match,
-            question=question_1,
-            user=user_3,
-            game_uid=first_game.uid,
-            db_session=dbsession,
-        ).save()
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=first_match,
+                question=question_1,
+                user=user_1,
+                game_uid=first_game.uid,
+                db_session=dbsession,
+            )
+        )
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=first_match,
+                question=question_2,
+                user=user_1,
+                game_uid=first_game.uid,
+                db_session=dbsession,
+            )
+        )
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=first_match,
+                question=question_1,
+                user=user_2,
+                game_uid=first_game.uid,
+                db_session=dbsession,
+            )
+        )
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=first_match,
+                question=question_1,
+                user=user_3,
+                game_uid=first_game.uid,
+                db_session=dbsession,
+            )
+        )
 
-        Reaction(
-            match=second_match,
-            question=question_1,
-            user=user_2,
-            game_uid=second_game.uid,
-            db_session=dbsession,
-        ).save()
-        Reaction(
-            match=second_match,
-            question=question_1,
-            user=user_1,
-            game_uid=second_game.uid,
-            db_session=dbsession,
-        ).save()
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=second_match,
+                question=question_1,
+                user=user_2,
+                game_uid=second_game.uid,
+                db_session=dbsession,
+            )
+        )
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=second_match,
+                question=question_1,
+                user=user_1,
+                game_uid=second_game.uid,
+                db_session=dbsession,
+            )
+        )
 
         response = client.get(f"{settings.API_V1_STR}/players/{first_match.uid}")
         assert response.ok
