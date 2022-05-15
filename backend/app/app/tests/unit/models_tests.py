@@ -118,14 +118,12 @@ class TestCaseQuestion:
             question=question,
             text="question2.answer1",
             position=1,
-            db_session=dbsession,
         )
         self.answer_dto.save(answer)
         answer = self.answer_dto.new(
             question=question,
             text="question2.answer2",
             position=2,
-            db_session=dbsession,
         )
         self.answer_dto.save(answer)
         assert self.answer_dto.count() == 2
@@ -144,12 +142,8 @@ class TestCaseQuestion:
         with pytest.raises((IntegrityError, InvalidRequestError)):
             question.answers.extend(
                 [
-                    self.answer_dto.new(
-                        text="question2.answer1", position=1, db_session=dbsession
-                    ),
-                    self.answer_dto.new(
-                        text="question2.answer1", position=2, db_session=dbsession
-                    ),
+                    self.answer_dto.new(text="question2.answer1", position=1),
+                    self.answer_dto.new(text="question2.answer1", position=2),
                 ]
             )
             self.question_dto.save(question)
@@ -188,7 +182,6 @@ class TestCaseQuestion:
             question_uid=new_question.uid,
             text="The machine was undergoing repair",
             position=0,
-            db_session=dbsession,
         )
         self.answer_dto.save(answer)
         cloned = new_question.clone()
@@ -202,11 +195,11 @@ class TestCaseQuestion:
         )
         self.question_dto.save(question)
         answer = self.answer_dto.new(
-            question_uid=question.uid, text="Answer1", position=0, db_session=dbsession
+            question_uid=question.uid, text="Answer1", position=0
         )
         self.answer_dto.save(answer)
         answer = self.answer_dto.new(
-            question_uid=question.uid, text="Answer2", position=1, db_session=dbsession
+            question_uid=question.uid, text="Answer2", position=1
         )
         self.answer_dto.save(answer)
 
@@ -218,17 +211,11 @@ class TestCaseQuestion:
             text="new-question", position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        a1 = self.answer_dto.new(
-            question_uid=question.uid, text="Answer1", position=0, db_session=dbsession
-        )
+        a1 = self.answer_dto.new(question_uid=question.uid, text="Answer1", position=0)
         self.answer_dto.save(a1)
-        a2 = self.answer_dto.new(
-            question_uid=question.uid, text="Answer2", position=1, db_session=dbsession
-        )
+        a2 = self.answer_dto.new(question_uid=question.uid, text="Answer2", position=1)
         self.answer_dto.save(a2)
-        a3 = self.answer_dto.new(
-            question_uid=question.uid, text="Answer3", position=2, db_session=dbsession
-        )
+        a3 = self.answer_dto.new(question_uid=question.uid, text="Answer3", position=2)
         self.answer_dto.save(a3)
 
         ans_2_json = a2.json
@@ -324,7 +311,6 @@ class TestCaseMatchModel:
             question_uid=question_1.uid,
             text="question2.answer1",
             position=1,
-            db_session=dbsession,
         )
         self.answer_dto.save(answer)
 
@@ -486,7 +472,6 @@ class TestCaseReactionModel:
             question=question,
             text="question2.answer1",
             position=1,
-            db_session=dbsession,
         )
         self.answer_dto.save(answer)
 
@@ -526,9 +511,7 @@ class TestCaseReactionModel:
             text="1+1 is = to", position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        answer = self.answer_dto.new(
-            question=question, text="2", position=1, db_session=dbsession
-        )
+        answer = self.answer_dto.new(question=question, text="2", position=1)
         self.answer_dto.save(answer)
         reaction = self.reaction_dto.new(
             match_uid=match.uid,
@@ -563,9 +546,7 @@ class TestCaseReactionModel:
         )
         self.reaction_dto.save(reaction)
 
-        answer = self.answer_dto.new(
-            question=question, text="9", position=1, db_session=dbsession
-        )
+        answer = self.answer_dto.new(question=question, text="9", position=1)
         self.answer_dto.save(answer)
         reaction.record_answer(answer)
 
@@ -590,9 +571,7 @@ class TestCaseReactionModel:
         )
         self.reaction_dto.save(reaction)
 
-        answer = self.answer_dto.new(
-            question=question, text="2", position=1, db_session=dbsession
-        )
+        answer = self.answer_dto.new(question=question, text="2", position=1)
         self.answer_dto.save(answer)
         reaction.record_answer(answer)
 

@@ -93,7 +93,6 @@ class Question(TableMixin, Base):
                     position=_answer.position,
                     is_correct=_answer.position,
                     level=_answer.level,
-                    db_session=self._session,
                 )
             )
         if not many:

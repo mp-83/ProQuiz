@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 
-from app.domain_entities import Answers, Matches, Questions, Reactions, Users
+from app.domain_entities import Matches, Questions, Reactions, Users
 from app.domain_entities.user import WordDigest
+from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.validation.logical import RetrieveObject
 from app.exceptions import NotFoundObjectError, ValidateError
 
@@ -131,7 +132,7 @@ class ValidatePlayNext:
             raise ValidateError("Duplicate Reactions")
 
     def valid_answer(self):
-        answer = Answers(db_session=self._session).get(uid=self.answer_uid)
+        answer = AnswerDTO(session=self._session).get(uid=self.answer_uid)
         if answer is None:
             raise NotFoundObjectError("Unexisting answer")
 

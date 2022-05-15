@@ -151,9 +151,7 @@ class TestCaseNextEndPoint(TestCaseBase):
             text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        answer = self.answer_dto.new(
-            question=question, text="UK", position=1, db_session=dbsession
-        )
+        answer = self.answer_dto.new(question=question, text="UK", position=1)
         self.answer_dto.save(answer)
         user = self.user_dto.fetch(email="user@test.project")
 
@@ -181,9 +179,7 @@ class TestCaseNextEndPoint(TestCaseBase):
             text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        answer = self.answer_dto.new(
-            question_uid=question.uid, text="UK", position=1, db_session=dbsession
-        )
+        answer = self.answer_dto.new(question_uid=question.uid, text="UK", position=1)
         self.answer_dto.save(answer)
         with pytest.raises(ValidateError):
             ValidatePlayNext(

@@ -1,13 +1,14 @@
 from sqlalchemy.orm import Session
 
-from app.domain_entities.answer import Answer  # TODO to remove
 from app.domain_entities.question import Question
+from app.domain_service.data_transfer.answer import AnswerDTO
 
 
 class QuestionDTO:
     def __init__(self, session: Session):
         self._session = session
         self.klass = Question
+        self.answer_dto = AnswerDTO(session=session)
 
     def new(self, **kwargs):
         return self.klass(**kwargs)
@@ -42,12 +43,11 @@ class QuestionDTO:
         self._session.commit()
         for position, _answer in enumerate(_answers):
             self._session.add(
-                Answer(
+                self.answer_dto.new(
                     question_uid=question.uid,
                     text=_answer["text"],
                     position=position,
                     is_correct=position == 0,
-                    db_session=self._session,
                 )
             )
         self._session.commit()
@@ -56,15 +56,15 @@ class QuestionDTO:
     def questions_with_ids(self, *ids):
         return self._session.query(Question).filter(Question.uid.in_(ids))
 
-    def update_answers(self, instance, answers):
+    def update_answers(self, instance: Question, answers: list):
         for p, data in enumerate(answers):
             data.update(position=p)
-            _answer = instance.answers_by_uid[data["uid"]]
-            _answer.update(**data)
+            answer = instance.answers_by_uid[data["uid"]]
+            self.answer_dto.update(answer, **data)
 
         self._session.commit()
 
-    def update(self, instance, **data: dict):
+    def update(self, instance, data: dict):
         for k, value in data.items():
             if k == "answers":
                 self.update_answers(instance, value)

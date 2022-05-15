@@ -275,9 +275,7 @@ class TestCasePlayNext:
             db_session=dbsession,
         )
         self.question_dto.save(question)
-        answer = self.answer_dto.new(
-            question=question, text="UK", position=1, level=2, db_session=dbsession
-        )
+        answer = self.answer_dto.new(question=question, text="UK", position=1, level=2)
         self.answer_dto.save(answer)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)

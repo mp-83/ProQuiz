@@ -1,4 +1,4 @@
-from app.domain_entities.answer import Answer, Answers  # noqa: F401
+from app.domain_entities.answer import Answer  # noqa: F401
 from app.domain_entities.game import Game  # noqa: F401
 from app.domain_entities.match import Match, Matches  # noqa: F401
 from app.domain_entities.open_answer import OpenAnswer, OpenAnswers  # noqa: F401

@@ -98,13 +98,9 @@ class TestCaseQuestionEP:
             text="new-question", position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        a1 = self.answer_dto.new(
-            question_uid=question.uid, text="Answer1", position=0, db_session=dbsession
-        )
+        a1 = self.answer_dto.new(question_uid=question.uid, text="Answer1", position=0)
         self.answer_dto.save(a1)
-        a2 = self.answer_dto.new(
-            question_uid=question.uid, text="Answer2", position=1, db_session=dbsession
-        )
+        a2 = self.answer_dto.new(question_uid=question.uid, text="Answer2", position=1)
         self.answer_dto.save(a2)
 
         response = client.put(

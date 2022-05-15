@@ -20,3 +20,13 @@ class AnswerDTO:
 
     def get(self, **filters):
         return self._session.query(self.klass).filter_by(**filters).one_or_none()
+
+    def update(self, instance, **kwargs):
+        commit = kwargs.pop("commit", False)
+        for k, v in kwargs.items():
+            if not hasattr(instance, k):
+                continue
+            setattr(instance, k, v)
+
+        if commit:
+            self._session.commit()

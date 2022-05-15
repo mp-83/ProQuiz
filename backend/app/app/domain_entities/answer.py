@@ -1,10 +1,10 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, select
-from sqlalchemy.orm import Session, relationship
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
 
 from app.constants import ANSWER_TEXT_MAX_LENGTH, URL_LENGTH
 from app.domain_entities.db.base import Base
-from app.domain_entities.db.utils import StoreConfig, TableMixin
+from app.domain_entities.db.utils import TableMixin
 
 
 class Answer(TableMixin, Base):
@@ -25,38 +25,6 @@ class Answer(TableMixin, Base):
 
     __table_args__ = (UniqueConstraint("question_uid", "text"),)
 
-    def __init__(self, db_session: Session, **kwargs):
-        self._session = db_session
-        super().__init__(**kwargs)
-
-    @property
-    def session(self):
-        return self._session
-
-    def all(self):
-        return self.session.execute(select(Answer)).all()
-
-    @classmethod
-    def with_text(cls, text):
-        session = StoreConfig().session
-        matched_row = session.execute(select(cls).where(cls.text == text))
-        return matched_row.scalar_one_or_none()
-
-    def save(self):
-        self.session.add(self)
-        self.session.commit()
-        return self
-
-    def update(self, **kwargs):
-        commit = kwargs.pop("commit", False)
-        for k, v in kwargs.items():
-            if not hasattr(self, k):
-                continue
-            setattr(self, k, v)
-
-        if commit:
-            self.session.commit()
-
     @property
     def json(self):
         return {
@@ -68,15 +36,3 @@ class Answer(TableMixin, Base):
             "level": self.level,
             "content_url": self.content_url,
         }
-
-
-class Answers:
-    def __init__(self, db_session: Session, **kwargs):
-        self._session = db_session
-        super().__init__(**kwargs)
-
-    def count(self):
-        return self._session.query(Answer).count()
-
-    def get(self, **filters):
-        return self._session.query(Answer).filter_by(**filters).one_or_none()

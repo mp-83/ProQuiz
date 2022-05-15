@@ -1,6 +1,9 @@
 from sqlalchemy.orm import Session
 
-from app.domain_entities import Answers, Matches, Questions, Users
+from app.domain_service.data_transfer.answer import AnswerDTO
+from app.domain_service.data_transfer.match import MatchDTO
+from app.domain_service.data_transfer.question import QuestionDTO
+from app.domain_service.data_transfer.user import UserDTO
 from app.exceptions import NotFoundObjectError
 
 
@@ -12,10 +15,10 @@ class RetrieveObject:
 
     def get(self):
         klass = {
-            "answer": Answers,
-            "match": Matches,
-            "question": Questions,
-            "user": Users,
+            "answer": AnswerDTO,
+            "match": MatchDTO,
+            "question": QuestionDTO,
+            "user": UserDTO,
         }.get(self.otype)
 
         obj = klass(self.db_session).get(uid=self.object_uid)

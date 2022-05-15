@@ -478,15 +478,12 @@ class TestCaseSinglePlayer(TestCaseBase):
             db_session=dbsession,
         )
         self.question_dto.save(first)
-        answer = self.answer_dto.new(
-            question=first, text="UK", position=1, db_session=dbsession
-        )
+        answer = self.answer_dto.new(question=first, text="UK", position=1)
         self.answer_dto.save(answer)
         second = self.question_dto.new(
             text="Where is Paris?",
             game_uid=game.uid,
             position=1,
-            db_session=dbsession,
         )
         self.question_dto.save(second)
         user = self.user_dto.new(email="user@test.project")
@@ -536,9 +533,7 @@ class TestCaseSinglePlayer(TestCaseBase):
             db_session=dbsession,
         )
         self.question_dto.save(question)
-        answer = self.answer_dto.new(
-            question=question, text="UK", position=1, db_session=dbsession
-        )
+        answer = self.answer_dto.new(question=question, text="UK", position=1)
         self.answer_dto.save(answer)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -586,9 +581,7 @@ class TestCaseSinglePlayer(TestCaseBase):
             db_session=dbsession,
         )
         self.question_dto.save(question)
-        answer = self.answer_dto.new(
-            question=question, text="UK", position=1, level=2, db_session=dbsession
-        )
+        answer = self.answer_dto.new(question=question, text="UK", position=1, level=2)
         self.answer_dto.save(answer)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -611,9 +604,7 @@ class TestCaseSinglePlayer(TestCaseBase):
             db_session=dbsession,
         )
         self.question_dto.save(first)
-        first_answer = self.answer_dto.new(
-            question=first, text="UK", position=1, db_session=dbsession
-        )
+        first_answer = self.answer_dto.new(question=first, text="UK", position=1)
         self.answer_dto.save(first_answer)
         second = self.question_dto.new(
             text="Where is Paris?",
@@ -622,9 +613,7 @@ class TestCaseSinglePlayer(TestCaseBase):
             db_session=dbsession,
         )
         self.question_dto.save(second)
-        second_answer = self.answer_dto.new(
-            question=second, text="France", position=1, db_session=dbsession
-        )
+        second_answer = self.answer_dto.new(question=second, text="France", position=1)
         self.answer_dto.save(second_answer)
         third = self.question_dto.new(
             text="Where is Dublin?",
@@ -633,9 +622,7 @@ class TestCaseSinglePlayer(TestCaseBase):
             db_session=dbsession,
         )
         self.question_dto.save(third)
-        third_answer = self.answer_dto.new(
-            question=third, text="Ireland", position=1, db_session=dbsession
-        )
+        third_answer = self.answer_dto.new(question=third, text="Ireland", position=1)
         self.answer_dto.save(third_answer)
 
         user = self.user_dto.new(email="user@test.project")
@@ -669,9 +656,7 @@ class TestCaseResumeMatch(TestCaseBase):
             position=0,
             db_session=dbsession,
         ).save()
-        answer = self.answer_dto.new(
-            question=question, text="UK", position=1, db_session=dbsession
-        )
+        answer = self.answer_dto.new(question=question, text="UK", position=1)
         self.answer_dto.save(answer)
         question = self.question_dto.new(
             text="Where is Moscow?",
