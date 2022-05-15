@@ -1,11 +1,10 @@
 from sqlalchemy.orm import Session
 
-from app.domain_entities import Users
-from app.domain_entities.user import WordDigest
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
+from app.domain_service.data_transfer.user import UserDTO, WordDigest
 from app.domain_service.validation.logical import RetrieveObject
 from app.exceptions import NotFoundObjectError, ValidateError
 
@@ -57,9 +56,8 @@ class ValidatePlaySign:
     def valid_user(self):
         email_digest = WordDigest(self.original_email).value()
         token_digest = WordDigest(self.token).value()
-        user = Users(db_session=self._session).get(
-            email_digest=email_digest, token_digest=token_digest
-        )
+        dto = UserDTO(session=self._session)
+        user = dto.get(email_digest=email_digest, token_digest=token_digest)
         if user:
             return user
         raise NotFoundObjectError("Invalid email-token")
@@ -76,7 +74,8 @@ class ValidatePlayStart:
         self.password = kwargs.get("password")
 
     def valid_user(self):
-        user = Users(db_session=self._session).get(uid=self.user_uid)
+        dto = UserDTO(session=self._session)
+        user = dto.get(uid=self.user_uid)
         if self.user_uid and not user:
             raise NotFoundObjectError()
         return user
@@ -118,11 +117,12 @@ class ValidatePlayNext:
         self.user_uid = kwargs.get("user_uid")
         self.question_uid = kwargs.get("question_uid")
         self._data = {}
+        self.user_dto = UserDTO(session=db_session)
 
     def valid_reaction(self):
         user = self._data.get("user")
         if not user:
-            user = Users(db_session=self._session).get(uid=self.user_uid)
+            user = self.user_dto.get(uid=self.user_uid)
 
         question = self._data.get("question")
         if not question:
@@ -147,7 +147,7 @@ class ValidatePlayNext:
         raise ValidateError("Invalid answer")
 
     def valid_user(self):
-        user = Users(db_session=self._session).get(uid=self.user_uid)
+        user = self.user_dto.get(uid=self.user_uid)
         if user:
             self._data["user"] = user
             return

@@ -2,13 +2,12 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.domain_entities.user import WordDigest
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
-from app.domain_service.data_transfer.user import UserDTO
+from app.domain_service.data_transfer.user import UserDTO, WordDigest
 from app.domain_service.validation.logical import (
     RetrieveObject,
     ValidateMatchImport,
