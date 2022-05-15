@@ -1,4 +1,5 @@
-from app.domain_entities import Ranking, Reaction, Reactions
+from app.domain_service.data_transfer.ranking import RankingDTO
+from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.exceptions import (
     GameError,
     GameOver,
@@ -109,10 +110,11 @@ class PlayerStatus:
         self._user = user
         self._current_match = match
         self._session = db_session
+        self.reaction_dto = ReactionDTO(session=db_session)
 
     @property
     def _all_reactions_query(self):
-        return Reactions(db_session=self._session).all_reactions_of_user_to_match(
+        return self.reaction_dto.all_reactions_of_user_to_match(
             self._user, self._current_match
         )  # .filter_by(_answer=None)
 
@@ -146,6 +148,7 @@ class SinglePlayer:
         self._user = user
         self._match = match
         self._session = db_session
+        self.reaction_dto = ReactionDTO(session=db_session)
 
         self._game_factory = None
         self._question_factory = None
@@ -170,13 +173,14 @@ class SinglePlayer:
         )
         question = self._question_factory.next()
 
-        self._current_reaction = Reaction(
+        self._current_reaction = self.reaction_dto.new(
             match_uid=self._match.uid,
             user_uid=self._user.uid,
             game_uid=game.uid,
             question_uid=question.uid,
             db_session=self._session,
-        ).save()
+        )
+        self.reaction_dto.save(self._current_reaction)
 
         return question
 
@@ -200,22 +204,23 @@ class SinglePlayer:
         return self._status.total_score()
 
     def last_reaction(self, question):
-        reactions = (
-            Reactions(db_session=self._session)
-            .all_reactions_of_user_to_match(self._user, self._match)
-            .filter_by(_answer=None)
+        reactions = self.reaction_dto.all_reactions_of_user_to_match(
+            self._user, self._match
+        ).filter_by(
+            _answer=None
         )  # TODO to fix: or _open_answer=None
 
         if reactions.count() > 0:
             return reactions.first()
 
-        return Reaction(
+        new_reaction = self.reaction_dto.new(
             match_uid=self._match.uid,
             question_uid=question.uid,
             game_uid=question.game.uid,
             user_uid=self._user.uid,
             db_session=self._session,
-        ).save()
+        )
+        return self.reaction_dto.save(new_reaction)
 
     @property
     def match_can_be_resumed(self):
@@ -269,9 +274,10 @@ class PlayScore:
         self._session = db_session
 
     def save_to_ranking(self):
-        return Ranking(
+        dto = RankingDTO(session=self._session)
+        new_ranking = dto.new(
             match_uid=self.match_uid,
             user_uid=self.user_uid,
             score=self.score,
-            db_session=self._session,
-        ).save()
+        )
+        dto.save(new_ranking)

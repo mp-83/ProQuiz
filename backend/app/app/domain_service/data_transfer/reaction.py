@@ -17,6 +17,7 @@ class ReactionDTO:
 
         self._session.add(instance)
         self._session.commit()
+        return instance
 
     def count(self):
         return self._session.query(self.klass).count()
