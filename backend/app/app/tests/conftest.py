@@ -11,12 +11,12 @@ from sqlalchemy.pool import StaticPool
 
 from app.core import security
 from app.core.config import settings
-from app.domain_entities import User
 from app.domain_entities.db.base import Base
 from app.domain_entities.db.session import get_db
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
+from app.domain_service.data_transfer.user import UserDTO
 from app.main import app
 from app.tests.fixtures import TEST_1
 from app.tests.utilities.user import authentication_token_from_email
@@ -118,14 +118,6 @@ class AuthenticatedRequest:
     def is_authenticated(self):
         return True
 
-    @property
-    def identity(self):
-        credentials = {
-            "email": "testing_user@test.com",
-            "password": "p@ss",
-        }
-        return User(**credentials).save()
-
 
 @pytest.fixture(name="emitted_queries")
 def count_database_queries():
@@ -172,6 +164,11 @@ def game_dto(dbsession):
 @pytest.fixture
 def question_dto(dbsession):
     yield QuestionDTO(session=dbsession)
+
+
+@pytest.fixture
+def user_dto(dbsession) -> UserDTO:
+    return UserDTO(session=dbsession)
 
 
 @pytest.fixture(name="trivia_match")

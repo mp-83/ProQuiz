@@ -5,13 +5,12 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import User
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.ranking import RankingDTO
-from app.domain_service.data_transfer.user import UserFactory, WordDigest
+from app.domain_service.data_transfer.user import UserDTO, WordDigest
 
 
 class TestCaseBadRequest:
@@ -60,20 +59,19 @@ class TestCasePlayCode:
 
 class TestCasePlaySign:
     def t_successfulSignReturnsExisting(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
+        self, client: TestClient, superuser_token_headers: dict, match_dto, user_dto
     ):
-        match_dto = MatchDTO(session=dbsession)
         match = match_dto.new(with_code=True)
         match_dto.save(match)
         email_digest = WordDigest("user@test.io").value()
         token_digest = WordDigest("01112021").value()
         email = f"{email_digest}@progame.io"
-        user = User(
+        user = user_dto.new(
             email=email,
             email_digest=email_digest,
             token_digest=token_digest,
-            db_session=dbsession,
-        ).save()
+        )
+        user_dto.save(user)
         response = client.post(
             f"{settings.API_V1_STR}/play/sign",
             json={"email": "user@test.io", "token": "01112021"},
@@ -89,6 +87,7 @@ class TestCasePlayStart:
         self.question_dto = QuestionDTO(session=dbsession)
         self.match_dto = MatchDTO(session=dbsession)
         self.game_dto = GameDTO(session=dbsession)
+        self.user_dto = UserDTO(session=dbsession)
 
     def t_unexistentMatch(
         self, client: TestClient, superuser_token_headers: dict, dbsession
@@ -107,7 +106,7 @@ class TestCasePlayStart:
         match = self.match_dto.new(expires=one_hour_ago)
         self.match_dto.save(match)
 
-        user = UserFactory(signed=match.is_restricted, db_session=dbsession).fetch()
+        user = self.user_dto.fetch(signed=match.is_restricted)
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": match.uid, "user_uid": user.uid},
@@ -127,8 +126,6 @@ class TestCasePlayStart:
         )
         self.question_dto.save(question)
 
-        UserFactory(signed=match.is_restricted, db_session=dbsession).fetch()
-
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": match.uid},
@@ -140,7 +137,7 @@ class TestCasePlayStart:
         assert response.json()["question"] == question.json
         assert response.json()["question"]["answers"] == []
         # the user.uid value can't be known ahead, but it will be > 0
-        assert response.json()["user"]
+        assert response.json()["user"] > 0
 
     def t_startMatchWithoutQuestion(
         self, client: TestClient, superuser_token_headers: dict, dbsession
@@ -149,7 +146,7 @@ class TestCasePlayStart:
         self.match_dto.save(match)
         game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
-        user = UserFactory(signed=match.is_restricted, db_session=dbsession).fetch()
+        user = self.user_dto.fetch(signed=match.is_restricted)
 
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
@@ -171,7 +168,7 @@ class TestCasePlayStart:
             game_uid=game.uid, text="1+1 is = to", position=0, db_session=dbsession
         )
         self.question_dto.save(question)
-        user = UserFactory(signed=match.is_restricted, db_session=dbsession).fetch()
+        user = self.user_dto.fetch(signed=match.is_restricted)
 
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
@@ -192,12 +189,13 @@ class TestCasePlayNext:
         self.question_dto = QuestionDTO(session=dbsession)
         self.answer_dto = AnswerDTO(session=dbsession)
         self.game_dto = GameDTO(session=dbsession)
+        self.user_dto = UserDTO(session=dbsession)
 
     def t_duplicateSameReaction(
         self, client: TestClient, superuser_token_headers: dict, dbsession, trivia_match
     ):
         match = trivia_match
-        user = UserFactory(signed=match.is_restricted, db_session=dbsession).fetch()
+        user = self.user_dto.fetch(signed=match.is_restricted)
         question = match.questions[0][0]
         answer = question.answers_by_position[0]
 
@@ -243,7 +241,7 @@ class TestCasePlayNext:
         self, client: TestClient, superuser_token_headers: dict, dbsession, trivia_match
     ):
         match = trivia_match
-        user = UserFactory(signed=match.is_restricted, db_session=dbsession).fetch()
+        user = self.user_dto.fetch(signed=match.is_restricted)
         question = match.questions[0][0]
         answer = question.answers_by_position[0]
 
@@ -281,7 +279,8 @@ class TestCasePlayNext:
             question=question, text="UK", position=1, level=2, db_session=dbsession
         )
         self.answer_dto.save(answer)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         response = client.post(
             f"{settings.API_V1_STR}/play/next",
             json={

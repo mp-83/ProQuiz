@@ -22,3 +22,8 @@ class RankingDTO:
             self._session.add(obj)
 
         self._session.commit()
+
+    def save(self, instance):
+        self._session.add(instance)
+        self._session.commit()
+        return instance

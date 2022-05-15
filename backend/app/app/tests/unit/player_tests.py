@@ -2,13 +2,13 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.domain_entities import User
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.ranking import RankingDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
+from app.domain_service.data_transfer.user import UserDTO
 from app.domain_service.play import (
     GameFactory,
     PlayerStatus,
@@ -33,6 +33,7 @@ class TestCaseBase:
         self.reaction_dto = ReactionDTO(session=dbsession)
         self.answer_dto = AnswerDTO(session=dbsession)
         self.game_dto = GameDTO(session=dbsession)
+        self.user_dto = UserDTO(session=dbsession)
 
 
 class TestCaseQuestionFactory(TestCaseBase):
@@ -276,7 +277,8 @@ class TestCaseStatus(TestCaseBase):
             text="Where is Paris", position=2, game=game, db_session=dbsession
         )
         self.question_dto.save(q3)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
 
         self.reaction_dto.save(
             self.reaction_dto.new(
@@ -329,7 +331,8 @@ class TestCaseStatus(TestCaseBase):
             text="Where is Paris", position=2, game=game, db_session=dbsession
         )
         self.question_dto.save(q3)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
 
         self.reaction_dto.save(
             self.reaction_dto.new(
@@ -377,7 +380,8 @@ class TestCaseStatus(TestCaseBase):
             text="Where is London", position=0, game=g2, db_session=dbsession
         )
         self.question_dto.save(q2)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         self.reaction_dto.save(
             self.reaction_dto.new(
                 match=match,
@@ -414,7 +418,8 @@ class TestCaseStatus(TestCaseBase):
             text="Where is London", position=0, game=g2, db_session=dbsession
         )
         self.question_dto.save(q2)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         self.reaction_dto.save(
             self.reaction_dto.new(
                 match=match,
@@ -451,7 +456,8 @@ class TestCaseSinglePlayer(TestCaseBase):
             db_session=dbsession,
         )
         self.question_dto.save(question)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
 
         status = PlayerStatus(user, match, db_session=dbsession)
         player = SinglePlayer(status, user, match, db_session=dbsession)
@@ -483,7 +489,8 @@ class TestCaseSinglePlayer(TestCaseBase):
             db_session=dbsession,
         )
         self.question_dto.save(second)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
 
         status = PlayerStatus(user, match, db_session=dbsession)
         player = SinglePlayer(status, user, match, db_session=dbsession)
@@ -505,7 +512,8 @@ class TestCaseSinglePlayer(TestCaseBase):
             db_session=dbsession,
         )
         self.question_dto.save(question)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
 
         status = PlayerStatus(user, match, db_session=dbsession)
         player = SinglePlayer(status, user, match, db_session=dbsession)
@@ -532,7 +540,8 @@ class TestCaseSinglePlayer(TestCaseBase):
             question=question, text="UK", position=1, db_session=dbsession
         )
         self.answer_dto.save(answer)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
 
         match.to_time = datetime.now() + timedelta(microseconds=8000)
         self.match_dto.save(match)
@@ -546,7 +555,8 @@ class TestCaseSinglePlayer(TestCaseBase):
 
     def t_matchCannotBePlayedMoreThanMatchTimes(self, dbsession):
         match = self.match_dto.save(self.match_dto.new())
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
         question = self.question_dto.new(
@@ -580,7 +590,8 @@ class TestCaseSinglePlayer(TestCaseBase):
             question=question, text="UK", position=1, level=2, db_session=dbsession
         )
         self.answer_dto.save(answer)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
 
         status = PlayerStatus(user, match, db_session=dbsession)
         player = SinglePlayer(status, user, match, db_session=dbsession)
@@ -627,7 +638,8 @@ class TestCaseSinglePlayer(TestCaseBase):
         )
         self.answer_dto.save(third_answer)
 
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
 
         status = PlayerStatus(user, match, db_session=dbsession)
         player = SinglePlayer(status, user, match, db_session=dbsession)
@@ -668,7 +680,8 @@ class TestCaseResumeMatch(TestCaseBase):
             db_session=dbsession,
         )
         self.question_dto.save(question)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
 
         status = PlayerStatus(user, match, db_session=dbsession)
         player = SinglePlayer(status, user, match, db_session=dbsession)
@@ -678,7 +691,8 @@ class TestCaseResumeMatch(TestCaseBase):
 
     def t_matchCanNotBeResumedBecausePublic(self, dbsession):
         match = self.match_dto.save(self.match_dto.new(is_restricted=False))
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
 
         status = PlayerStatus(user, match, db_session=dbsession)
         player = SinglePlayer(status, user, match, db_session=dbsession)
@@ -688,7 +702,8 @@ class TestCaseResumeMatch(TestCaseBase):
 class TestCasePlayScore(TestCaseBase):
     def t_compute_score(self, dbsession):
         match = self.match_dto.save(self.match_dto.new())
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         PlayScore(match.uid, user.uid, 5.5, db_session=dbsession).save_to_ranking()
 
         assert len(RankingDTO(session=dbsession).all()) == 1

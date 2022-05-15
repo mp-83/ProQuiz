@@ -2,8 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.domain_entities import User
-from app.domain_entities.user import UserFactory, WordDigest
+from app.domain_entities.user import WordDigest
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
@@ -40,7 +39,7 @@ class TestCaseRetrieveObject:
             RetrieveObject(uid=1, otype="match", db_session=dbsession).get()
 
     def t_objectIsOfCorrectType(self, dbsession):
-        user = UserFactory(db_session=dbsession).fetch()
+        user = UserDTO(session=dbsession).fetch()
         obj = RetrieveObject(uid=user.uid, otype="user", db_session=dbsession).get()
         assert obj == user
 
@@ -81,12 +80,15 @@ class TestCaseSignEndPoint:
         email_digest = WordDigest(original_email).value()
         token_digest = WordDigest("01112021").value()
         email = f"{email_digest}@progame.io"
-        User(
-            email=email,
-            email_digest=email_digest,
-            token_digest=token_digest,
-            db_session=dbsession,
-        ).save()
+        user_dto = UserDTO(session=dbsession)
+        user_dto.save(
+            user_dto.new(
+                email=email,
+                email_digest=email_digest,
+                token_digest=token_digest,
+                db_session=dbsession,
+            )
+        )
         with pytest.raises(NotFoundObjectError):
             ValidatePlaySign(
                 original_email, "25121980", db_session=dbsession
@@ -97,7 +99,8 @@ class TestCaseStartEndPoint(TestCaseBase):
     def t_publicUserRestrictedMatch(self, dbsession):
         match = self.match_dto.new(is_restricted=True)
         self.match_dto.save(match)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         with pytest.raises(ValidateError) as err:
             ValidatePlayStart(
                 match_uid=match.uid,
@@ -111,7 +114,7 @@ class TestCaseStartEndPoint(TestCaseBase):
     def t_privateMatchRequiresPassword(self, dbsession):
         match = self.match_dto.new(is_restricted=True)
         self.match_dto.save(match)
-        user = UserFactory(signed=True, db_session=dbsession).fetch()
+        user = self.user_dto.fetch(signed=True)
         with pytest.raises(ValidateError) as err:
             ValidatePlayStart(
                 match_uid=match.uid,
@@ -129,7 +132,7 @@ class TestCaseStartEndPoint(TestCaseBase):
     def t_invalidPassword(self, dbsession):
         match = self.match_dto.new(is_restricted=True)
         self.match_dto.save(match)
-        UserFactory(signed=True, db_session=dbsession).fetch()
+        self.user_dto.fetch(signed=True)
         with pytest.raises(ValidateError) as err:
             ValidatePlayStart(
                 match_uid=match.uid, password="Invalid", db_session=dbsession
@@ -152,7 +155,7 @@ class TestCaseNextEndPoint(TestCaseBase):
             question=question, text="UK", position=1, db_session=dbsession
         )
         self.answer_dto.save(answer)
-        user = UserFactory(email="user@test.project", db_session=dbsession).fetch()
+        user = self.user_dto.fetch(email="user@test.project")
 
         reaction = self.reaction_dto.new(
             match=match,

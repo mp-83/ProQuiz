@@ -5,11 +5,11 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_entities import User
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
+from app.domain_service.data_transfer.user import UserDTO
 from app.tests.fixtures import TEST_1
 
 
@@ -42,6 +42,7 @@ class TestCaseMatchEndpoints:
         self.reaction_dto = ReactionDTO(session=dbsession)
         self.match_dto = MatchDTO(session=dbsession)
         self.game_dto = GameDTO(session=dbsession)
+        self.user_dto = UserDTO(session=dbsession)
 
     def t_successfulCreationOfAMatch(
         self, client: TestClient, superuser_token_headers: dict, dbsession
@@ -144,7 +145,8 @@ class TestCaseMatchEndpoints:
             db_session=dbsession,
         )
         self.question_dto.save(question)
-        user = User(email="t@t.com", db_session=dbsession).save()
+        user = self.user_dto.new(email="t@t.com")
+        self.user_dto.save(user)
         reaction = self.reaction_dto.new(
             match=match, question=question, user=user, db_session=dbsession
         )

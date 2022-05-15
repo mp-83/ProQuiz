@@ -41,7 +41,14 @@ class UserDTO:
         password = kwargs.get("password")
         token = kwargs.get("token", "")
 
-        return UserFactory(db_session=self._session).fetch()
+        return UserFactory(
+            original_email=original_email,
+            signed=signed,
+            email=email,
+            password=password,
+            token=token,
+            db_session=self._session,
+        ).fetch()
 
 
 class WordDigest:
@@ -72,8 +79,8 @@ class UserFactory:
     def internal_user(self):
         email_digest = WordDigest(self.email).value()
 
-        internal_user = self.user_dto.get(email=self.email)
-        return internal_user or self.user_dto.save(
+        _internal_user = self.user_dto.get(email=self.email)
+        return _internal_user or self.user_dto.save(
             self.user_dto.new(
                 email=self.email,
                 email_digest=email_digest,

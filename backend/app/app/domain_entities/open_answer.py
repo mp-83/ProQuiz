@@ -13,10 +13,6 @@ class OpenAnswer(TableMixin, Base):
     content_url = Column(String(URL_LENGTH))
     # reactions: implicit backward relation
 
-    def __init__(self, db_session: Session, **kwargs):
-        self._session = db_session
-        super().__init__(**kwargs)
-
     @property
     def level(self):
         return

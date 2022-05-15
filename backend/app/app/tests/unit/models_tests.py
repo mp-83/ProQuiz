@@ -5,7 +5,6 @@ import pytest
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 from app.constants import MATCH_HASH_LEN, MATCH_PASSWORD_LEN
-from app.domain_entities import OpenAnswer, User
 from app.domain_entities.reaction import ReactionScore
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
@@ -15,82 +14,79 @@ from app.domain_service.data_transfer.match import (
     MatchHash,
     MatchPassword,
 )
+from app.domain_service.data_transfer.open_answer import OpenAnswerDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
-from app.domain_service.data_transfer.user import UserDTO, UserFactory
+from app.domain_service.data_transfer.user import UserDTO
 from app.exceptions import NotUsableQuestionError
 
 
 class TestCaseUserFactory:
-    def t_fetchNewSignedUser(self, dbsession, monkeypatch):
+    @pytest.fixture(autouse=True)
+    def setUp(self, dbsession):
+        self.user_dto = UserDTO(session=dbsession)
+
+    def t_fetchNewSignedUser(self, monkeypatch):
         monkeypatch.setenv(
             "SIGNED_KEY", "3ba57f9a004e42918eee6f73326aa89d", prepend=None
         )
-        signed_user = UserFactory(
-            original_email="test@progame.io", db_session=dbsession
-        ).fetch()
+        signed_user = self.user_dto.fetch(original_email="test@progame.io")
         assert signed_user.email == "916a55cf753a5c847b861df2bdbbd8de@progame.io"
         assert signed_user.email_digest == "916a55cf753a5c847b861df2bdbbd8de"
 
-    def t_fetchExistingSignedUser(self, dbsession, monkeypatch):
+    def t_fetchExistingSignedUser(self, monkeypatch):
         monkeypatch.setenv(
             "SIGNED_KEY", "3ba57f9a004e42918eee6f73326aa89d", prepend=None
         )
-        signed_user = User(
+        signed_user = self.user_dto.new(
             email_digest="916a55cf753a5c847b861df2bdbbd8de",
             token_digest="2357e975e4daaee0348474750b792660",
-            db_session=dbsession,
-        ).save()
+        )
+        self.user_dto.save(signed_user)
         assert signed_user is not None
         assert (
-            UserFactory(
-                original_email="test@progame.io", token="25111961", db_session=dbsession
-            ).fetch()
+            self.user_dto.fetch(original_email="test@progame.io", token="25111961")
             == signed_user
         )
 
-    def t_fetchUnsignedUserShouldReturnNewUserEveryTime(self, dbsession, mocker):
+    def t_fetchUnsignedUserShouldReturnNewUserEveryTime(self, mocker):
         # called twice to showcase the expected behaviour
         mocker.patch(
             "app.domain_service.data_transfer.user.uuid4",
             return_value=mocker.Mock(hex="3ba57f9a004e42918eee6f73326aa89d"),
         )
-        unsigned_user = UserFactory(db_session=dbsession).fetch()
+        unsigned_user = self.user_dto.fetch()
         assert unsigned_user.email == "uns-3ba57f9a004e42918eee6f73326aa89d@progame.io"
         assert not unsigned_user.token_digest
         mocker.patch(
             "app.domain_service.data_transfer.user.uuid4",
             return_value=mocker.Mock(hex="eee84145094cc69e4f816fd9f435e6b3"),
         )
-        unsigned_user = UserFactory(db_session=dbsession).fetch()
+        unsigned_user = self.user_dto.fetch()
         assert unsigned_user.email == "uns-eee84145094cc69e4f816fd9f435e6b3@progame.io"
         assert not unsigned_user.token_digest
 
-    def t_fetchSignedUserWithoutOriginalEmailCreatesNewUser(
-        self, dbsession, monkeypatch
-    ):
+    def t_fetchSignedUserWithoutOriginalEmailCreatesNewUser(self, monkeypatch):
         monkeypatch.setenv(
             "SIGNED_KEY", "3ba57f9a004e42918eee6f73326aa89d", prepend=None
         )
-        signed_user = UserFactory(signed=True, db_session=dbsession).fetch()
+        signed_user = self.user_dto.fetch(signed=True)
         assert signed_user.email == "9a1cfb41abc50c3f37630b673323cef5@progame.io"
         assert signed_user.email_digest == "9a1cfb41abc50c3f37630b673323cef5"
 
-    def t_createNewInternalUser(self, dbsession):
-        internal_user = UserFactory(
-            email="user@test.project", password="password", db_session=dbsession
-        ).fetch()
+    def t_createNewInternalUser(self):
+        internal_user = self.user_dto.fetch(
+            email="user@test.project", password="password"
+        )
         assert internal_user.email == "user@test.project"
         assert internal_user.check_password("password")
         assert internal_user.create_timestamp is not None
 
-    def t_fetchExistingInternalUser(self, dbsession):
-        new_internal_user = UserFactory(
-            email="internal@progame.io", password="password", db_session=dbsession
-        ).fetch()
-        existing_user = UserFactory(
-            email=new_internal_user.email, db_session=dbsession
-        ).fetch()
+    def t_fetchExistingInternalUser(self):
+        new_internal_user = self.user_dto.fetch(
+            email="internal@progame.io", password="password"
+        )
+        existing_user = self.user_dto.fetch(email=new_internal_user.email)
         assert existing_user == new_internal_user
 
 
@@ -250,6 +246,7 @@ class TestCaseMatchModel:
         self.answer_dto = AnswerDTO(session=dbsession)
         self.match_dto = MatchDTO(session=dbsession)
         self.game_dto = GameDTO(session=dbsession)
+        self.user_dto = UserDTO(session=dbsession)
 
     def t_questionsPropertyReturnsTheExpectedResults(self, dbsession):
         match = self.match_dto.save(self.match_dto.new())
@@ -358,7 +355,8 @@ class TestCaseMatchModel:
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=2)
         self.game_dto.save(game)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         question = self.question_dto.new(
             text="1+1 is = to", position=0, game_uid=game.uid, db_session=dbsession
         )
@@ -472,12 +470,14 @@ class TestCaseReactionModel:
         self.reaction_dto = ReactionDTO(session=dbsession)
         self.match_dto = MatchDTO(session=dbsession)
         self.game_dto = GameDTO(session=dbsession)
+        self.user_dto = UserDTO(session=dbsession)
 
     def t_cannotExistsTwoReactionsOfTheSameUserAtSameTime(self, dbsession):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         question = self.question_dto.new(
             text="new-question", position=0, game_uid=game.uid, db_session=dbsession
         )
@@ -520,7 +520,8 @@ class TestCaseReactionModel:
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         question = self.question_dto.new(
             text="1+1 is = to", position=0, db_session=dbsession
         )
@@ -547,7 +548,8 @@ class TestCaseReactionModel:
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         question = self.question_dto.new(
             text="3*3 = ", time=0, position=0, db_session=dbsession
         )
@@ -573,7 +575,8 @@ class TestCaseReactionModel:
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         question = self.question_dto.new(
             text="1+1 =", time=2, position=0, db_session=dbsession
         )
@@ -604,7 +607,8 @@ class TestCaseReactionModel:
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         question = self.question_dto.new(
             text="Where is Miami", position=0, db_session=dbsession
         )
@@ -618,7 +622,10 @@ class TestCaseReactionModel:
         )
         self.reaction_dto.save(reaction)
 
-        open_answer = OpenAnswer(text="Florida", db_session=dbsession).save()
+        open_answer_dto = OpenAnswerDTO(session=dbsession)
+        open_answer = open_answer_dto.new(text="Florida")
+        open_answer_dto.save(open_answer)
+
         reaction.record_answer(open_answer)
         assert question.is_open
         assert reaction.answer
@@ -630,7 +637,8 @@ class TestCaseReactionModel:
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
-        user = User(email="user@test.project", db_session=dbsession).save()
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
         q1 = self.question_dto.new(text="t1", position=0, db_session=dbsession)
         self.question_dto.save(q1)
         q2 = self.question_dto.new(text="t2", position=1, db_session=dbsession)
