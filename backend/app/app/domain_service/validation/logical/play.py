@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 
-from app.domain_entities import Matches, Questions, Reactions, Users
+from app.domain_entities import Questions, Reactions, Users
 from app.domain_entities.user import WordDigest
 from app.domain_service.data_transfer.answer import AnswerDTO
+from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.validation.logical import RetrieveObject
 from app.exceptions import NotFoundObjectError, ValidateError
 
@@ -13,7 +14,7 @@ class ValidatePlayLand:
         self._session = db_session
 
     def valid_match(self):
-        match = Matches(db_session=self._session).get(uhash=self.match_uhash)
+        match = MatchDTO(session=self._session).get(uhash=self.match_uhash)
         if not match:
             raise NotFoundObjectError()
 
@@ -32,7 +33,7 @@ class ValidatePlayCode:
         self._session = db_session
 
     def valid_match(self):
-        match = Matches(db_session=self._session).get(code=self.match_code)
+        match = MatchDTO(session=self._session).get(code=self.match_code)
         if not match:
             raise NotFoundObjectError()
 
