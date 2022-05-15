@@ -178,7 +178,6 @@ class SinglePlayer:
             user_uid=self._user.uid,
             game_uid=game.uid,
             question_uid=question.uid,
-            db_session=self._session,
         )
         self.reaction_dto.save(self._current_reaction)
 
@@ -218,7 +217,6 @@ class SinglePlayer:
             question_uid=question.uid,
             game_uid=question.game.uid,
             user_uid=self._user.uid,
-            db_session=self._session,
         )
         return self.reaction_dto.save(new_reaction)
 
@@ -248,7 +246,7 @@ class SinglePlayer:
                 self._current_reaction.game, *self._status.questions_displayed()
             )
 
-        self._current_reaction.record_answer(answer)
+        self.reaction_dto.record_answer(self._current_reaction, answer)
         return self.forward()
 
     @property

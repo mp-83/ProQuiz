@@ -144,9 +144,7 @@ class TestCaseMatchEndpoints:
         self.question_dto.save(question)
         user = self.user_dto.new(email="t@t.com")
         self.user_dto.save(user)
-        reaction = self.reaction_dto.new(
-            match=match, question=question, user=user, db_session=dbsession
-        )
+        reaction = self.reaction_dto.new(match=match, question=question, user=user)
         self.reaction_dto.save(reaction)
         response = client.put(
             f"{settings.API_V1_STR}/matches/edit/{match.uid}",

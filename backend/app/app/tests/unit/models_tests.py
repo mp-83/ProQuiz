@@ -5,7 +5,6 @@ import pytest
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 from app.constants import MATCH_HASH_LEN, MATCH_PASSWORD_LEN
-from app.domain_entities.reaction import ReactionScore
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import (
@@ -16,7 +15,7 @@ from app.domain_service.data_transfer.match import (
 )
 from app.domain_service.data_transfer.open_answer import OpenAnswerDTO
 from app.domain_service.data_transfer.question import QuestionDTO
-from app.domain_service.data_transfer.reaction import ReactionDTO
+from app.domain_service.data_transfer.reaction import ReactionDTO, ReactionScore
 from app.domain_service.data_transfer.user import UserDTO
 from app.exceptions import NotUsableQuestionError
 
@@ -338,7 +337,6 @@ class TestCaseMatchModel:
                 user=user,
                 match=match,
                 game_uid=game.uid,
-                db_session=dbsession,
             )
         )
 
@@ -469,7 +467,6 @@ class TestCaseReactionModel:
                     user_uid=user.uid,
                     create_timestamp=now,
                     game_uid=game.uid,
-                    db_session=dbsession,
                 )
             )
             self.reaction_dto.save(
@@ -480,7 +477,6 @@ class TestCaseReactionModel:
                     user_uid=user.uid,
                     create_timestamp=now,
                     game_uid=game.uid,
-                    db_session=dbsession,
                 )
             )
         dbsession.rollback()
@@ -501,7 +497,6 @@ class TestCaseReactionModel:
             answer_uid=answer.uid,
             user_uid=user.uid,
             game_uid=game.uid,
-            db_session=dbsession,
         )
         self.reaction_dto.save(reaction)
         question.text = "1+2 is = to"
@@ -522,13 +517,12 @@ class TestCaseReactionModel:
             question=question,
             user=user,
             game_uid=game.uid,
-            db_session=dbsession,
         )
         self.reaction_dto.save(reaction)
 
         answer = self.answer_dto.new(question=question, text="9", position=1)
         self.answer_dto.save(answer)
-        reaction.record_answer(answer)
+        self.reaction_dto.record_answer(reaction, answer)
 
         assert reaction.answer is None
 
@@ -545,13 +539,12 @@ class TestCaseReactionModel:
             question=question,
             user=user,
             game_uid=game.uid,
-            db_session=dbsession,
         )
         self.reaction_dto.save(reaction)
 
         answer = self.answer_dto.new(question=question, text="2", position=1)
         self.answer_dto.save(answer)
-        reaction.record_answer(answer)
+        self.reaction_dto.record_answer(reaction, answer)
 
         assert reaction.answer
         assert reaction.answer_time
@@ -573,7 +566,6 @@ class TestCaseReactionModel:
             question=question,
             user=user,
             game_uid=game.uid,
-            db_session=dbsession,
         )
         self.reaction_dto.save(reaction)
 
@@ -581,7 +573,7 @@ class TestCaseReactionModel:
         open_answer = open_answer_dto.new(text="Florida")
         open_answer_dto.save(open_answer)
 
-        reaction.record_answer(open_answer)
+        self.reaction_dto.record_answer(reaction, answer=open_answer)
         assert question.is_open
         assert reaction.answer
         assert reaction.answer_time
@@ -599,11 +591,11 @@ class TestCaseReactionModel:
         q2 = self.question_dto.new(text="t2", position=1)
         self.question_dto.save(q2)
         r1 = self.reaction_dto.new(
-            match=match, question=q1, user=user, game_uid=game.uid, db_session=dbsession
+            match=match, question=q1, user=user, game_uid=game.uid
         )
         self.reaction_dto.save(r1)
         r2 = self.reaction_dto.new(
-            match=match, question=q2, user=user, game_uid=game.uid, db_session=dbsession
+            match=match, question=q2, user=user, game_uid=game.uid
         )
         self.reaction_dto.save(r2)
 

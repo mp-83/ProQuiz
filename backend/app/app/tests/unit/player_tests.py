@@ -276,7 +276,6 @@ class TestCaseStatus(TestCaseBase):
                 question=q1,
                 user=user,
                 game_uid=game.uid,
-                db_session=dbsession,
             )
         )
 
@@ -286,7 +285,6 @@ class TestCaseStatus(TestCaseBase):
                 question=q2,
                 user=user,
                 game_uid=game.uid,
-                db_session=dbsession,
             )
         )
 
@@ -297,7 +295,6 @@ class TestCaseStatus(TestCaseBase):
                 question=q3,
                 user=user,
                 game_uid=game.uid,
-                db_session=dbsession,
             )
         )
         status = PlayerStatus(user, match, db_session=dbsession)
@@ -324,7 +321,6 @@ class TestCaseStatus(TestCaseBase):
                 question=q1,
                 user=user,
                 game_uid=game.uid,
-                db_session=dbsession,
             )
         )
 
@@ -334,7 +330,6 @@ class TestCaseStatus(TestCaseBase):
                 question=q2,
                 user=user,
                 game_uid=game.uid,
-                db_session=dbsession,
             )
         )
         another_match = self.match_dto.save(self.match_dto.new())
@@ -344,7 +339,6 @@ class TestCaseStatus(TestCaseBase):
                 question=q3,
                 user=user,
                 game_uid=game.uid,
-                db_session=dbsession,
             )
         )
         status = PlayerStatus(user, match, db_session=dbsession)
@@ -368,7 +362,6 @@ class TestCaseStatus(TestCaseBase):
                 question=q1,
                 user=user,
                 game_uid=g1.uid,
-                db_session=dbsession,
             )
         )
         self.reaction_dto.save(
@@ -377,7 +370,6 @@ class TestCaseStatus(TestCaseBase):
                 question=q2,
                 user=user,
                 game_uid=g2.uid,
-                db_session=dbsession,
             )
         )
 
@@ -403,7 +395,6 @@ class TestCaseStatus(TestCaseBase):
                 user=user,
                 game_uid=g1.uid,
                 score=3,
-                db_session=dbsession,
             )
         )
         self.reaction_dto.save(
@@ -413,7 +404,6 @@ class TestCaseStatus(TestCaseBase):
                 user=user,
                 game_uid=g2.uid,
                 score=2.4,
-                db_session=dbsession,
             )
         )
         status = PlayerStatus(user, match, db_session=dbsession)

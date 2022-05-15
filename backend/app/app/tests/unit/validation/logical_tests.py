@@ -161,7 +161,6 @@ class TestCaseNextEndPoint(TestCaseBase):
             user=user,
             game_uid=game.uid,
             answer_uid=answer.uid,
-            db_session=dbsession,
         )
         self.reaction_dto.save(reaction)
 

@@ -38,7 +38,6 @@ class TestCaseUser:
                 question=question_1,
                 user=user_1,
                 game_uid=first_game.uid,
-                db_session=dbsession,
             )
         )
         self.reaction_dto.save(
@@ -47,7 +46,6 @@ class TestCaseUser:
                 question=question_2,
                 user=user_1,
                 game_uid=first_game.uid,
-                db_session=dbsession,
             )
         )
         self.reaction_dto.save(
@@ -56,7 +54,6 @@ class TestCaseUser:
                 question=question_1,
                 user=user_2,
                 game_uid=first_game.uid,
-                db_session=dbsession,
             )
         )
         self.reaction_dto.save(
@@ -65,7 +62,6 @@ class TestCaseUser:
                 question=question_1,
                 user=user_3,
                 game_uid=first_game.uid,
-                db_session=dbsession,
             )
         )
 
@@ -75,7 +71,6 @@ class TestCaseUser:
                 question=question_1,
                 user=user_2,
                 game_uid=second_game.uid,
-                db_session=dbsession,
             )
         )
         self.reaction_dto.save(
@@ -84,7 +79,6 @@ class TestCaseUser:
                 question=question_1,
                 user=user_1,
                 game_uid=second_game.uid,
-                db_session=dbsession,
             )
         )
 
