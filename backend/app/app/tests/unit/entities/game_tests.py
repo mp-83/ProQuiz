@@ -8,12 +8,12 @@ from app.domain_service.data_transfer.question import QuestionDTO
 
 class TestCaseGameModel:
     @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.question_dto = QuestionDTO(session=dbsession)
-        self.match_dto = MatchDTO(session=dbsession)
-        self.game_dto = GameDTO(session=dbsession)
+    def setUp(self, db_session):
+        self.question_dto = QuestionDTO(session=db_session)
+        self.match_dto = MatchDTO(session=db_session)
+        self.game_dto = GameDTO(session=db_session)
 
-    def t_raiseErrorWhenTwoGamesOfMatchHaveSamePosition(self, dbsession):
+    def t_raiseErrorWhenTwoGamesOfMatchHaveSamePosition(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -21,9 +21,9 @@ class TestCaseGameModel:
             another_game = self.game_dto.new(match_uid=match.uid, index=1)
             self.game_dto.save(another_game)
 
-        dbsession.rollback()
+        db_session.rollback()
 
-    def t_orderedQuestionsMethod(self, dbsession, emitted_queries):
+    def t_orderedQuestionsMethod(self, emitted_queries):
         # Questions are intentionally created unordered
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)

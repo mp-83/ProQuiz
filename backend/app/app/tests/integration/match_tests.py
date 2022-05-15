@@ -14,9 +14,7 @@ from app.tests.fixtures import TEST_1
 
 
 class TestCaseBadRequest:
-    def t_creation(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
-    ) -> None:
+    def t_creation(self, client: TestClient, superuser_token_headers: dict) -> None:
         response = client.post(
             f"{settings.API_V1_STR}/matches/new",
             json={"questions": [None]},
@@ -24,9 +22,7 @@ class TestCaseBadRequest:
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def t_update(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
-    ) -> None:
+    def t_update(self, client: TestClient, superuser_token_headers: dict) -> None:
         response = client.put(
             f"{settings.API_V1_STR}/matches/edit/1",
             json={"questions": [1]},
@@ -37,15 +33,15 @@ class TestCaseBadRequest:
 
 class TestCaseMatchEndpoints:
     @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.question_dto = QuestionDTO(session=dbsession)
-        self.reaction_dto = ReactionDTO(session=dbsession)
-        self.match_dto = MatchDTO(session=dbsession)
-        self.game_dto = GameDTO(session=dbsession)
-        self.user_dto = UserDTO(session=dbsession)
+    def setUp(self, db_session):
+        self.question_dto = QuestionDTO(session=db_session)
+        self.reaction_dto = ReactionDTO(session=db_session)
+        self.match_dto = MatchDTO(session=db_session)
+        self.game_dto = GameDTO(session=db_session)
+        self.user_dto = UserDTO(session=db_session)
 
     def t_successfulCreationOfAMatch(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
+        self, client: TestClient, superuser_token_headers: dict
     ):
         match_name = "New Match"
         response = client.post(
@@ -59,9 +55,7 @@ class TestCaseMatchEndpoints:
         assert questions[0]["text"] == TEST_1[0]["text"]
         assert response.json()["is_restricted"]
 
-    def t_createMatchWithCode(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
-    ):
+    def t_createMatchWithCode(self, client: TestClient, superuser_token_headers: dict):
         match_name = "New Match"
         now = datetime.now()
         tomorrow = now + timedelta(days=1)
@@ -79,11 +73,11 @@ class TestCaseMatchEndpoints:
         assert response.json()["code"]
         assert response.json()["expires"] == tomorrow.isoformat()
 
-    def t_requestUnexistentMatch(self, client: TestClient, dbsession):
+    def t_requestUnexistentMatch(self, client: TestClient):
         response = client.get(f"{settings.API_V1_STR}/matches/30")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def t_retriveOneMatchWithAllData(self, client: TestClient, dbsession):
+    def t_retriveOneMatchWithAllData(self, client: TestClient):
         match_name = "New Match"
         match = self.match_dto.new(name=match_name)
         self.match_dto.save(match)
@@ -129,7 +123,7 @@ class TestCaseMatchEndpoints:
         ]
 
     def t_matchCannotBeChangedIfStarted(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
+        self, client: TestClient, superuser_token_headers: dict
     ):
         match_name = "New Match"
         match = self.match_dto.new(name=match_name)
@@ -154,7 +148,7 @@ class TestCaseMatchEndpoints:
         assert response.json()["error"] == "Match started. Cannot be edited"
 
     def t_addQuestionToExistingMatchWithOneGameOnly(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
+        self, client: TestClient, superuser_token_headers: dict
     ):
         match = self.match_dto.new()
         self.match_dto.save(match)
@@ -191,7 +185,7 @@ class TestCaseMatchEndpoints:
         self.match_dto.refresh(match)
         assert match.times == 10
 
-    def t_listAllMatches(self, client: TestClient, dbsession):
+    def t_listAllMatches(self, client: TestClient):
         m1 = self.match_dto.save(self.match_dto.new())
         m2 = self.match_dto.save(self.match_dto.new())
         m3 = self.match_dto.save(self.match_dto.new())
@@ -200,11 +194,7 @@ class TestCaseMatchEndpoints:
         assert response.json()["matches"] == [m.json for m in [m1, m2, m3]]
 
     def t_importQuestionsFromYaml(
-        self,
-        client: TestClient,
-        superuser_token_headers: dict,
-        yaml_file_handler,
-        dbsession,
+        self, client: TestClient, superuser_token_headers: dict, yaml_file_handler
     ):
         match = self.match_dto.new()
         self.match_dto.save(match)

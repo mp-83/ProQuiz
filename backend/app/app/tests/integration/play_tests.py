@@ -14,7 +14,7 @@ from app.domain_service.data_transfer.user import UserDTO, WordDigest
 
 
 class TestCaseBadRequest:
-    def t_endpoints(self, client: TestClient, superuser_token_headers: dict, dbsession):
+    def t_endpoints(self, client: TestClient, superuser_token_headers: dict):
         endpoints = ["/play/h/BAD", "/play/start", "/play/next", "/play/sign"]
         for endpoint in endpoints:
             response = client.post(
@@ -27,8 +27,8 @@ class TestCaseBadRequest:
 
 class TestCasePlayLand:
     # the test scenario for land/404 is already tested above
-    def t_playLand(self, client: TestClient, superuser_token_headers: dict, dbsession):
-        match_dto = MatchDTO(session=dbsession)
+    def t_playLand(self, client: TestClient, superuser_token_headers: dict, db_session):
+        match_dto = MatchDTO(session=db_session)
         match = match_dto.new(with_code=False)
         match_dto.save(match)
         response = client.post(
@@ -41,9 +41,9 @@ class TestCasePlayLand:
 
 
 class TestCasePlayCode:
-    def t_playCode(self, client: TestClient, superuser_token_headers: dict, dbsession):
+    def t_playCode(self, client: TestClient, superuser_token_headers: dict, db_session):
         in_one_hour = datetime.now() + timedelta(hours=1)
-        match_dto = MatchDTO(session=dbsession)
+        match_dto = MatchDTO(session=db_session)
         match = match_dto.new(with_code=True, expires=in_one_hour)
         match_dto.save(match)
         response = client.post(
@@ -83,15 +83,13 @@ class TestCasePlaySign:
 
 class TestCasePlayStart:
     @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.question_dto = QuestionDTO(session=dbsession)
-        self.match_dto = MatchDTO(session=dbsession)
-        self.game_dto = GameDTO(session=dbsession)
-        self.user_dto = UserDTO(session=dbsession)
+    def setUp(self, db_session):
+        self.question_dto = QuestionDTO(session=db_session)
+        self.match_dto = MatchDTO(session=db_session)
+        self.game_dto = GameDTO(session=db_session)
+        self.user_dto = UserDTO(session=db_session)
 
-    def t_unexistentMatch(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
-    ):
+    def t_unexistentMatch(self, client: TestClient, superuser_token_headers: dict):
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": 100, "user_uid": 1},
@@ -99,9 +97,7 @@ class TestCasePlayStart:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def t_startExpiredMatch(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
-    ):
+    def t_startExpiredMatch(self, client: TestClient, superuser_token_headers: dict):
         one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
         match = self.match_dto.new(expires=one_hour_ago)
         self.match_dto.save(match)
@@ -115,7 +111,7 @@ class TestCasePlayStart:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def t_startMatchAndUserIsImplicitlyCreated(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
+        self, client: TestClient, superuser_token_headers: dict
     ):
         match = self.match_dto.new(is_restricted=False)
         self.match_dto.save(match)
@@ -140,7 +136,7 @@ class TestCasePlayStart:
         assert response.json()["user"] > 0
 
     def t_startMatchWithoutQuestion(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
+        self, client: TestClient, superuser_token_headers: dict
     ):
         match = self.match_dto.new(is_restricted=False)
         self.match_dto.save(match)
@@ -158,7 +154,7 @@ class TestCasePlayStart:
 
     # the password feature is tested more thoroughly in the logical tests
     def t_startRestrictedMatchUsingPassword(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
+        self, client: TestClient, superuser_token_headers: dict
     ):
         match = self.match_dto.new(is_restricted=True)
         self.match_dto.save(match)
@@ -185,14 +181,14 @@ class TestCasePlayStart:
 
 class TestCasePlayNext:
     @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.question_dto = QuestionDTO(session=dbsession)
-        self.answer_dto = AnswerDTO(session=dbsession)
-        self.game_dto = GameDTO(session=dbsession)
-        self.user_dto = UserDTO(session=dbsession)
+    def setUp(self, db_session):
+        self.question_dto = QuestionDTO(session=db_session)
+        self.answer_dto = AnswerDTO(session=db_session)
+        self.game_dto = GameDTO(session=db_session)
+        self.user_dto = UserDTO(session=db_session)
 
     def t_duplicateSameReaction(
-        self, client: TestClient, superuser_token_headers: dict, dbsession, trivia_match
+        self, client: TestClient, superuser_token_headers: dict, trivia_match
     ):
         match = trivia_match
         user = self.user_dto.fetch(signed=match.is_restricted)
@@ -222,9 +218,7 @@ class TestCasePlayNext:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def t_unexistentQuestion(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
-    ):
+    def t_unexistentQuestion(self, client: TestClient, superuser_token_headers: dict):
         response = client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
@@ -238,7 +232,7 @@ class TestCasePlayNext:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def t_answerQuestion(
-        self, client: TestClient, superuser_token_headers: dict, dbsession, trivia_match
+        self, client: TestClient, superuser_token_headers: dict, trivia_match
     ):
         match = trivia_match
         user = self.user_dto.fetch(signed=match.is_restricted)
@@ -260,9 +254,9 @@ class TestCasePlayNext:
         assert response.json()["user"] == user.uid
 
     def t_completeMatch(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
+        self, client: TestClient, superuser_token_headers: dict, db_session
     ):
-        match_dto = MatchDTO(session=dbsession)
+        match_dto = MatchDTO(session=db_session)
         match = match_dto.new(with_code=True)
         match_dto.save(match)
         game = self.game_dto.new(match_uid=match.uid, index=0)
@@ -290,4 +284,4 @@ class TestCasePlayNext:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
-        assert len(RankingDTO(session=dbsession).of_match(match.uid)) == 1
+        assert len(RankingDTO(session=db_session).of_match(match.uid)) == 1

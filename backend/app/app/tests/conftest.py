@@ -45,7 +45,7 @@ app.dependency_overrides[get_db] = override_get_db
 
 
 @pytest.fixture()
-def old_dbsession() -> Generator:
+def old_db_session() -> Generator:
     # alembic_cfg = alembic.config.Config(alembic_ini_file)
     # alembic.command.stamp(alembic_cfg, None, purge=True)
 
@@ -59,12 +59,10 @@ def old_dbsession() -> Generator:
 
 
 @pytest.fixture()
-def dbsession():
+def db_session() -> Session:
     init_db()
-    _session_factory = sessionmaker(
-        autocommit=False, autoflush=False, bind=test_engine
-    )()
-    yield _session_factory
+    _session_factory = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+    yield _session_factory()
     reset_db()
 
 
@@ -152,27 +150,27 @@ def count_database_queries():
 
 
 @pytest.fixture
-def match_dto(dbsession):
-    yield MatchDTO(session=dbsession)
+def match_dto(db_session):
+    yield MatchDTO(session=db_session)
 
 
 @pytest.fixture
-def game_dto(dbsession):
-    yield GameDTO(session=dbsession)
+def game_dto(db_session):
+    yield GameDTO(session=db_session)
 
 
 @pytest.fixture
-def question_dto(dbsession):
-    yield QuestionDTO(session=dbsession)
+def question_dto(db_session):
+    yield QuestionDTO(session=db_session)
 
 
 @pytest.fixture
-def user_dto(dbsession) -> UserDTO:
-    return UserDTO(session=dbsession)
+def user_dto(db_session) -> UserDTO:
+    return UserDTO(session=db_session)
 
 
 @pytest.fixture(name="trivia_match")
-def create_fixture_test(dbsession, match_dto, game_dto, question_dto):
+def create_fixture_test(db_session, match_dto, game_dto, question_dto):
     match = match_dto.save(match_dto.new())
 
     first_game = game_dto.new(match_uid=match.uid, index=1)

@@ -10,13 +10,13 @@ from app.domain_service.data_transfer.user import UserDTO
 
 class TestCaseUser:
     @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.question_dto = QuestionDTO(session=dbsession)
-        self.reaction_dto = ReactionDTO(session=dbsession)
-        self.game_dto = GameDTO(session=dbsession)
-        self.user_dto = UserDTO(session=dbsession)
+    def setUp(self, db_session):
+        self.question_dto = QuestionDTO(session=db_session)
+        self.reaction_dto = ReactionDTO(session=db_session)
+        self.game_dto = GameDTO(session=db_session)
+        self.user_dto = UserDTO(session=db_session)
 
-    def t_list_all_players(self, client: TestClient, dbsession, match_dto):
+    def t_list_all_players(self, client: TestClient, match_dto):
         first_match = match_dto.save(match_dto.new())
         first_game = self.game_dto.new(match_uid=first_match.uid, index=0)
         self.game_dto.save(first_game)

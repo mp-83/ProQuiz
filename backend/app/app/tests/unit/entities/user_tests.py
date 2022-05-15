@@ -5,8 +5,8 @@ from app.domain_service.data_transfer.user import UserDTO
 
 class TestCaseUserFactory:
     @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.user_dto = UserDTO(session=dbsession)
+    def setUp(self, db_session):
+        self.user_dto = UserDTO(session=db_session)
 
     def t_fetchNewSignedUser(self, monkeypatch):
         monkeypatch.setenv(

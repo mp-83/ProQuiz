@@ -15,15 +15,15 @@ from app.domain_service.data_transfer.user import UserDTO
 
 class TestCaseReactionModel:
     @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.question_dto = QuestionDTO(session=dbsession)
-        self.answer_dto = AnswerDTO(session=dbsession)
-        self.reaction_dto = ReactionDTO(session=dbsession)
-        self.match_dto = MatchDTO(session=dbsession)
-        self.game_dto = GameDTO(session=dbsession)
-        self.user_dto = UserDTO(session=dbsession)
+    def setUp(self, db_session):
+        self.question_dto = QuestionDTO(session=db_session)
+        self.answer_dto = AnswerDTO(session=db_session)
+        self.reaction_dto = ReactionDTO(session=db_session)
+        self.match_dto = MatchDTO(session=db_session)
+        self.game_dto = GameDTO(session=db_session)
+        self.user_dto = UserDTO(session=db_session)
 
-    def t_cannotExistsTwoReactionsOfTheSameUserAtSameTime(self, dbsession):
+    def t_cannotExistsTwoReactionsOfTheSameUserAtSameTime(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -62,9 +62,9 @@ class TestCaseReactionModel:
                     game_uid=game.uid,
                 )
             )
-        dbsession.rollback()
+        db_session.rollback()
 
-    def t_ifQuestionChangesThenAlsoFKIsUpdatedAndAffectsReaction(self, dbsession):
+    def t_ifQuestionChangesThenAlsoFKIsUpdatedAndAffectsReaction(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -87,7 +87,7 @@ class TestCaseReactionModel:
 
         assert reaction.question.text == "1+2 is = to"
 
-    def t_whenQuestionIsElapsedAnswerIsNotRecorded(self, dbsession):
+    def t_whenQuestionIsElapsedAnswerIsNotRecorded(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -109,7 +109,7 @@ class TestCaseReactionModel:
 
         assert reaction.answer is None
 
-    def t_recordAnswerInTime(self, dbsession):
+    def t_recordAnswerInTime(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -136,7 +136,7 @@ class TestCaseReactionModel:
         # isclose is used to avoid brittleness
         assert isclose(reaction.score, 0.999, rel_tol=0.05)
 
-    def t_reactionTimingIsRecordedAlsoForOpenQuestions(self, dbsession):
+    def t_reactionTimingIsRecordedAlsoForOpenQuestions(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -152,7 +152,7 @@ class TestCaseReactionModel:
         )
         self.reaction_dto.save(reaction)
 
-        open_answer_dto = OpenAnswerDTO(session=dbsession)
+        open_answer_dto = OpenAnswerDTO(session=db_session)
         open_answer = open_answer_dto.new(text="Florida")
         open_answer_dto.save(open_answer)
 
@@ -163,7 +163,7 @@ class TestCaseReactionModel:
         # no score should be computed for open questions
         assert not reaction.score
 
-    def t_allReactionsOfUser(self, dbsession):
+    def t_allReactionsOfUser(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)

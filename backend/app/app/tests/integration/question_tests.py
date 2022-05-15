@@ -9,15 +9,15 @@ from app.domain_service.data_transfer.question import QuestionDTO
 
 class TestCaseQuestionEP:
     @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.question_dto = QuestionDTO(session=dbsession)
-        self.answer_dto = AnswerDTO(session=dbsession)
+    def setUp(self, db_session):
+        self.question_dto = QuestionDTO(session=db_session)
+        self.answer_dto = AnswerDTO(session=db_session)
 
-    def t_unexistentQuestion(self, client: TestClient, dbsession):
+    def t_unexistentQuestion(self, client: TestClient):
         response = client.get(f"{settings.API_V1_STR}/questions/30")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def t_fetchingSingleQuestion(self, client: TestClient, dbsession):
+    def t_fetchingSingleQuestion(self, client: TestClient):
         question = self.question_dto.new(text="Text", position=0)
         self.question_dto.save(question)
         response = client.get(f"{settings.API_V1_STR}/questions/{question.uid}")
@@ -25,9 +25,7 @@ class TestCaseQuestionEP:
         assert response.json()["text"] == "Text"
         assert response.json()["answers_list"] == []
 
-    def t_createNewQuestion(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
-    ):
+    def t_createNewQuestion(self, client: TestClient, superuser_token_headers: dict):
         # CSRF token is needed also in this case
         response = client.post(
             f"{settings.API_V1_STR}/questions/new",
@@ -42,9 +40,7 @@ class TestCaseQuestionEP:
         assert response.json()["text"] == "eleven pm"
         assert response.json()["position"] == 2
 
-    def t_invalidText(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
-    ):
+    def t_invalidText(self, client: TestClient, superuser_token_headers: dict):
         response = client.post(
             f"{settings.API_V1_STR}/questions/new",
             json={"text": None, "position": 1},
@@ -53,7 +49,7 @@ class TestCaseQuestionEP:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def t_changeTextAndPositionOfAQuestion(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
+        self, client: TestClient, superuser_token_headers: dict
     ):
         question = self.question_dto.new(text="Text", position=0)
         self.question_dto.save(question)
@@ -70,7 +66,7 @@ class TestCaseQuestionEP:
         assert response.json()["position"] == 2
 
     def t_positionCannotBeNegative(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
+        self, client: TestClient, superuser_token_headers: dict
     ):
         question = self.question_dto.new(text="Text", position=0)
         self.question_dto.save(question)
@@ -82,7 +78,7 @@ class TestCaseQuestionEP:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def t_editingUnexistentQuestion(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
+        self, client: TestClient, superuser_token_headers: dict
     ):
         response = client.put(
             f"{settings.API_V1_STR}/questions/edit/40",
@@ -92,7 +88,7 @@ class TestCaseQuestionEP:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def t_updateAnswerTextAndPosition(
-        self, client: TestClient, superuser_token_headers: dict, dbsession
+        self, client: TestClient, superuser_token_headers: dict
     ):
         question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)

@@ -25,7 +25,7 @@
 
 #
 # class TestCaseLogin:
-#     def t_failedLoginAttempt(self, client: TestClient, superuser_token_headers: dict, dbsession):
+#     def t_failedLoginAttempt(self, client: TestClient, superuser_token_headers: dict, db_session):
 #         response = client.post(
 #             f"{settings.API_V1_STR}/login",
 #             json={"email": "user@test.com", "password": "psser"},
@@ -33,7 +33,7 @@
 #         )
 #         assert response.status_code == status.HTTP_400_BAD_REQUEST
 #
-#     def t_successfulLogin(self, client: TestClient, superuser_token_headers: dict, dbsession):
+#     def t_successfulLogin(self, client: TestClient, superuser_token_headers: dict, db_session):
 #         credentials = {
 #             "email": "user@test.com",
 #             "password": "p@ssworth",
@@ -48,7 +48,7 @@
 #
 #
 # class TestCaseLogOut:
-#     def t_cookiesAfterLogoutCompletedSuccessfully(self, client: TestClient, superuser_token_headers: dict, dbsession):
+#     def t_cookiesAfterLogoutCompletedSuccessfully(self, client: TestClient, superuser_token_headers: dict, db_session):
 #         response = client.post(
 #             f"{settings.API_V1_STR}/login",
 #             headers=superuser_token_headers,
@@ -56,7 +56,7 @@
 #         assert response.status_code == status.HTTP_303_SEE_OTHER
 #         assert "Set-Cookie" in dict(response.headers)
 #
-#     def t_usingGetInsteadOfPostWhenCallingLogout(self, client: TestClient, dbsession):
+#     def t_usingGetInsteadOfPostWhenCallingLogout(self, client: TestClient, db_session):
 #         response = client.get(f"{settings.API_V1_STR}/login")
 #         assert response.status_code == status.HTTP_303_SEE_OTHER
 #         assert "Set-Cookie" not in dict(response.headers)

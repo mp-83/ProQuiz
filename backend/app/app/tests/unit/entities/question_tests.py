@@ -7,12 +7,12 @@ from app.domain_service.data_transfer.question import QuestionDTO
 
 class TestCaseQuestion:
     @pytest.fixture(autouse=True)
-    def setUp(self, dbsession):
-        self.question_dto = QuestionDTO(session=dbsession)
-        self.answer_dto = AnswerDTO(session=dbsession)
+    def setUp(self, db_session):
+        self.question_dto = QuestionDTO(session=db_session)
+        self.answer_dto = AnswerDTO(session=db_session)
 
     @pytest.fixture
-    def samples(self, dbsession):
+    def samples(self):
         self.question_dto.add_many(
             [
                 self.question_dto.new(text="q1.text", position=0),
@@ -22,12 +22,12 @@ class TestCaseQuestion:
         )
         yield
 
-    def t_theQuestionAtPosition(self, samples, dbsession):
+    def t_theQuestionAtPosition(self, samples):
         question = self.question_dto.at_position(0)
         assert question.text == "q1.text"
         assert question.create_timestamp is not None
 
-    def t_newCreatedAnswersShouldBeAvailableFromTheQuestion(self, samples, dbsession):
+    def t_newCreatedAnswersShouldBeAvailableFromTheQuestion(self, samples):
         question = self.question_dto.get(position=0)
         answer = self.answer_dto.new(
             question=question,
@@ -44,13 +44,13 @@ class TestCaseQuestion:
         assert self.answer_dto.count() == 2
         assert question.answers[0].question_uid == question.uid
 
-    def t_createQuestionWithoutPosition(self, samples, dbsession):
+    def t_createQuestionWithoutPosition(self, samples):
         new_question = self.question_dto.new(text="new-question", position=1)
         self.question_dto.save(new_question)
         assert new_question.is_open
         assert new_question.is_template
 
-    def t_allAnswersOfAQuestionMustDiffer(self, samples, dbsession):
+    def t_allAnswersOfAQuestionMustDiffer(self, samples, db_session):
         question = self.question_dto.get(position=1)
         with pytest.raises((IntegrityError, InvalidRequestError)):
             question.answers.extend(
@@ -61,9 +61,9 @@ class TestCaseQuestion:
             )
             self.question_dto.save(question)
 
-        dbsession.rollback()
+        db_session.rollback()
 
-    def t_createManyQuestionsAtOnce(self, dbsession):
+    def t_createManyQuestionsAtOnce(self):
         data = {
             "text": "Following the machine’s debut, Kempelen was reluctant to display the Turk because",
             "answers": [
@@ -86,7 +86,7 @@ class TestCaseQuestion:
         assert {e.text for e in new_question.answers} == expected
         assert self.answer_dto.get(text="The machine was undergoing repair").is_correct
 
-    def t_cloningQuestion(self, dbsession):
+    def t_cloningQuestion(self):
         new_question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(new_question)
         answer = self.answer_dto.new(
@@ -99,7 +99,7 @@ class TestCaseQuestion:
         assert new_question.uid != cloned.uid
         assert new_question.answers[0] != cloned.answers[0]
 
-    def t_questionsAnswersAreOrderedByDefault(self, dbsession):
+    def t_questionsAnswersAreOrderedByDefault(self):
         # the reverse relation fields .answers is ordered by default
         question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
@@ -115,7 +115,7 @@ class TestCaseQuestion:
         assert question.answers[0].text == "Answer1"
         assert question.answers[1].text == "Answer2"
 
-    def t_updateAnswers(self, dbsession):
+    def t_updateAnswers(self):
         question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
         a1 = self.answer_dto.new(question_uid=question.uid, text="Answer1", position=0)
