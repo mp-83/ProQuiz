@@ -149,6 +149,35 @@ class MatchDTO:
     def all_matches(self, **filters):
         return self._session.query(self.klass).filter_by(**filters).all()
 
+    def update(self, instance: Match, **attrs):
+        for name, value in attrs.items():
+            if name == "questions":
+                self.update_questions(instance, value, commit=True)
+            elif name == "name" and not value:
+                continue
+            else:
+                setattr(instance, name, value)
+        self.save(instance)
+
+    def insert_questions(self, instance, questions: list):
+        result = []
+        game_dto = GameDTO(session=self._session)
+        new_game = game_dto.new(match_uid=instance.uid)
+        game_dto.save(new_game)
+
+        question_dto = QuestionDTO(session=self._session)
+        for data in questions:
+            new_q_instance = question_dto.new(
+                game_uid=new_game.uid,
+                text=data.get("text"),
+                position=len(new_game.questions),
+            )
+            question_dto.create_with_answers(new_q_instance, data["answers"])
+            result.append(new_q_instance)
+
+        self._session.commit()
+        return result
+
 
 class MatchHash:
     def __init__(self, db_session: Session):

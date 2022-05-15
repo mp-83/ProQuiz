@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.domain_entities.db.session import get_db
-from app.domain_entities.user import UserFactory
+from app.domain_service.data_transfer.user import UserDTO
 from app.domain_service.play import PlayerStatus, PlayScore, SinglePlayer
 from app.domain_service.validation import syntax
 from app.domain_service.validation.logical import (
@@ -65,7 +65,7 @@ def code(user_input: syntax.CodePlay, session: Session = Depends(get_db)):
         return JSONResponse(status_code=400, content={"error": e.message})
 
     match = data.get("match")
-    user = UserFactory(signed=True, db_session=session).fetch()
+    user = UserDTO(session=session).fetch(signed=True)
     return JSONResponse(content={"match": match.uid, "user": user.uid})
 
 
@@ -82,7 +82,7 @@ def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
     match = data.get("match")
     user = data.get("user")
     if not user:
-        user = UserFactory(signed=match.is_restricted, db_session=session).fetch()
+        user = UserDTO(session=session).fetch(signed=match.is_restricted)
 
     status = PlayerStatus(user, match, db_session=session)
     try:

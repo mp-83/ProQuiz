@@ -99,15 +99,7 @@ class Match(TableMixin, Base):
         return len(self.reactions)
 
     def update(self, session: Session, **attrs):
-        self._session = session
-        for name, value in attrs.items():
-            if name == "questions":
-                self.update_questions(value, commit=True)
-            elif name == "name" and not value:
-                continue
-            else:
-                setattr(self, name, value)
-        self.save()
+        pass
 
     def insert_questions(self, questions, session: Session):
         result = []

@@ -5,10 +5,11 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.core.security import login_required
-from app.domain_entities import Answer, Question
 from app.domain_entities.db.session import get_db
+from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
+from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.validation import syntax
 from app.domain_service.validation.logical import (
     RetrieveObject,
@@ -49,23 +50,27 @@ def create_match(
 ):
     user_input = user_input.dict()
     questions = user_input.pop("questions", None) or []
-    match_dto = MatchDTO(session=session)
-    new_match = match_dto.new(**user_input)
-    match_dto.save(new_match)
+    dto = MatchDTO(session=session)
+    new_match = dto.new(**user_input)
+    dto.save(new_match)
 
     game_dto = GameDTO(session=session)
     new_game = game_dto.new(match_uid=new_match.uid)
     game_dto.save(new_game)
+    question_dto = QuestionDTO(session=session)
+    answer_dto = AnswerDTO(session=session)
     for position, question in enumerate(questions):
-        new = Question(
+        new = question_dto.new(
             db_session=session,
             game_uid=new_game.uid,
             text=question["text"],
             position=position,
-        ).save()
+        )
+        question_dto.save(new)
+
         for p, _answer in enumerate(question.get("answers") or []):
             session.add(
-                Answer(
+                answer_dto.new(
                     question_uid=new.uid,
                     text=_answer["text"],
                     position=p,
@@ -96,7 +101,8 @@ def edit_match(
         )
 
     user_input = user_input.dict()
-    match.update(session, **user_input)
+    dto = MatchDTO(session=session)
+    dto.update(match, **user_input)
     return match
 
 
@@ -118,5 +124,6 @@ def match_yaml_import(
             status_code=status.HTTP_400_BAD_REQUEST, content={"error": e.message}
         )
 
-    match.insert_questions(user_input["data"]["questions"], session=session)
+    dto = MatchDTO(session=session)
+    dto.insert_questions(match, user_input["data"]["questions"])
     return match

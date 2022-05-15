@@ -24,7 +24,7 @@ class Question(TableMixin, Base):
         UniqueConstraint("game_uid", "position", name="ck_question_game_uid_position"),
     )
 
-    def __init__(self, db_session: Session, **kwargs):
+    def __init__(self, db_session: Session = None, **kwargs):
         self._session = db_session
         super().__init__(**kwargs)
 
@@ -62,16 +62,7 @@ class Question(TableMixin, Base):
         return self
 
     def update(self, db_session, **data):
-        self._session = db_session
-        for k, v in data.items():
-            if k == "answers":
-                self.update_answers(v)
-            elif k in ["text", "position"] and v is None:
-                continue
-            elif hasattr(self, k):
-                setattr(self, k, v)
-
-        self._session.commit()
+        pass
 
     @property
     def answers_by_uid(self):
@@ -82,32 +73,10 @@ class Question(TableMixin, Base):
         return {a.position: a for a in self.answers}
 
     def update_answers(self, answers):
-        for p, data in enumerate(answers):
-            data.update(position=p)
-            _answer = self.answers_by_uid[data["uid"]]
-            _answer.update(**data)
-
-        self._session.commit()
+        pass
 
     def create_with_answers(self, answers):
-        _answers = answers or []
-        self._session.add(self)
-        # this commit might be avoided, as it is done in the .clone()
-        # method but without it, fails
-        # https://docs.sqlalchemy.org/en/14/tutorial/orm_related_objects.html#cascading-objects-into-the-session
-        self._session.commit()
-        for position, _answer in enumerate(_answers):
-            self._session.add(
-                Answer(
-                    question_uid=self.uid,
-                    text=_answer["text"],
-                    position=position,
-                    is_correct=position == 0,
-                    db_session=self._session,
-                )
-            )
-        self._session.commit()
-        return self
+        pass
 
     def clone(self, many=False):
         new = self.__class__(

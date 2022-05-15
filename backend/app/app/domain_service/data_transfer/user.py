@@ -5,6 +5,7 @@ from uuid import uuid4
 from sqlalchemy.orm import Session
 
 from app.constants import DIGEST_SIZE
+from app.domain_entities.reaction import Reaction
 from app.domain_entities.user import User
 
 
@@ -49,6 +50,14 @@ class UserDTO:
             token=token,
             db_session=self._session,
         ).fetch()
+
+    def players_of_match(self, match_uid):
+        return (
+            self._session.query(User)
+            .join(Reaction, Reaction.user_uid == User.uid)
+            .filter(Reaction.match_uid == match_uid)
+            .all()
+        )
 
 
 class WordDigest:

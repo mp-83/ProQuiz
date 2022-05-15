@@ -15,6 +15,7 @@ class QuestionDTO:
     def save(self, instance):
         self._session.add(instance)
         self._session.commit()
+        return instance
 
     def add_many(self, objects):
         self._session.add_all(objects)
@@ -54,3 +55,22 @@ class QuestionDTO:
 
     def questions_with_ids(self, *ids):
         return self._session.query(Question).filter(Question.uid.in_(ids))
+
+    def update_answers(self, instance, answers):
+        for p, data in enumerate(answers):
+            data.update(position=p)
+            _answer = instance.answers_by_uid[data["uid"]]
+            _answer.update(**data)
+
+        self._session.commit()
+
+    def update(self, instance, **data: dict):
+        for k, value in data.items():
+            if k == "answers":
+                self.update_answers(instance, value)
+            elif k in ["text", "position"] and value is None:
+                continue
+            elif hasattr(instance, k):
+                setattr(instance, k, value)
+
+        self._session.commit()

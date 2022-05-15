@@ -3,8 +3,8 @@ import logging
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
-from app.domain_entities import Question
 from app.domain_entities.db.session import get_db
+from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.validation import syntax
 from app.domain_service.validation.logical import RetrieveObject
 from app.exceptions import NotFoundObjectError
@@ -27,7 +27,9 @@ def get_question(uid: int, session: Session = Depends(get_db)):
 @router.post("/new", response_model=syntax.Question)
 def new_question(user_input: syntax.QuestionCreate, session: Session = Depends(get_db)):
     user_input = user_input.dict()
-    return Question(**user_input, db_session=session).save()
+    dto = QuestionDTO(session=session)
+    instance = dto.new(**user_input)
+    return dto.save(instance)
 
 
 @router.put("/edit/{uid}", response_model=syntax.Question)
@@ -40,5 +42,6 @@ def edit_question(
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     user_input = user_input.dict()
-    question.update(session, **user_input)
+    dto = QuestionDTO(session=session)
+    dto.update(question, **user_input)
     return question

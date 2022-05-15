@@ -233,7 +233,7 @@ class TestCaseQuestion:
 
         ans_2_json = a2.json
         ans_2_json.update(text="Answer text 2")
-        question.update_answers([a3.json, a1.json, ans_2_json])
+        self.question_dto.update_answers(question, [a3.json, a1.json, ans_2_json])
         assert question.answers_by_position[0].text == "Answer3"
         assert question.answers_by_position[1].text == "Answer1"
         assert question.answers_by_position[2].text == "Answer text 2"
