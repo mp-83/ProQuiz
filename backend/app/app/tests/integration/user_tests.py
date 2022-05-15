@@ -18,14 +18,10 @@ class TestCaseUser:
 
     def t_list_all_players(self, client: TestClient, dbsession, match_dto):
         first_match = match_dto.save(match_dto.new())
-        first_game = self.game_dto.new(
-            match_uid=first_match.uid, index=0, db_session=dbsession
-        )
+        first_game = self.game_dto.new(match_uid=first_match.uid, index=0)
         self.game_dto.save(first_game)
         second_match = match_dto.save(match_dto.new())
-        second_game = self.game_dto.new(
-            match_uid=second_match.uid, index=0, db_session=dbsession
-        )
+        second_game = self.game_dto.new(match_uid=second_match.uid, index=0)
         self.game_dto.save(second_game)
         question_1 = self.question_dto.new(
             text="3*3 = ", time=0, position=0, db_session=dbsession

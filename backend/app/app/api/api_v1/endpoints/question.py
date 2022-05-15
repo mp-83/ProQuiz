@@ -26,9 +26,8 @@ def get_question(uid: int, session: Session = Depends(get_db)):
 
 @router.post("/new", response_model=syntax.Question)
 def new_question(user_input: syntax.QuestionCreate, session: Session = Depends(get_db)):
-    user_input = user_input.dict()
     dto = QuestionDTO(session=session)
-    instance = dto.new(**user_input)
+    instance = dto.new(**user_input.dict())
     return dto.save(instance)
 
 
@@ -41,7 +40,6 @@ def edit_question(
     except NotFoundObjectError:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
-    user_input = user_input.dict()
     dto = QuestionDTO(session=session)
-    dto.update(question, **user_input)
+    dto.update(question, user_input.dict())
     return question

@@ -1,5 +1,5 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer
-from sqlalchemy.orm import Session, relationship
+from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
 
 from app.domain_entities.db.base import Base
@@ -21,15 +21,7 @@ class Game(TableMixin, Base):
         UniqueConstraint("match_uid", "index", name="ck_game_match_uid_question"),
     )
 
-    def __init__(self, db_session: Session = None, **kwargs):
-        self._session = db_session
-        super().__init__(**kwargs)
-
-    def save(self):
-        self._session.add(self)
-        self._session.commit()
-        return self
-
+    @property
     def first_question(self):
         for q in self.questions:
             if q.position == 0:
