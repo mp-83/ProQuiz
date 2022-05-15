@@ -18,7 +18,7 @@ class TestCaseQuestionEP:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def t_fetchingSingleQuestion(self, client: TestClient, dbsession):
-        question = self.question_dto.new(text="Text", position=0, db_session=dbsession)
+        question = self.question_dto.new(text="Text", position=0)
         self.question_dto.save(question)
         response = client.get(f"{settings.API_V1_STR}/questions/{question.uid}")
         assert response.ok
@@ -55,7 +55,7 @@ class TestCaseQuestionEP:
     def t_changeTextAndPositionOfAQuestion(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
-        question = self.question_dto.new(text="Text", position=0, db_session=dbsession)
+        question = self.question_dto.new(text="Text", position=0)
         self.question_dto.save(question)
         response = client.put(
             f"{settings.API_V1_STR}/questions/edit/{question.uid}",
@@ -72,7 +72,7 @@ class TestCaseQuestionEP:
     def t_positionCannotBeNegative(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
-        question = self.question_dto.new(text="Text", position=0, db_session=dbsession)
+        question = self.question_dto.new(text="Text", position=0)
         self.question_dto.save(question)
         response = client.put(
             f"{settings.API_V1_STR}/questions/edit/{question.uid}",
@@ -94,9 +94,7 @@ class TestCaseQuestionEP:
     def t_updateAnswerTextAndPosition(
         self, client: TestClient, superuser_token_headers: dict, dbsession
     ):
-        question = self.question_dto.new(
-            text="new-question", position=0, db_session=dbsession
-        )
+        question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
         a1 = self.answer_dto.new(question_uid=question.uid, text="Answer1", position=0)
         self.answer_dto.save(a1)

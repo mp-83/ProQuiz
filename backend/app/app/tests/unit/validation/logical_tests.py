@@ -148,7 +148,7 @@ class TestCaseNextEndPoint(TestCaseBase):
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
         question = self.question_dto.new(
-            text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession
+            text="Where is London?", game_uid=game.uid, position=0
         )
         self.question_dto.save(question)
         answer = self.answer_dto.new(question=question, text="UK", position=1)
@@ -176,7 +176,7 @@ class TestCaseNextEndPoint(TestCaseBase):
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
         question = self.question_dto.new(
-            text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession
+            text="Where is London?", game_uid=game.uid, position=0
         )
         self.question_dto.save(question)
         answer = self.answer_dto.new(question_uid=question.uid, text="UK", position=1)

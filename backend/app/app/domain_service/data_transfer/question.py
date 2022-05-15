@@ -74,3 +74,24 @@ class QuestionDTO:
                 setattr(instance, k, value)
 
         self._session.commit()
+
+    def clone(self, instance, many=False):
+        new = self.klass(
+            game_uid=instance.game.uid if instance.game else None,
+            text=instance.text,
+            position=instance.position,
+        )
+        self.save(new)
+        for _answer in instance.answers:
+            self._session.add(
+                self.answer_dto.new(
+                    question_uid=new.uid,
+                    text=_answer.text,
+                    position=_answer.position,
+                    is_correct=_answer.position,
+                    level=_answer.level,
+                )
+            )
+        if not many:
+            self._session.commit()
+        return new

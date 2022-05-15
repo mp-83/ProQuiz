@@ -23,14 +23,10 @@ class TestCaseUser:
         second_match = match_dto.save(match_dto.new())
         second_game = self.game_dto.new(match_uid=second_match.uid, index=0)
         self.game_dto.save(second_game)
-        question_1 = self.question_dto.new(
-            text="3*3 = ", time=0, position=0, db_session=dbsession
-        )
+        question_1 = self.question_dto.new(text="3*3 = ", time=0, position=0)
         self.question_dto.save(question_1)
 
-        question_2 = self.question_dto.new(
-            text="1+1 = ", time=1, position=1, db_session=dbsession
-        )
+        question_2 = self.question_dto.new(text="1+1 = ", time=1, position=1)
         self.question_dto.save(question_2)
 
         user_1 = self.user_dto.fetch()

@@ -122,7 +122,7 @@ class TestCasePlayStart:
         game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         question = self.question_dto.new(
-            game_uid=game.uid, text="1+1 is = to", position=0, db_session=dbsession
+            game_uid=game.uid, text="1+1 is = to", position=0
         )
         self.question_dto.save(question)
 
@@ -165,7 +165,7 @@ class TestCasePlayStart:
         game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         question = self.question_dto.new(
-            game_uid=game.uid, text="1+1 is = to", position=0, db_session=dbsession
+            game_uid=game.uid, text="1+1 is = to", position=0
         )
         self.question_dto.save(question)
         user = self.user_dto.fetch(signed=match.is_restricted)
@@ -272,7 +272,6 @@ class TestCasePlayNext:
             game_uid=game.uid,
             position=0,
             time=2,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         answer = self.answer_dto.new(question=question, text="UK", position=1, level=2)

@@ -93,7 +93,6 @@ class TestCaseMatchEndpoints:
             text="Where is London?",
             game_uid=first_game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
 
@@ -103,7 +102,6 @@ class TestCaseMatchEndpoints:
             text="Where is Vienna?",
             game_uid=second_game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
 
@@ -142,7 +140,6 @@ class TestCaseMatchEndpoints:
             text="Where is London?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         user = self.user_dto.new(email="t@t.com")
@@ -169,7 +166,6 @@ class TestCaseMatchEndpoints:
             text="Where is London?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         payload = {

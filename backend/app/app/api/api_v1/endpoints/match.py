@@ -61,7 +61,6 @@ def create_match(
     answer_dto = AnswerDTO(session=session)
     for position, question in enumerate(questions):
         new = question_dto.new(
-            db_session=session,
             game_uid=new_game.uid,
             text=question["text"],
             position=position,

@@ -185,14 +185,12 @@ def create_fixture_test(dbsession, match_dto, game_dto, question_dto):
                 game_uid=first_game.uid,
                 text=question_dict["text"],
                 position=i,
-                db_session=dbsession,
             )
         else:
             new_question = question_dto.new(
                 game_uid=second_game.uid,
                 text=question_dict["text"],
                 position=(i - 2),
-                db_session=dbsession,
             )
         question_dto.create_with_answers(new_question, question_dict["answers"])
 

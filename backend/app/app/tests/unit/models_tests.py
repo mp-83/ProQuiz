@@ -100,9 +100,9 @@ class TestCaseQuestion:
     def samples(self, dbsession):
         self.question_dto.add_many(
             [
-                self.question_dto.new(text="q1.text", position=0, db_session=dbsession),
-                self.question_dto.new(text="q2.text", position=1, db_session=dbsession),
-                self.question_dto.new(text="q3.text", position=2, db_session=dbsession),
+                self.question_dto.new(text="q1.text", position=0),
+                self.question_dto.new(text="q2.text", position=1),
+                self.question_dto.new(text="q3.text", position=2),
             ]
         )
         yield
@@ -130,9 +130,7 @@ class TestCaseQuestion:
         assert question.answers[0].question_uid == question.uid
 
     def t_createQuestionWithoutPosition(self, samples, dbsession):
-        new_question = self.question_dto.new(
-            text="new-question", position=1, db_session=dbsession
-        )
+        new_question = self.question_dto.new(text="new-question", position=1)
         self.question_dto.save(new_question)
         assert new_question.is_open
         assert new_question.is_template
@@ -164,7 +162,7 @@ class TestCaseQuestion:
             "position": 0,
         }
         new_question = self.question_dto.new(
-            text=data["text"], position=data["position"], db_session=dbsession
+            text=data["text"], position=data["position"]
         )
         self.question_dto.create_with_answers(new_question, data["answers"])
 
@@ -174,9 +172,7 @@ class TestCaseQuestion:
         assert self.answer_dto.get(text="The machine was undergoing repair").is_correct
 
     def t_cloningQuestion(self, dbsession):
-        new_question = self.question_dto.new(
-            text="new-question", position=0, db_session=dbsession
-        )
+        new_question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(new_question)
         answer = self.answer_dto.new(
             question_uid=new_question.uid,
@@ -184,15 +180,13 @@ class TestCaseQuestion:
             position=0,
         )
         self.answer_dto.save(answer)
-        cloned = new_question.clone()
+        cloned = self.question_dto.clone(new_question)
         assert new_question.uid != cloned.uid
         assert new_question.answers[0] != cloned.answers[0]
 
     def t_questionsAnswersAreOrderedByDefault(self, dbsession):
         # the reverse relation fields .answers is ordered by default
-        question = self.question_dto.new(
-            text="new-question", position=0, db_session=dbsession
-        )
+        question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
         answer = self.answer_dto.new(
             question_uid=question.uid, text="Answer1", position=0
@@ -207,9 +201,7 @@ class TestCaseQuestion:
         assert question.answers[1].text == "Answer2"
 
     def t_updateAnswers(self, dbsession):
-        question = self.question_dto.new(
-            text="new-question", position=0, db_session=dbsession
-        )
+        question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
         a1 = self.answer_dto.new(question_uid=question.uid, text="Answer1", position=0)
         self.answer_dto.save(a1)
@@ -243,7 +235,6 @@ class TestCaseMatchModel:
             text="Where is London?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         second_game = self.game_dto.new(match_uid=match.uid, index=1)
@@ -253,7 +244,6 @@ class TestCaseMatchModel:
             text="Where is Vienna?",
             game_uid=second_game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         assert match.questions[0][0].text == "Where is London?"
@@ -279,7 +269,6 @@ class TestCaseMatchModel:
             text="Where is London?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
 
@@ -298,12 +287,8 @@ class TestCaseMatchModel:
         assert question.text == "What is the capital of Norway?"
 
     def t_createMatchUsingTemplateQuestions(self, dbsession):
-        question_1 = self.question_dto.new(
-            text="Where is London?", position=0, db_session=dbsession
-        )
-        question_2 = self.question_dto.new(
-            text="Where is Vienna?", position=1, db_session=dbsession
-        )
+        question_1 = self.question_dto.new(text="Where is London?", position=0)
+        question_2 = self.question_dto.new(text="Where is Vienna?", position=1)
         self.question_dto.add_many([question_1, question_2])
 
         self.question_dto.add_many([question_1, question_2])
@@ -331,7 +316,6 @@ class TestCaseMatchModel:
             text="Where is London?",
             game_uid=game.uid,
             position=3,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         with pytest.raises(NotUsableQuestionError):
@@ -344,7 +328,7 @@ class TestCaseMatchModel:
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
         question = self.question_dto.new(
-            text="1+1 is = to", position=0, game_uid=game.uid, db_session=dbsession
+            text="1+1 is = to", position=0, game_uid=game.uid
         )
         self.question_dto.save(question)
         reaction_dto = ReactionDTO(session=dbsession)
@@ -424,19 +408,19 @@ class TestCaseGameModel:
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
         question_2 = self.question_dto.new(
-            text="Where is London?", game_uid=game.uid, position=1, db_session=dbsession
+            text="Where is London?", game_uid=game.uid, position=1
         )
         self.question_dto.save(question_2)
         question_1 = self.question_dto.new(
-            text="Where is Lisboa?", game_uid=game.uid, position=0, db_session=dbsession
+            text="Where is Lisboa?", game_uid=game.uid, position=0
         )
         self.question_dto.save(question_1)
         question_4 = self.question_dto.new(
-            text="Where is Paris?", game_uid=game.uid, position=3, db_session=dbsession
+            text="Where is Paris?", game_uid=game.uid, position=3
         )
         self.question_dto.save(question_4)
         question_3 = self.question_dto.new(
-            text="Where is Berlin?", game_uid=game.uid, position=2, db_session=dbsession
+            text="Where is Berlin?", game_uid=game.uid, position=2
         )
         self.question_dto.save(question_3)
 
@@ -465,7 +449,7 @@ class TestCaseReactionModel:
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
         question = self.question_dto.new(
-            text="new-question", position=0, game_uid=game.uid, db_session=dbsession
+            text="new-question", position=0, game_uid=game.uid
         )
         self.question_dto.save(question)
         answer = self.answer_dto.new(
@@ -507,9 +491,7 @@ class TestCaseReactionModel:
         self.game_dto.save(game)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
-        question = self.question_dto.new(
-            text="1+1 is = to", position=0, db_session=dbsession
-        )
+        question = self.question_dto.new(text="1+1 is = to", position=0)
         self.question_dto.save(question)
         answer = self.answer_dto.new(question=question, text="2", position=1)
         self.answer_dto.save(answer)
@@ -533,9 +515,7 @@ class TestCaseReactionModel:
         self.game_dto.save(game)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
-        question = self.question_dto.new(
-            text="3*3 = ", time=0, position=0, db_session=dbsession
-        )
+        question = self.question_dto.new(text="3*3 = ", time=0, position=0)
         self.question_dto.save(question)
         reaction = self.reaction_dto.new(
             match=match,
@@ -558,9 +538,7 @@ class TestCaseReactionModel:
         self.game_dto.save(game)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
-        question = self.question_dto.new(
-            text="1+1 =", time=2, position=0, db_session=dbsession
-        )
+        question = self.question_dto.new(text="1+1 =", time=2, position=0)
         self.question_dto.save(question)
         reaction = self.reaction_dto.new(
             match=match,
@@ -588,9 +566,7 @@ class TestCaseReactionModel:
         self.game_dto.save(game)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
-        question = self.question_dto.new(
-            text="Where is Miami", position=0, db_session=dbsession
-        )
+        question = self.question_dto.new(text="Where is Miami", position=0)
         self.question_dto.save(question)
         reaction = self.reaction_dto.new(
             match=match,
@@ -618,9 +594,9 @@ class TestCaseReactionModel:
         self.game_dto.save(game)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
-        q1 = self.question_dto.new(text="t1", position=0, db_session=dbsession)
+        q1 = self.question_dto.new(text="t1", position=0)
         self.question_dto.save(q1)
-        q2 = self.question_dto.new(text="t2", position=1, db_session=dbsession)
+        q2 = self.question_dto.new(text="t2", position=1)
         self.question_dto.save(q2)
         r1 = self.reaction_dto.new(
             match=match, question=q1, user=user, game_uid=game.uid, db_session=dbsession

@@ -42,11 +42,11 @@ class TestCaseQuestionFactory(TestCaseBase):
         game = self.game_dto.new(match_uid=match.uid, index=1, order=False)
         self.game_dto.save(game)
         q_berlin = self.question_dto.new(
-            text="Where is Berlin?", game_uid=game.uid, position=0, db_session=dbsession
+            text="Where is Berlin?", game_uid=game.uid, position=0
         )
         self.question_dto.save(q_berlin)
         q_zurich = self.question_dto.new(
-            text="Where is Zurich?", game_uid=game.uid, position=1, db_session=dbsession
+            text="Where is Zurich?", game_uid=game.uid, position=1
         )
         self.question_dto.save(q_zurich)
 
@@ -63,11 +63,11 @@ class TestCaseQuestionFactory(TestCaseBase):
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
         second = self.question_dto.new(
-            text="Where is London?", game_uid=game.uid, position=1, db_session=dbsession
+            text="Where is London?", game_uid=game.uid, position=1
         )
         self.question_dto.save(second)
         first = self.question_dto.new(
-            text="Where is Paris?", game_uid=game.uid, position=0, db_session=dbsession
+            text="Where is Paris?", game_uid=game.uid, position=0
         )
         self.question_dto.save(first)
 
@@ -89,7 +89,7 @@ class TestCaseQuestionFactory(TestCaseBase):
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
         question = self.question_dto.new(
-            text="Where is Paris?", game_uid=game.uid, position=0, db_session=dbsession
+            text="Where is Paris?", game_uid=game.uid, position=0
         )
         self.question_dto.save(question)
 
@@ -106,11 +106,10 @@ class TestCaseQuestionFactory(TestCaseBase):
             text="Where is Amsterdam?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         question = self.question_dto.new(
-            text="Where is Lion?", game_uid=game.uid, position=1, db_session=dbsession
+            text="Where is Lion?", game_uid=game.uid, position=1
         )
         self.question_dto.save(question)
 
@@ -128,11 +127,10 @@ class TestCaseQuestionFactory(TestCaseBase):
             text="Where is Amsterdam?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(first)
         second = self.question_dto.new(
-            text="Where is Lion?", game_uid=game.uid, position=1, db_session=dbsession
+            text="Where is Lion?", game_uid=game.uid, position=1
         )
         self.question_dto.save(second)
 
@@ -149,11 +147,10 @@ class TestCaseQuestionFactory(TestCaseBase):
             text="Where is Amsterdam?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         question = self.question_dto.new(
-            text="Where is Lion?", game_uid=game.uid, position=1, db_session=dbsession
+            text="Where is Lion?", game_uid=game.uid, position=1
         )
         self.question_dto.save(question)
 
@@ -169,11 +166,10 @@ class TestCaseQuestionFactory(TestCaseBase):
             text="Where is Amsterdam?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         question = self.question_dto.new(
-            text="Where is Lion?", game_uid=game.uid, position=1, db_session=dbsession
+            text="Where is Lion?", game_uid=game.uid, position=1
         )
         self.question_dto.save(question)
 
@@ -265,17 +261,11 @@ class TestCaseStatus(TestCaseBase):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
-        q1 = self.question_dto.new(
-            text="Where is Miami", position=0, game=game, db_session=dbsession
-        )
+        q1 = self.question_dto.new(text="Where is Miami", position=0, game=game)
         self.question_dto.save(q1)
-        q2 = self.question_dto.new(
-            text="Where is London", position=1, game=game, db_session=dbsession
-        )
+        q2 = self.question_dto.new(text="Where is London", position=1, game=game)
         self.question_dto.save(q2)
-        q3 = self.question_dto.new(
-            text="Where is Paris", position=2, game=game, db_session=dbsession
-        )
+        q3 = self.question_dto.new(text="Where is Paris", position=2, game=game)
         self.question_dto.save(q3)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -319,17 +309,11 @@ class TestCaseStatus(TestCaseBase):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
-        q1 = self.question_dto.new(
-            text="Where is Miami", position=0, game=game, db_session=dbsession
-        )
+        q1 = self.question_dto.new(text="Where is Miami", position=0, game=game)
         self.question_dto.save(q1)
-        q2 = self.question_dto.new(
-            text="Where is London", position=1, game=game, db_session=dbsession
-        )
+        q2 = self.question_dto.new(text="Where is London", position=1, game=game)
         self.question_dto.save(q2)
-        q3 = self.question_dto.new(
-            text="Where is Paris", position=2, game=game, db_session=dbsession
-        )
+        q3 = self.question_dto.new(text="Where is Paris", position=2, game=game)
         self.question_dto.save(q3)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -372,13 +356,9 @@ class TestCaseStatus(TestCaseBase):
         self.game_dto.save(g1)
         g2 = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(g2)
-        q1 = self.question_dto.new(
-            text="Where is Miami", position=0, game=g1, db_session=dbsession
-        )
+        q1 = self.question_dto.new(text="Where is Miami", position=0, game=g1)
         self.question_dto.save(q1)
-        q2 = self.question_dto.new(
-            text="Where is London", position=0, game=g2, db_session=dbsession
-        )
+        q2 = self.question_dto.new(text="Where is London", position=0, game=g2)
         self.question_dto.save(q2)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -410,13 +390,9 @@ class TestCaseStatus(TestCaseBase):
         self.game_dto.save(g1)
         g2 = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(g2)
-        q1 = self.question_dto.new(
-            text="Where is Miami", position=0, game=g1, db_session=dbsession
-        )
+        q1 = self.question_dto.new(text="Where is Miami", position=0, game=g1)
         self.question_dto.save(q1)
-        q2 = self.question_dto.new(
-            text="Where is London", position=0, game=g2, db_session=dbsession
-        )
+        q2 = self.question_dto.new(text="Where is London", position=0, game=g2)
         self.question_dto.save(q2)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -453,7 +429,6 @@ class TestCaseSinglePlayer(TestCaseBase):
             text="Where is London?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         user = self.user_dto.new(email="user@test.project")
@@ -475,7 +450,6 @@ class TestCaseSinglePlayer(TestCaseBase):
             text="Where is London?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(first)
         answer = self.answer_dto.new(question=first, text="UK", position=1)
@@ -506,7 +480,6 @@ class TestCaseSinglePlayer(TestCaseBase):
             text="Where is London?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         user = self.user_dto.new(email="user@test.project")
@@ -530,7 +503,6 @@ class TestCaseSinglePlayer(TestCaseBase):
             text="Where is London?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         answer = self.answer_dto.new(question=question, text="UK", position=1)
@@ -555,7 +527,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
         question = self.question_dto.new(
-            text="Where is London?", game_uid=game.uid, position=0, db_session=dbsession
+            text="Where is London?", game_uid=game.uid, position=0
         )
         self.question_dto.save(question)
 
@@ -578,7 +550,6 @@ class TestCaseSinglePlayer(TestCaseBase):
             game_uid=game.uid,
             position=0,
             time=2,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         answer = self.answer_dto.new(question=question, text="UK", position=1, level=2)
@@ -601,7 +572,6 @@ class TestCaseSinglePlayer(TestCaseBase):
             text="Where is London?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
         )
         self.question_dto.save(first)
         first_answer = self.answer_dto.new(question=first, text="UK", position=1)
@@ -610,7 +580,6 @@ class TestCaseSinglePlayer(TestCaseBase):
             text="Where is Paris?",
             game_uid=game.uid,
             position=1,
-            db_session=dbsession,
         )
         self.question_dto.save(second)
         second_answer = self.answer_dto.new(question=second, text="France", position=1)
@@ -619,7 +588,6 @@ class TestCaseSinglePlayer(TestCaseBase):
             text="Where is Dublin?",
             game_uid=game.uid,
             position=2,
-            db_session=dbsession,
         )
         self.question_dto.save(third)
         third_answer = self.answer_dto.new(question=third, text="Ireland", position=1)
@@ -654,15 +622,14 @@ class TestCaseResumeMatch(TestCaseBase):
             text="Where is London?",
             game_uid=game.uid,
             position=0,
-            db_session=dbsession,
-        ).save()
+        )
+        self.question_dto.save(question)
         answer = self.answer_dto.new(question=question, text="UK", position=1)
         self.answer_dto.save(answer)
         question = self.question_dto.new(
             text="Where is Moscow?",
             game_uid=game.uid,
             position=1,
-            db_session=dbsession,
         )
         self.question_dto.save(question)
         user = self.user_dto.new(email="user@test.project")

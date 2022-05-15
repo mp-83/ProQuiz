@@ -1,9 +1,10 @@
 from sqlalchemy.orm import Session
 
-from app.domain_entities import Questions, Reactions, Users
+from app.domain_entities import Reactions, Users
 from app.domain_entities.user import WordDigest
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.match import MatchDTO
+from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.validation.logical import RetrieveObject
 from app.exceptions import NotFoundObjectError, ValidateError
 
@@ -124,7 +125,7 @@ class ValidatePlayNext:
 
         question = self._data.get("question")
         if not question:
-            question = Questions(db_session=self._session).get(uid=self.question_uid)
+            question = QuestionDTO(session=self._session).get(uid=self.question_uid)
 
         reaction = Reactions(db_session=self._session).reaction_of_user_to_question(
             user, question
@@ -137,7 +138,7 @@ class ValidatePlayNext:
         if answer is None:
             raise NotFoundObjectError("Unexisting answer")
 
-        question = Questions(db_session=self._session).get(uid=self.question_uid)
+        question = QuestionDTO(session=self._session).get(uid=self.question_uid)
         if question and answer in question.answers:
             self._data["answer"] = answer
             return

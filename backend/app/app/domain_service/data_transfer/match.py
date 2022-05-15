@@ -139,7 +139,6 @@ class MatchDTO:
                 game_uid=new_game.uid,
                 text=question.text,
                 position=question.position,
-                db_session=self._session,
             )
             self._session.add(new)
             result.append(new)
