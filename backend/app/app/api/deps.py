@@ -9,6 +9,7 @@ from app.core import security
 from app.core.config import settings
 from app.domain_entities import User
 from app.domain_entities.db.session import get_db
+from app.domain_service.data_transfer.user import UserDTO
 from app.domain_service.validation import syntax
 
 reusable_oauth2 = OAuth2PasswordBearer(
@@ -17,7 +18,7 @@ reusable_oauth2 = OAuth2PasswordBearer(
 
 
 def get_current_user(
-    db: Session = Depends(get_db), token: str = Depends(reusable_oauth2)
+    session: Session = Depends(get_db), token: str = Depends(reusable_oauth2)
 ) -> User:
     try:
         payload = jwt.decode(
@@ -29,7 +30,9 @@ def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
         ) from err
-    user = domain_service.user.get(db, id=token_data.sub)
+
+    dto = UserDTO(session=session)
+    user = dto.get(uid=token_data.sub)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user

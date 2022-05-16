@@ -72,9 +72,13 @@ def client() -> Generator:
         yield c
 
 
+@pytest.fixture(scope="session")
+def access_token_expires():
+    return timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+
 @pytest.fixture(scope="module")
-def superuser_token_headers() -> Dict[str, str]:
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+def superuser_token_headers(access_token_expires) -> Dict[str, str]:
     a_token = {
         "access_token": security.create_access_token(
             1, expires_delta=access_token_expires
