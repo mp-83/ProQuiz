@@ -74,8 +74,8 @@ def db_session() -> Session:
     reset_db()
 
 
-@pytest.fixture(scope="module")
-def client() -> Generator:
+@pytest.fixture()
+def client(db_session) -> Generator:
     with TestClient(app) as c:
         yield c
 

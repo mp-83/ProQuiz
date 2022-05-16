@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
+from functools import wraps
 from typing import Any, Union
 
+from fastapi import HTTPException
 from jose import jwt
 from passlib.context import CryptContext
 
@@ -33,15 +35,11 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-from fastapi.responses import RedirectResponse
-
-
 def login_required(func):
-    def function_wrapper(*args, **kwargs):
-        view = args[0]
-        if view.request.is_authenticated:
-            return func(*args, **kwargs)
-        login_url = view.request.route_url("login")
-        return RedirectResponse(login_url)
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        if kwargs.get("_user") is None:
+            raise HTTPException(status_code=403)
+        return func(*args, **kwargs)
 
-    return function_wrapper
+    return wrapper

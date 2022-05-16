@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
-from app.core.security import login_required
 from app.domain_entities.db.session import get_db
 from app.domain_entities.user import User
 from app.domain_service.data_transfer.answer import AnswerDTO
@@ -27,7 +26,7 @@ router = APIRouter()
 
 @router.get("/")
 def list_matches(
-    session: Session = Depends(get_db), _: User = Depends(get_current_user)
+    session: Session = Depends(get_db), _user: User = Depends(get_current_user)
 ):
     # TODO: to fix the filtering parameters
     all_matches = MatchDTO(session=session).all_matches(**{})
@@ -38,6 +37,7 @@ def list_matches(
 def get_match(
     uid: int,
     session: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ):
     try:
         match = RetrieveObject(uid=uid, otype="match", db_session=session).get()
@@ -51,6 +51,7 @@ def get_match(
 def create_match(
     user_input: syntax.MatchCreate,
     session: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ):
     user_input = user_input.dict()
     questions = user_input.pop("questions", None) or []
@@ -86,12 +87,12 @@ def create_match(
     return new_match
 
 
-@login_required
 @router.put("/edit/{uid}", response_model=syntax.Match)
 def edit_match(
     uid: int,
     user_input: syntax.MatchEdit,
     session: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ):
     try:
         match = ValidateEditMatch(uid, db_session=session).is_valid()
@@ -108,11 +109,11 @@ def edit_match(
     return match
 
 
-@login_required
 @router.post("/yaml_import", response_model=syntax.Match)
 def match_yaml_import(
     user_input: syntax.MatchYamlImport,
     session: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ):
     user_input = user_input.dict()
     match_uid = user_input.get("uid")
