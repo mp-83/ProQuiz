@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user
 from app.core.security import login_required
 from app.domain_entities.db.session import get_db
+from app.domain_entities.user import User
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
@@ -24,7 +26,9 @@ router = APIRouter()
 
 
 @router.get("/")
-def list_matches(session: Session = Depends(get_db)):
+def list_matches(
+    session: Session = Depends(get_db), _: User = Depends(get_current_user)
+):
     # TODO: to fix the filtering parameters
     all_matches = MatchDTO(session=session).all_matches(**{})
     return {"matches": [m.json for m in all_matches]}

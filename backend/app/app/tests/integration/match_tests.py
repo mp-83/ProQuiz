@@ -191,6 +191,7 @@ class TestCaseMatchEndpoints:
         m3 = self.match_dto.save(self.match_dto.new())
 
         response = client.get(f"{settings.API_V1_STR}/matches/")
+        assert response.ok
         assert response.json()["matches"] == [m.json for m in [m1, m2, m3]]
 
     def t_importQuestionsFromYaml(

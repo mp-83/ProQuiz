@@ -9,6 +9,7 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.api.deps import get_current_user
 from app.core import security
 from app.core.config import settings
 from app.domain_entities.db.base import Base
@@ -41,7 +42,14 @@ def override_get_db():
     yield session_factory()
 
 
+def override_get_current_user():
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+    session = session_factory()
+    yield UserDTO(session=session).get(uid=1)
+
+
 app.dependency_overrides[get_db] = override_get_db
+app.dependency_overrides[get_current_user] = override_get_current_user
 
 
 @pytest.fixture()
@@ -90,6 +98,7 @@ def superuser_token_headers(access_token_expires) -> Dict[str, str]:
 
 @pytest.fixture(scope="module")
 def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]:
+    # performs the whole authentication process
     return authentication_token_from_email(
         client=client, email=settings.EMAIL_TEST_USER, db=db
     )

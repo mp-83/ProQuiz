@@ -5,10 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user
 from app.core import security
 from app.core.config import settings
 from app.domain_entities import User
+from app.domain_entities.db.session import get_db
 from app.domain_service.data_transfer.user import UserDTO
 from app.domain_service.validation import syntax
 
