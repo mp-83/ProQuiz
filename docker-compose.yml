@@ -17,7 +17,7 @@ services:
     env_file:
       - .env
     ports:
-      - "7890:80"
+      - "5050:80"
 
   backend:
     build:
