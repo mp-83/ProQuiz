@@ -53,8 +53,8 @@ class Settings(BaseSettings):
     EMAILS_FROM_NAME: Optional[str] = None
 
     EMAIL_TEST_USER: EmailStr = "test@example.com"  # type: ignore
-    # FIRST_SUPERUSER: EmailStr
-    # FIRST_SUPERUSER_PASSWORD: str
+    FIRST_SUPERUSER: EmailStr
+    FIRST_SUPERUSER_PASSWORD: str
 
     class Config:
         case_sensitive = True
