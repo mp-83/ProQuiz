@@ -1,25 +1,19 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
+FROM python:3.8-slim
 
-WORKDIR /app/
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+    apt-get -y upgrade &&  \
+    apt-get install -qq -y \
+    build-essential libpq-dev --no-install-recommends \
+    python3-dev python3-pip python3-setuptools python3-wheel python3-cffi \
+    && pip install --upgrade pip
 
-# Install Poetry
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | POETRY_HOME=/opt/poetry python && \
-    cd /usr/local/bin && \
-    ln -s /opt/poetry/bin/poetry && \
-    poetry config virtualenvs.create false
+WORKDIR /app
 
-# Copy poetry.lock* in case it doesn't exist in the repo
-COPY ./app/pyproject.toml ./app/poetry.lock* /app/
+COPY ./requirements.txt ./app /app
+# COPY app/ /app
 
-# Allow installing dev dependencies to run tests
-ARG INSTALL_DEV=false
-RUN bash -c "if [ $INSTALL_DEV == 'true' ] ; then poetry install --no-root ; else poetry install --no-root --no-dev ; fi"
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
-# For development, Jupyter remote kernel, Hydrogen
-# Using inside the container:
-# jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
-ARG INSTALL_JUPYTER=false
-RUN bash -c "if [ $INSTALL_JUPYTER == 'true' ] ; then pip install jupyterlab ; fi"
+# ENV PYTHONPATH=/app
 
-COPY ./app /app
-ENV PYTHONPATH=/app
+CMD ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "7070", "--log-level", "debug"]
