@@ -32,7 +32,7 @@ def main() -> None:
     _session = session_factory()
     populate_database(_session)
 
-    logger.info("Initial data created")
+    logger.info("Database is now populated")
 
 
 if __name__ == "__main__":
