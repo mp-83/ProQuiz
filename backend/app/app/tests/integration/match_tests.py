@@ -180,7 +180,12 @@ class TestCaseMatchEndpoints:
             headers=superuser_token_headers,
         )
         assert response.ok
-        assert len(match.questions[0]) == 2
+        first_game_questions = match.questions[0]
+        assert len(first_game_questions) == 2
+        assert first_game_questions[1].text == "What is the capital of Sweden?"
+        assert first_game_questions[1].answers_by_position[0].is_correct
+        assert not first_game_questions[1].answers_by_position[1].is_correct
+        assert not first_game_questions[1].answers_by_position[2].is_correct
         assert len(game.ordered_questions) == 2
         self.match_dto.refresh(match)
         assert match.times == 10

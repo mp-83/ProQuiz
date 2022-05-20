@@ -56,6 +56,17 @@ class QuestionDTO:
     def questions_with_ids(self, *ids):
         return self._session.query(Question).filter(Question.uid.in_(ids))
 
+    def create_or_update_answers(self, instance: Question, answers: list):
+        for n, answer_data in enumerate(answers, start=len(instance.answers)):
+            answer = instance.answers_by_uid.get(answer_data.get("uid"))
+            answer_data.update(question_uid=instance.uid, position=n)
+            if answer:
+                answer = self.answer_dto.update(answer, **answer_data)
+            else:
+                answer_data.update(is_correct=n == 0)
+                answer = self.answer_dto.new(**answer_data)
+            self._session.add(answer)
+
     def update_answers(self, instance: Question, answers: list):
         for p, data in enumerate(answers):
             data.update(position=p)

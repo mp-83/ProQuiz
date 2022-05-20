@@ -98,23 +98,28 @@ class MatchDTO:
                 q.uid: q for q in self.question_dto.questions_with_ids(*ids).all()
             }
 
-        for q in questions:
-            game_idx = q.get("game")
+        for question_data in questions:
+            game_idx = question_data.get("game")
             if game_idx is None:
                 g = self.game_dto.new(match_uid=instance.uid)
                 self.game_dto.save(g)
             else:
                 g = instance.games[game_idx]
 
-            if q.get("uid") in existing:
-                question = existing.get(q.get("uid"))
-                question.text = q.get("text", question.text)
-                question.position = q.get("position", question.position)
+            if question_data.get("uid") in existing:
+                question = existing.get(question_data.get("uid"))
+                question.text = question_data.get("text", question.text)
+                question.position = question_data.get("position", question.position)
             else:
                 question = self.question_dto.new(
-                    game_uid=g.uid, text=q.get("text"), position=len(g.questions)
+                    game_uid=g.uid,
+                    text=question_data.get("text"),
+                    position=len(g.questions),
                 )
-            self._session.add(question)
+            self.question_dto.save(question)
+            self.question_dto.create_or_update_answers(
+                question, question_data.get("answers", [])
+            )
             result.append(question)
 
         if commit:
