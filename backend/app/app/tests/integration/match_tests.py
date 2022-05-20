@@ -57,7 +57,7 @@ class TestCaseMatchEndpoints:
 
     def t_createMatchWithCode(self, client: TestClient, superuser_token_headers: dict):
         match_name = "New Match"
-        now = datetime.now()
+        now = datetime.now() + timedelta(hours=1)
         tomorrow = now + timedelta(days=1)
         response = client.post(
             f"{settings.API_V1_STR}/matches/new",

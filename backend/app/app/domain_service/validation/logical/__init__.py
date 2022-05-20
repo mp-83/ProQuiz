@@ -2,7 +2,7 @@ from .generic import RetrieveObject  # noqa: F401
 from .match import (  # noqa: F401
     ValidateEditMatch,
     ValidateMatchImport,
-    ValidateNewCodeMatch,
+    ValidateNewMatch,
 )
 from .play import (  # noqa: F401
     ValidateError,

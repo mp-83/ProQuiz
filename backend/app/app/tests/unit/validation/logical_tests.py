@@ -11,7 +11,7 @@ from app.domain_service.data_transfer.user import UserDTO, WordDigest
 from app.domain_service.validation.logical import (
     RetrieveObject,
     ValidateMatchImport,
-    ValidateNewCodeMatch,
+    ValidateNewMatch,
     ValidatePlayCode,
     ValidatePlayLand,
     ValidatePlayNext,
@@ -197,26 +197,42 @@ class TestCaseNextEndPoint(TestCaseBase):
 
 
 class TestCaseCreateMatch:
-    def t_fromTimeGreaterThanToTime(self):
+    def t_fromTimeGreaterThanToTime(self, db_session):
         # to avoid from_time to be < datetime.now() when
         # the check is performed, the value is increased
         # by two seconds (or we mock datetime.now)
         with pytest.raises(ValidateError) as e:
-            ValidateNewCodeMatch(
-                from_time=(datetime.now() + timedelta(seconds=2)),
-                to_time=(datetime.now() - timedelta(seconds=10)),
+            ValidateNewMatch(
+                {
+                    "from_time": (datetime.now() + timedelta(seconds=2)),
+                    "to_time": (datetime.now() - timedelta(seconds=10)),
+                },
+                db_session=db_session,
             ).is_valid()
 
         assert e.value.message == "to-time must be greater than from-time"
 
-    def t_fromTimeIsExpired(self):
+    def t_fromTimeIsExpired(self, db_session):
         with pytest.raises(ValidateError) as e:
-            ValidateNewCodeMatch(
-                from_time=(datetime.now() - timedelta(seconds=1)),
-                to_time=(datetime.now() + timedelta(days=1)),
+            ValidateNewMatch(
+                {
+                    "from_time": (datetime.now() - timedelta(seconds=1)),
+                    "to_time": (datetime.now() + timedelta(days=1)),
+                },
+                db_session=db_session,
             ).is_valid()
 
         assert e.value.message == "from-time must be greater than now"
+
+    def t_matchWithSameNameAlreadyExists(self, db_session):
+        name = "New match"
+        dto = MatchDTO(session=db_session)
+        new_match = dto.new(name=name)
+        dto.save(new_match)
+        with pytest.raises(ValidateError) as e:
+            ValidateNewMatch({"name": name}, db_session=db_session).is_valid()
+
+        assert e.value.message == "A Match with the same name already exists."
 
 
 class TestCaseImportFromYaml:

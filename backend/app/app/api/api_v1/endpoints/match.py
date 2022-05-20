@@ -16,6 +16,7 @@ from app.domain_service.validation.logical import (
     RetrieveObject,
     ValidateEditMatch,
     ValidateMatchImport,
+    ValidateNewMatch,
 )
 from app.exceptions import NotFoundObjectError, ValidateError
 
@@ -49,11 +50,18 @@ def get_match(
 
 @router.post("/new", response_model=syntax.Match)
 def create_match(
-    user_input: syntax.MatchCreate,
+    match_in: syntax.MatchCreate,
     session: Session = Depends(get_db),
     _user: User = Depends(get_current_user),
 ):
-    user_input = user_input.dict()
+    user_input = match_in.dict()
+    try:
+        ValidateNewMatch(user_input, db_session=session).is_valid()
+    except ValidateError as e:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST, content={"error": e.message}
+        )
+
     questions = user_input.pop("questions", None) or []
     dto = MatchDTO(session=session)
     new_match = dto.new(**user_input)

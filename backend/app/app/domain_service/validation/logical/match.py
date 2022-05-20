@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.validation.logical import RetrieveObject
 from app.exceptions import ValidateError
 
@@ -24,18 +25,29 @@ class ValidateEditMatch:
         return self.valid_match()
 
 
-class ValidateNewCodeMatch:
-    def __init__(self, from_time, to_time):
-        self.from_time = from_time
-        self.to_time = to_time
+class ValidateNewMatch:
+    def __init__(self, match_in: dict, db_session: Session):
+        self.from_time = match_in.get("from_time")
+        self.to_time = match_in.get("to_time")
+        self.name = match_in.get("name")
+        self._session = db_session
 
-    def is_valid(self):
+    def valid_match(self):
+        match = MatchDTO(session=self._session).get(name=self.name)
+        if match:
+            raise ValidateError("A Match with the same name already exists.")
+
+    def validate_datetime(self):
         now = datetime.now()
-        if self.from_time < now:
+        if self.from_time and self.from_time < now:
             raise ValidateError("from-time must be greater than now")
 
-        if self.to_time < self.from_time:
+        if self.to_time and self.to_time < self.from_time:
             raise ValidateError("to-time must be greater than from-time")
+
+    def is_valid(self):
+        self.valid_match()
+        self.validate_datetime()
 
 
 class ValidateMatchImport:
