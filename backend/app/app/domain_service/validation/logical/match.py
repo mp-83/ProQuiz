@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
@@ -38,7 +38,7 @@ class ValidateNewMatch:
             raise ValidateError("A Match with the same name already exists.")
 
     def validate_datetime(self):
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         if self.from_time and self.from_time < now:
             raise ValidateError("from-time must be greater than now")
 

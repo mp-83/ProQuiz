@@ -9,6 +9,7 @@ class AnswerDTO:
         self.klass = Answer
 
     def new(self, **kwargs):
+        kwargs.pop("uid", None)
         return self.klass(**kwargs)
 
     def save(self, instance):
@@ -21,10 +22,14 @@ class AnswerDTO:
     def get(self, **filters):
         return self._session.query(self.klass).filter_by(**filters).one_or_none()
 
+    def nullable_column(self, name):
+        return self.klass.__table__.columns.get(name).nullable
+
     def update(self, instance, **kwargs):
         commit = kwargs.pop("commit", False)
+        kwargs.pop("uid", None)
         for k, v in kwargs.items():
-            if not hasattr(instance, k):
+            if not hasattr(instance, k) or (v is None and not self.nullable_column(k)):
                 continue
             setattr(instance, k, v)
 

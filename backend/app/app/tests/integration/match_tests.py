@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi import status
@@ -57,7 +57,7 @@ class TestCaseMatchEndpoints:
 
     def t_createMatchWithCode(self, client: TestClient, superuser_token_headers: dict):
         match_name = "New Match"
-        now = datetime.now() + timedelta(hours=1)
+        now = datetime.now(tz=timezone.utc) + timedelta(hours=1)
         tomorrow = now + timedelta(days=1)
         response = client.post(
             f"{settings.API_V1_STR}/matches/new",
@@ -71,7 +71,7 @@ class TestCaseMatchEndpoints:
         )
         assert response.ok
         assert response.json()["code"]
-        assert response.json()["expires"] == tomorrow.isoformat()
+        assert response.json()["expires"] == tomorrow.isoformat().replace("+00:00", "")
 
     def t_requestUnexistentMatch(self, client: TestClient):
         response = client.get(f"{settings.API_V1_STR}/matches/30")

@@ -59,23 +59,23 @@ def new_match():
         password=os.getenv("FIRST_SUPERUSER_PASSWORD"),
     )
     payload = {
-        "name": "New match",
+        "name": "Another new match",
         "with_code": True,
         "times": 0,
         "from_time": "2022-05-21T06:19:43.780Z",
         "to_time": "2022-05-22T06:19:43.780Z",
         "is_restricted": False,
         "order": True,
-        # "questions": [
-        #     {
-        #         "text": "How are you",
-        #         "position": 0,
-        #         "time": 0,
-        #         "content_url": "string",
-        #         "game": 0,
-        #         "answers": ["Fine", "Bad", "So, so"],
-        #     }
-        # ],
+        "questions": [
+            {
+                "text": "How are you",
+                "position": 0,
+                "time": 0,
+                "content_url": "string",
+                "game": 0,
+                "answers": [{"text": "Good"}, {"text": "Bad"}, {"text": "So so"}],
+            }
+        ],
     }
     result = client.post(f"{BASE_URL}/matches/new", json=payload)
     typer.echo((result.status_code, result.json()))

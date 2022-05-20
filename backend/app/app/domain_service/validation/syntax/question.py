@@ -1,24 +1,13 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, NonNegativeInt
 
-from app.domain_service.validation.syntax import Answer
-
-
-class SimpleAnswer(BaseModel):
-    uid: Optional[int]
-    text: str
-
-    @validator("uid")
-    def positive_value(cls, v):
-        if v is not None:
-            assert v > 0
-        return v
+from app.domain_service.validation.syntax import Answer, AnswerCreate
 
 
 class Question(BaseModel):
-    uid: int
-    position: int
+    uid: NonNegativeInt
+    position: NonNegativeInt
     text: str
     time: int = None
     content_url: str = None
@@ -31,24 +20,13 @@ class Question(BaseModel):
 
 class QuestionCreate(BaseModel):
     text: str
-    position: Optional[int]
+    position: Optional[NonNegativeInt]
     time: int = None
     content_url: str = None
-    game: Optional[int]
-    answers: List[SimpleAnswer] = []
-
-    @validator("position")
-    def positive_value(cls, v):
-        assert v > 0
-        return v
+    game: Optional[NonNegativeInt]
+    answers: Optional[List[AnswerCreate]]
 
 
 class QuestionEdit(QuestionCreate):
     text: Optional[str]
-    position: Optional[int]
-
-    @validator("position")
-    def positive_value(cls, v):
-        if v is not None:
-            assert v > 0
-        return v
+    position: Optional[NonNegativeInt]

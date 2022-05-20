@@ -22,7 +22,7 @@ class TestCaseLogin:
         dto.save(new_user)
         response = client.post(
             f"{settings.API_V1_STR}/login/access-token",
-            data={"username": "user@test.com", "password": "psser"},
+            data={"username": "user@test.com", "password": "p@ssworth"},
             headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK

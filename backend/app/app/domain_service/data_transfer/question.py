@@ -65,13 +65,15 @@ class QuestionDTO:
         self._session.commit()
 
     def update(self, instance, data: dict):
+        answers = data.pop("answers", [])
         for k, value in data.items():
-            if k == "answers":
-                self.update_answers(instance, value)
-            elif k in ["text", "position"] and value is None:
+            if k in ["text", "position"] and value is None:
                 continue
             elif hasattr(instance, k):
                 setattr(instance, k, value)
+
+        if answers:
+            self.update_answers(instance, answers)
 
         self._session.commit()
 

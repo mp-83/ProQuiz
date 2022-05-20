@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -197,6 +197,8 @@ class TestCaseNextEndPoint(TestCaseBase):
 
 
 class TestCaseCreateMatch:
+    now = datetime.now(tz=timezone.utc)
+
     def t_fromTimeGreaterThanToTime(self, db_session):
         # to avoid from_time to be < datetime.now() when
         # the check is performed, the value is increased
@@ -204,8 +206,8 @@ class TestCaseCreateMatch:
         with pytest.raises(ValidateError) as e:
             ValidateNewMatch(
                 {
-                    "from_time": (datetime.now() + timedelta(seconds=2)),
-                    "to_time": (datetime.now() - timedelta(seconds=10)),
+                    "from_time": (self.now + timedelta(seconds=60)),
+                    "to_time": (self.now - timedelta(minutes=10)),
                 },
                 db_session=db_session,
             ).is_valid()
@@ -216,8 +218,8 @@ class TestCaseCreateMatch:
         with pytest.raises(ValidateError) as e:
             ValidateNewMatch(
                 {
-                    "from_time": (datetime.now() - timedelta(seconds=1)),
-                    "to_time": (datetime.now() + timedelta(days=1)),
+                    "from_time": (self.now - timedelta(seconds=1)),
+                    "to_time": (self.now + timedelta(days=1)),
                 },
                 db_session=db_session,
             ).is_valid()

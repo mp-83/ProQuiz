@@ -32,13 +32,16 @@ def get_question(
 
 @router.post("/new", response_model=syntax.Question)
 def new_question(
-    user_input: syntax.QuestionCreate,
+    question_in: syntax.QuestionCreate,
     session: Session = Depends(get_db),
     _user: User = Depends(get_current_user),
 ):
+    user_input = question_in.dict()
     dto = QuestionDTO(session=session)
-    instance = dto.new(**user_input.dict())
-    return dto.save(instance)
+    answers = user_input.pop("answers", [])
+    new_instance = dto.new(**user_input)
+    dto.create_with_answers(new_instance, answers=answers)
+    return dto.save(new_instance)
 
 
 @router.put("/edit/{uid}", response_model=syntax.Question)

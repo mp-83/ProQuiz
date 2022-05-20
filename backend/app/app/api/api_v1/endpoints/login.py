@@ -24,8 +24,10 @@ def login_access_token(
     OAuth2 compatible token login, get an access token for future requests
     """
     user = UserDTO(session=session).get(email=form_data.username)
-    if not user or user and user.check_password(form_data.password):
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid user")
+    elif not user.check_password(form_data.password):
+        raise HTTPException(status_code=400, detail="Incorrect password")
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
