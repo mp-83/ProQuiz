@@ -213,4 +213,4 @@ class TestCaseMatchEndpoints:
         )
 
         assert response.json()["questions_list"][0]["text"] == "What is your name?"
-        assert response.json()["questions_list"][0]["answers_list"]
+        assert response.json()["questions_list"][0]["answers_list"][2]["is_correct"]

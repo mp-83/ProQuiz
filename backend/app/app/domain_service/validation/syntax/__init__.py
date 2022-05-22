@@ -32,5 +32,4 @@ from app.domain_service.validation.syntax.user import (  # noqa: F401
     UserUpdate,
 )
 
-from .item import Item, ItemCreate, ItemInDB, ItemUpdate  # noqa: F401
 from .token import Token, TokenPayload  # noqa: F401

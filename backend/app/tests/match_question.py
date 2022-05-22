@@ -59,22 +59,28 @@ def new_match():
         password=os.getenv("FIRST_SUPERUSER_PASSWORD"),
     )
     payload = {
-        "name": "Another new match",
+        "name": "Sunday match n.2",
         "with_code": True,
         "times": 0,
-        "from_time": "2022-05-21T06:19:43.780Z",
-        "to_time": "2022-05-22T06:19:43.780Z",
+        "from_time": "2023-05-21T06:19:43.780Z",
+        "to_time": "2023-05-22T06:19:43.780Z",
         "is_restricted": False,
         "order": True,
         "questions": [
             {
-                "text": "How are you",
+                "text": "Following the machine’s debut, Kempelen was reluctant to display the Turk because",
+                "answers": [
+                    {"text": "The machine was undergoing repair"},
+                    {
+                        "text": "He had dismantled it following its match with Sir Robert Murray Keith."
+                    },
+                    {"text": "He preferred to spend time on his other projects."},
+                    {"text": "It had been destroyed by fire."},
+                ],
                 "position": 0,
                 "time": 0,
                 "content_url": "string",
-                "game": 0,
-                "answers": [{"text": "Good"}, {"text": "Bad"}, {"text": "So so"}],
-            }
+            },
         ],
     }
     result = client.post(f"{BASE_URL}/matches/new", json=payload)

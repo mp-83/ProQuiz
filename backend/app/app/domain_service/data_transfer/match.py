@@ -149,11 +149,16 @@ class MatchDTO:
     def all_matches(self, **filters):
         return self._session.query(self.klass).filter_by(**filters).all()
 
+    def nullable_column(self, name):
+        return self.klass.__table__.columns.get(name).nullable
+
     def update(self, instance: Match, **attrs):
         for name, value in attrs.items():
             if name == "questions":
                 self.update_questions(instance, value, commit=True)
-            elif name == "name" and not value:
+            elif not hasattr(instance, name) or (
+                value is None and not self.nullable_column(name)
+            ):
                 continue
             else:
                 setattr(instance, name, value)

@@ -7,10 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.domain_entities.db.session import get_db
 from app.domain_entities.user import User
-from app.domain_service.data_transfer.answer import AnswerDTO
-from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
-from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.validation import syntax
 from app.domain_service.validation.logical import (
     RetrieveObject,
@@ -67,30 +64,7 @@ def create_match(
     new_match = dto.new(**user_input)
     dto.save(new_match)
 
-    game_dto = GameDTO(session=session)
-    new_game = game_dto.new(match_uid=new_match.uid)
-    game_dto.save(new_game)
-    question_dto = QuestionDTO(session=session)
-    answer_dto = AnswerDTO(session=session)
-    for position, question in enumerate(questions):
-        new = question_dto.new(
-            game_uid=new_game.uid,
-            text=question["text"],
-            position=position,
-        )
-        question_dto.save(new)
-
-        for p, _answer in enumerate(question.get("answers") or []):
-            session.add(
-                answer_dto.new(
-                    question_uid=new.uid,
-                    text=_answer["text"],
-                    position=p,
-                    is_correct=position == 0,
-                )
-            )
-
-    session.commit()
+    dto.insert_questions(new_match, questions)
     session.refresh(new_match)
     return new_match
 
