@@ -99,12 +99,8 @@ class MatchDTO:
             }
 
         for question_data in questions:
-            game_idx = question_data.get("game")
-            if game_idx is None:
-                g = self.game_dto.new(match_uid=instance.uid)
-                self.game_dto.save(g)
-            else:
-                g = instance.games[game_idx]
+            game_no = question_data.get("game")
+            game = instance.games[game_no] if game_no else instance.games[0]
 
             if question_data.get("uid") in existing:
                 question = existing.get(question_data.get("uid"))
@@ -112,9 +108,9 @@ class MatchDTO:
                 question.position = question_data.get("position", question.position)
             else:
                 question = self.question_dto.new(
-                    game_uid=g.uid,
+                    game_uid=game.uid,
                     text=question_data.get("text"),
-                    position=len(g.questions),
+                    position=len(game.questions),
                 )
             self.question_dto.save(question)
             self.question_dto.create_or_update_answers(
