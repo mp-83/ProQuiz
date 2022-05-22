@@ -150,7 +150,7 @@ class TestCasePlayStart:
             headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["error"] == f"Game {game.uid} has no questions"
+        assert response.json()["detail"] == f"Game {game.uid} has no questions"
 
     # the password feature is tested more thoroughly in the logical tests
     def t_startRestrictedMatchUsingPassword(

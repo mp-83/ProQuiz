@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -24,8 +24,8 @@ def get_question(
 ):
     try:
         question = RetrieveObject(uid=uid, otype="question", db_session=session).get()
-    except NotFoundObjectError:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except NotFoundObjectError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
 
     return question
 
@@ -53,8 +53,8 @@ def edit_question(
 ):
     try:
         question = RetrieveObject(uid=uid, otype="question", db_session=session).get()
-    except NotFoundObjectError:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except NotFoundObjectError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
 
     dto = QuestionDTO(session=session)
     dto.update(question, user_input.dict())

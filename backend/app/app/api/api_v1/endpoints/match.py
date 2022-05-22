@@ -1,7 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, Response, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -39,8 +38,8 @@ def get_match(
 ):
     try:
         match = RetrieveObject(uid=uid, otype="match", db_session=session).get()
-    except NotFoundObjectError:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except NotFoundObjectError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
 
     return match
 
@@ -54,10 +53,10 @@ def create_match(
     user_input = match_in.dict()
     try:
         ValidateNewMatch(user_input, db_session=session).is_valid()
-    except ValidateError as e:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST, content={"error": e.message}
-        )
+    except ValidateError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
+        ) from exc
 
     questions = user_input.pop("questions", None) or []
     dto = MatchDTO(session=session)
@@ -78,12 +77,12 @@ def edit_match(
 ):
     try:
         match = ValidateEditMatch(uid, db_session=session).is_valid()
-    except (NotFoundObjectError, ValidateError) as e:
-        if isinstance(e, NotFoundObjectError):
-            return Response(status_code=status.HTTP_404_NOT_FOUND)
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST, content={"error": e.message}
-        )
+    except (NotFoundObjectError, ValidateError) as exc:
+        if isinstance(exc, NotFoundObjectError):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
+        ) from exc
 
     user_input = user_input.dict()
     dto = MatchDTO(session=session)
@@ -102,12 +101,12 @@ def match_yaml_import(
 
     try:
         match = ValidateMatchImport(match_uid, db_session=session).is_valid()
-    except (NotFoundObjectError, ValidateError) as e:
-        if isinstance(e, NotFoundObjectError):
-            return Response(status_code=status.HTTP_404_NOT_FOUND)
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST, content={"error": e.message}
-        )
+    except (NotFoundObjectError, ValidateError) as exc:
+        if isinstance(exc, NotFoundObjectError):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
+        ) from exc
 
     dto = MatchDTO(session=session)
     dto.insert_questions(match, user_input["data"]["questions"])

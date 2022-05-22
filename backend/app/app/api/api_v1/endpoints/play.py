@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
@@ -35,20 +35,20 @@ def land(
 ):
     try:
         match_uhash = syntax.LandPlay(match_uhash=match_uhash).dict()["match_uhash"]
-    except ValidationError as e:
-        return JSONResponse(
+    except ValidationError as exc:
+        raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            content={"error": e.errors()},
-        )
+            detail=exc.errors(),
+        ) from exc
 
     try:
         data = ValidatePlayLand(match_uhash=match_uhash, db_session=session).is_valid()
-    except (NotFoundObjectError, ValidateError) as e:
-        if isinstance(e, NotFoundObjectError):
-            return Response(status_code=status.HTTP_404_NOT_FOUND)
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST, content={"error": e.message}
-        )
+    except (NotFoundObjectError, ValidateError) as exc:
+        if isinstance(exc, NotFoundObjectError):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
+        ) from exc
 
     match = data.get("match")
     return JSONResponse(content={"match": match.uid})
@@ -59,10 +59,12 @@ def code(user_input: syntax.CodePlay, session: Session = Depends(get_db)):
     match_code = user_input.dict()["match_code"]
     try:
         data = ValidatePlayCode(match_code=match_code, db_session=session).is_valid()
-    except (NotFoundObjectError, ValidateError) as e:
-        if isinstance(e, NotFoundObjectError):
-            return Response(status_code=404)
-        return JSONResponse(status_code=400, content={"error": e.message})
+    except (NotFoundObjectError, ValidateError) as exc:
+        if isinstance(exc, NotFoundObjectError):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
+        ) from exc
 
     match = data.get("match")
     user = UserDTO(session=session).fetch(signed=True)
@@ -74,22 +76,26 @@ def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
     user_input = user_input.dict()
     try:
         data = ValidatePlayStart(db_session=session, **user_input).is_valid()
-    except (NotFoundObjectError, ValidateError) as e:
-        if isinstance(e, NotFoundObjectError):
-            return Response(status_code=404)
-        return JSONResponse(status_code=400, content={"error": e.message})
+    except (NotFoundObjectError, ValidateError) as exc:
+        if isinstance(exc, NotFoundObjectError):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
+        ) from exc
 
     match = data.get("match")
     user = data.get("user")
     if not user:
         user = UserDTO(session=session).fetch(signed=match.is_restricted)
 
-    status = PlayerStatus(user, match, db_session=session)
+    player_status = PlayerStatus(user, match, db_session=session)
     try:
-        player = SinglePlayer(status, user, match, db_session=session)
+        player = SinglePlayer(player_status, user, match, db_session=session)
         current_question = player.start()
-    except InternalException as e:
-        return JSONResponse(status_code=400, content={"error": e.message})
+    except InternalException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
+        ) from exc
 
     match_data = {
         "match": match.uid,
@@ -104,26 +110,30 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
     user_input = user_input.dict()
     try:
         data = ValidatePlayNext(db_session=session, **user_input).is_valid()
-    except (NotFoundObjectError, ValidateError) as e:
-        if isinstance(e, NotFoundObjectError):
-            return Response(status_code=404)
-        return JSONResponse(status_code=400, content={"error": e.message})
+    except (NotFoundObjectError, ValidateError) as exc:
+        if isinstance(exc, NotFoundObjectError):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
+        ) from exc
 
     match = data.get("match")
     user = data.get("user")
     answer = data.get("answer")
 
-    status = PlayerStatus(user, match, db_session=session)
+    player_status = PlayerStatus(user, match, db_session=session)
     try:
-        player = SinglePlayer(status, user, match, db_session=session)
-    except InternalException as e:
-        return JSONResponse(status_code=400, content={"error": e.message})
+        player = SinglePlayer(player_status, user, match, db_session=session)
+    except InternalException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
+        ) from exc
 
     try:
         next_q = player.react(answer)
     except MatchOver:
         PlayScore(
-            match.uid, user.uid, status.current_score(), db_session=session
+            match.uid, user.uid, player_status.current_score(), db_session=session
         ).save_to_ranking()
         return JSONResponse(content={"question": None})
 
@@ -135,10 +145,12 @@ def sign(user_input: syntax.SignPlay, session: Session = Depends(get_db)):
     try:
         user_input = user_input.dict()
         data = ValidatePlaySign(db_session=session, **user_input).is_valid()
-    except (NotFoundObjectError, ValidateError) as e:
-        if isinstance(e, NotFoundObjectError):
-            return Response(status_code=404)
-        return JSONResponse(status_code=400, content={"error": e.message})
+    except (NotFoundObjectError, ValidateError) as exc:
+        if isinstance(exc, NotFoundObjectError):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
+        ) from exc
 
     user = data.get("user")
     return JSONResponse(content={"user": user.uid})

@@ -145,7 +145,7 @@ class TestCaseMatchEndpoints:
             json={"times": 1, "name": match.name},
             headers=superuser_token_headers,
         )
-        assert response.json()["error"] == "Match started. Cannot be edited"
+        assert response.json()["detail"] == "Match started. Cannot be edited"
 
     def t_addQuestionToExistingMatchWithOneGameOnly(
         self, client: TestClient, superuser_token_headers: dict
