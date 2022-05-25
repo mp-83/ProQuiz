@@ -10,18 +10,14 @@ from app.domain_service.data_transfer.user import UserDTO
 from app.domain_service.play import PlayerStatus, PlayScore, SinglePlayer
 from app.domain_service.validation import syntax
 from app.domain_service.validation.logical import (
+    LogicValidation,
     ValidatePlayCode,
     ValidatePlayLand,
     ValidatePlayNext,
     ValidatePlaySign,
     ValidatePlayStart,
 )
-from app.exceptions import (
-    InternalException,
-    MatchOver,
-    NotFoundObjectError,
-    ValidateError,
-)
+from app.exceptions import InternalException, MatchOver
 
 logger = logging.getLogger(__name__)
 
@@ -41,15 +37,9 @@ def land(
             detail=exc.errors(),
         ) from exc
 
-    try:
-        data = ValidatePlayLand(match_uhash=match_uhash, db_session=session).is_valid()
-    except (NotFoundObjectError, ValidateError) as exc:
-        if isinstance(exc, NotFoundObjectError):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
-        ) from exc
-
+    data = LogicValidation(ValidatePlayLand).validate(
+        match_uhash=match_uhash, db_session=session
+    )
     match = data.get("match")
     return JSONResponse(content={"match": match.uid})
 
@@ -57,15 +47,9 @@ def land(
 @router.post("/code", response_model=syntax.PlaySchemaBase)
 def code(user_input: syntax.CodePlay, session: Session = Depends(get_db)):
     match_code = user_input.dict()["match_code"]
-    try:
-        data = ValidatePlayCode(match_code=match_code, db_session=session).is_valid()
-    except (NotFoundObjectError, ValidateError) as exc:
-        if isinstance(exc, NotFoundObjectError):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
-        ) from exc
-
+    data = LogicValidation(ValidatePlayCode).validate(
+        match_code=match_code, db_session=session
+    )
     match = data.get("match")
     user = UserDTO(session=session).fetch(signed=True)
     return JSONResponse(content={"match": match.uid, "user": user.uid})
@@ -74,15 +58,7 @@ def code(user_input: syntax.CodePlay, session: Session = Depends(get_db)):
 @router.post("/start")
 def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
     user_input = user_input.dict()
-    try:
-        data = ValidatePlayStart(db_session=session, **user_input).is_valid()
-    except (NotFoundObjectError, ValidateError) as exc:
-        if isinstance(exc, NotFoundObjectError):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
-        ) from exc
-
+    data = LogicValidation(ValidatePlayStart).validate(db_session=session, **user_input)
     match = data.get("match")
     user = data.get("user")
     if not user:
@@ -108,15 +84,7 @@ def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
 @router.post("/next")
 def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
     user_input = user_input.dict()
-    try:
-        data = ValidatePlayNext(db_session=session, **user_input).is_valid()
-    except (NotFoundObjectError, ValidateError) as exc:
-        if isinstance(exc, NotFoundObjectError):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
-        ) from exc
-
+    data = LogicValidation(ValidatePlayNext).validate(db_session=session, **user_input)
     match = data.get("match")
     user = data.get("user")
     answer = data.get("answer")
@@ -142,15 +110,7 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
 
 @router.post("/sign")
 def sign(user_input: syntax.SignPlay, session: Session = Depends(get_db)):
-    try:
-        user_input = user_input.dict()
-        data = ValidatePlaySign(db_session=session, **user_input).is_valid()
-    except (NotFoundObjectError, ValidateError) as exc:
-        if isinstance(exc, NotFoundObjectError):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
-        ) from exc
-
+    user_input = user_input.dict()
+    data = LogicValidation(ValidatePlaySign).validate(db_session=session, **user_input)
     user = data.get("user")
     return JSONResponse(content={"user": user.uid})

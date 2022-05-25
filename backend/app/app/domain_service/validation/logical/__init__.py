@@ -1,4 +1,4 @@
-from .generic import RetrieveObject  # noqa: F401
+from .generic import LogicValidation, RetrieveObject  # noqa: F401
 from .match import (  # noqa: F401
     ValidateEditMatch,
     ValidateMatchImport,
