@@ -1,7 +1,8 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, NonNegativeInt
+from pydantic import BaseModel, HttpUrl, NonNegativeInt, validator
 
+from app.constants import QUESTION_TEXT_MAX_LENGTH, QUESTION_TEXT_MIN_LENGTH
 from app.domain_service.validation.syntax import Answer, AnswerCreate
 
 
@@ -19,12 +20,18 @@ class Question(BaseModel):
 
 
 class QuestionCreate(BaseModel):
-    text: str
+    text: Optional[str]
     position: Optional[NonNegativeInt]
     time: int = None
-    content_url: str = None
+    content_url: Optional[HttpUrl]
     game: Optional[NonNegativeInt]
     answers: Optional[List[AnswerCreate]]
+
+    @validator("text")
+    def text_length(cls, value: str):
+        if value:
+            assert QUESTION_TEXT_MIN_LENGTH <= len(value) < QUESTION_TEXT_MAX_LENGTH
+        return value
 
 
 class QuestionEdit(QuestionCreate):

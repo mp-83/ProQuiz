@@ -23,6 +23,11 @@ class Question(TableMixin, Base):
         UniqueConstraint("game_uid", "position", name="ck_question_game_uid_position"),
     )
 
+    def __init__(self, **kwargs):
+        if not kwargs.get("text") and kwargs.get("content_url"):
+            kwargs["text"] = "ContentURL"
+        super().__init__(**kwargs)
+
     @property
     def is_open(self):
         return len(self.answers) == 0

@@ -75,10 +75,14 @@ class QuestionDTO:
 
         self._session.commit()
 
-    def update(self, instance, data: dict):
+    def update(self, instance: Question, data: dict):
         answers = data.pop("answers", [])
         for k, value in data.items():
-            if k in ["text", "position"] and value is None:
+            if k == "text" and value is None:
+                if data.get("content_url") is None:
+                    continue
+                value = "ContentURL"
+            if k == "position" and value is None:
                 continue
             elif hasattr(instance, k):
                 setattr(instance, k, value)
@@ -86,9 +90,9 @@ class QuestionDTO:
         if answers:
             self.update_answers(instance, answers)
 
-        self._session.commit()
+        self.save(instance)
 
-    def clone(self, instance, many=False):
+    def clone(self, instance: Question, many=False):
         new = self.klass(
             game_uid=instance.game.uid if instance.game else None,
             text=instance.text,

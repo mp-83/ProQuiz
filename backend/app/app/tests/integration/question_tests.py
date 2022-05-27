@@ -40,13 +40,23 @@ class TestCaseQuestionEP:
         assert response.json()["text"] == "eleven pm"
         assert response.json()["position"] == 2
 
-    def t_invalidText(self, client: TestClient, superuser_token_headers: dict):
+    def t_createNewQuestionWithContentUrl(
+        self, client: TestClient, superuser_token_headers: dict
+    ):
+        # CSRF token is needed also in this case
         response = client.post(
             f"{settings.API_V1_STR}/questions/new",
-            json={"text": None, "position": 1},
+            json={
+                "content_url": "https://img.com",
+                "position": 2,
+            },
             headers=superuser_token_headers,
         )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.ok
+        assert self.question_dto.count() == 1
+        assert response.json()["text"] == "ContentURL"
+        assert response.json()["content_url"] == "https://img.com"
+        assert response.json()["position"] == 2
 
     def t_changeTextAndPositionOfAQuestion(
         self, client: TestClient, superuser_token_headers: dict
@@ -77,15 +87,20 @@ class TestCaseQuestionEP:
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def t_editingUnexistentQuestion(
+    def t_changingContentUrlWithText(
         self, client: TestClient, superuser_token_headers: dict
     ):
+        url = "https://img.org"
+        question = self.question_dto.new(text="Text", position=0)
+        self.question_dto.save(question)
         response = client.put(
-            f"{settings.API_V1_STR}/questions/edit/40",
-            json={"text": "text", "position": 1},
+            f"{settings.API_V1_STR}/questions/edit/{question.uid}",
+            json={"text": None, "position": 1, "content_url": url},
             headers=superuser_token_headers,
         )
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["content_url"] == url
+        assert response.json()["text"] == "ContentURL"
 
     def t_updateAnswerTextAndPosition(
         self, client: TestClient, superuser_token_headers: dict

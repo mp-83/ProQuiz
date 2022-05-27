@@ -8,7 +8,11 @@ from app.domain_entities.db.session import get_db
 from app.domain_entities.user import User
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.validation import syntax
-from app.domain_service.validation.logical import RetrieveObject
+from app.domain_service.validation.logical import (
+    LogicValidation,
+    RetrieveObject,
+    ValidateNewQuestion,
+)
 from app.exceptions import NotFoundObjectError
 
 logger = logging.getLogger(__name__)
@@ -37,6 +41,7 @@ def new_question(
     _user: User = Depends(get_current_user),
 ):
     user_input = question_in.dict()
+    LogicValidation(ValidateNewQuestion).validate(question_in=user_input)
     dto = QuestionDTO(session=session)
     answers = user_input.pop("answers", [])
     new_instance = dto.new(**user_input)
@@ -47,7 +52,7 @@ def new_question(
 @router.put("/edit/{uid}", response_model=syntax.Question)
 def edit_question(
     uid,
-    user_input: syntax.QuestionEdit,
+    question_in: syntax.QuestionEdit,
     session: Session = Depends(get_db),
     _user: User = Depends(get_current_user),
 ):
@@ -57,5 +62,5 @@ def edit_question(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
 
     dto = QuestionDTO(session=session)
-    dto.update(question, user_input.dict())
+    dto.update(question, question_in.dict())
     return question

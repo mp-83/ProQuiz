@@ -1,4 +1,6 @@
 import os
+import sys
+from pprint import pprint
 
 import requests
 import typer
@@ -23,7 +25,10 @@ class Client:
     def __init__(self):
         self._client = requests.Session()
 
-    def authenticate(self, username, password):
+    def authenticate(self, username=None, password=None):
+        username = username or os.getenv("FIRST_SUPERUSER")
+        password = password or os.getenv("FIRST_SUPERUSER_PASSWORD")
+
         response = self._client.post(
             f"{BASE_URL}/login/access-token",
             data={"username": username, "password": password},
@@ -44,22 +49,43 @@ class Client:
         return self._client.get(*args, **kwargs)
 
 
-@app.command()
-def rankings(match_uid: str):
+def list_matches():
     client = Client()
-    result = client.get(f"{BASE_URL}/players/{match_uid}")
-    typer.echo(result.json())
+    client.authenticate()
+    result = client.get(f"{BASE_URL}/matches")
+    for match in result.json().values():
+        typer.echo(pprint(match))
 
 
-@app.command()
+def match_details():
+    typer.echo("Enter the match ID")
+    match_uid = input()
+    client = Client()
+    client.authenticate()
+    result = client.get(f"{BASE_URL}/matches/{match_uid}")
+    typer.echo(pprint(result.json()))
+
+
+def new_question():
+    text = input("Text: ")
+    payload = {"text": text}
+    position = input("Position ")
+    payload["position"] = position
+
+    client = Client()
+    client.authenticate()
+    response = client.post(f"{BASE_URL}/questions/new", json=payload)
+    if response.ok:
+        typer.echo(pprint(response.json()))
+    else:
+        typer.echo(response.reason)
+
+
 def new_match():
     client = Client()
-    client.authenticate(
-        username=os.getenv("FIRST_SUPERUSER"),
-        password=os.getenv("FIRST_SUPERUSER_PASSWORD"),
-    )
+    client.authenticate()
     payload = {
-        "name": "Sunday match n.2",
+        "name": "Wednesday match n.1",
         "with_code": True,
         "times": 0,
         "from_time": "2023-05-21T06:19:43.780Z",
@@ -85,6 +111,40 @@ def new_match():
     }
     result = client.post(f"{BASE_URL}/matches/new", json=payload)
     typer.echo((result.status_code, result.json()))
+
+
+def exit_command():
+    typer.echo("Exiting")
+    sys.exit(0)
+
+
+def menu():
+    main_message = """
+    Choose your option:
+        1. list matches
+        2. get match details
+        3. create a new match
+        4. create new question
+        Enter to exit
+    """
+    typer.echo(main_message)
+    return input()
+
+
+@app.command()
+def start():
+    while True:
+        user_choice = menu()
+        action = {
+            "1": list_matches,
+            "2": match_details,
+            "3": new_match,
+            "4": new_question,
+        }.get(user_choice)
+        if not action:
+            exit_command()
+
+        action()
 
 
 if __name__ == "__main__":

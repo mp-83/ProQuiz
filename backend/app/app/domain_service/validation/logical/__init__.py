@@ -12,3 +12,4 @@ from .play import (  # noqa: F401
     ValidatePlaySign,
     ValidatePlayStart,
 )
+from .question import ValidateNewQuestion  # noqa: F401

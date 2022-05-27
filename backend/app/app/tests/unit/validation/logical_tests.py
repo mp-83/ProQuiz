@@ -12,6 +12,7 @@ from app.domain_service.validation.logical import (
     RetrieveObject,
     ValidateMatchImport,
     ValidateNewMatch,
+    ValidateNewQuestion,
     ValidatePlayCode,
     ValidatePlayLand,
     ValidatePlayNext,
@@ -241,3 +242,14 @@ class TestCaseImportFromYaml:
     def t_matchDoesNotExists(self, db_session):
         with pytest.raises(NotFoundObjectError):
             ValidateMatchImport(match_uid=1, db_session=db_session).valid_match()
+
+
+class TestCaseQuestionCreate:
+    def t_eitherTextOrContentUrl(self):
+        with pytest.raises(ValidateError):
+            ValidateNewQuestion(question_in={"text": ""}).is_valid()
+
+        with pytest.raises(ValidateError):
+            ValidateNewQuestion(
+                question_in={"content_url": None, "text": ""}
+            ).is_valid()

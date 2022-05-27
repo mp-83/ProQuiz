@@ -78,19 +78,25 @@ class TestCasePlaySchemas:
 
 
 class TestCaseQuestionSchema:
-    def t_templateQuestion(self):
-        assert syntax.QuestionCreate(
-            **{"text": "".join("a" for _ in range(400)), "position": 1}
+    def t_textMaxLength(self):
+        pytest.raises(
+            ValidationError,
+            syntax.QuestionCreate,
+            **{"text": "".join("a" for _ in range(501)), "position": 1},
         )
 
-    def t_gameQuestion(self):
-        assert syntax.QuestionCreate(
-            **{"text": "".join("a" for _ in range(400)), "position": 1, "game_uid": "1"}
-        )
+    def t_textMinLength(self):
+        pytest.raises(ValidationError, syntax.QuestionCreate, text="aa", position=1)
 
-    def t_editQuestion(self):
-        assert syntax.QuestionEdit(
-            **{"text": "".join("a" for _ in range(400)), "position": 1, "game_uid": "1"}
+    def t_nullTextIsValid(self):
+        assert syntax.QuestionCreate(text=None, position=1)
+
+    def t_nullContentUrlIsValid(self):
+        assert syntax.QuestionCreate(content_url=None)
+
+    def t_urlMinLength(self):
+        pytest.raises(
+            ValidationError, syntax.QuestionCreate, content_url="aa", position=1
         )
 
 
