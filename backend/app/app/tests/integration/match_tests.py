@@ -111,6 +111,7 @@ class TestCaseMatchEndpoints:
                 "time": None,
                 "content_url": None,
                 "answers_list": [],
+                "game": {"index": 0, "match_uid": 1, "order": True, "uid": 1},
             },
             {
                 "uid": 2,
@@ -119,6 +120,7 @@ class TestCaseMatchEndpoints:
                 "time": None,
                 "content_url": None,
                 "answers_list": [],
+                "game": {"index": 1, "match_uid": 1, "order": True, "uid": 2},
             },
         ]
 
