@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -22,10 +22,11 @@ router = APIRouter()
 
 @router.get("/", response_model=syntax.ManyQuestions)
 def list_questions(
-    filters: dict,
+    request: Request,
     session: Session = Depends(get_db),
     _user: User = Depends(get_current_user),
 ):
+    filters = request.query_params
     all_questions = QuestionDTO(session=session).all_questions(**filters)
     return {"questions": all_questions}
 

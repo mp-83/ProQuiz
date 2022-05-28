@@ -140,7 +140,7 @@ class TestCaseQuestionEP:
         )
         response = client.get(
             f"{settings.API_V1_STR}/questions/",
-            json={"game_uid": None},
+            params={"game_uid": None},
             headers=superuser_token_headers,
         )
         assert len(response.json()["questions"]) == 3

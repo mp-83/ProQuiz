@@ -1,15 +1,13 @@
 import pytest
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
-from app.domain_service.data_transfer.answer import AnswerDTO
-from app.domain_service.data_transfer.question import QuestionDTO
-
 
 class TestCaseQuestion:
     @pytest.fixture(autouse=True)
-    def setUp(self, db_session):
-        self.question_dto = QuestionDTO(session=db_session)
-        self.answer_dto = AnswerDTO(session=db_session)
+    def setUp(self, db_session, question_dto, answer_dto, match_dto):
+        self.question_dto = question_dto
+        self.answer_dto = answer_dto
+        self.match_dto = match_dto
 
     @pytest.fixture
     def samples(self):
@@ -21,6 +19,10 @@ class TestCaseQuestion:
             ]
         )
         yield
+
+    def t_allQuestionsFilteredByMatchUid(self, match_dto):
+        match_dto = match_dto
+        assert True
 
     def t_theQuestionAtPosition(self, samples):
         question = self.question_dto.at_position(0)

@@ -113,6 +113,17 @@ def new_match():
     typer.echo((result.status_code, result.json()))
 
 
+def list_questions():
+    client = Client()
+    client.authenticate()
+    response = client.get(f"{BASE_URL}/questions/", params={})
+    if response.ok:
+        for question in response.json()["questions"]:
+            typer.echo(pprint(question))
+    else:
+        typer.echo(response.reason)
+
+
 def exit_command():
     typer.echo("Exiting")
     sys.exit(0)
@@ -125,6 +136,7 @@ def menu():
         2. get match details
         3. create a new match
         4. create new question
+        5. list all questions
         Enter to exit
     """
     typer.echo(main_message)
@@ -140,6 +152,7 @@ def start():
             "2": match_details,
             "3": new_match,
             "4": new_question,
+            "5": list_questions,
         }.get(user_choice)
         if not action:
             exit_command()

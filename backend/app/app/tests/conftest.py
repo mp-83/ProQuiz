@@ -14,6 +14,7 @@ from app.core import security
 from app.core.config import settings
 from app.domain_entities.db.base import Base
 from app.domain_entities.db.session import get_db
+from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
@@ -180,6 +181,11 @@ def question_dto(db_session):
 @pytest.fixture
 def user_dto(db_session) -> UserDTO:
     return UserDTO(session=db_session)
+
+
+@pytest.fixture
+def answer_dto(db_session):
+    return AnswerDTO(session=db_session)
 
 
 @pytest.fixture(name="trivia_match")
