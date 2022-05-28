@@ -20,6 +20,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+@router.get("/", response_model=syntax.ManyQuestions)
+def list_questions(
+    filters: dict,
+    session: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
+    all_questions = QuestionDTO(session=session).all_questions(**filters)
+    return {"questions": all_questions}
+
+
 @router.get("/{uid}", response_model=syntax.Question)
 def get_question(
     uid: int,

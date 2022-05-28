@@ -37,3 +37,7 @@ class QuestionCreate(BaseModel):
 class QuestionEdit(QuestionCreate):
     text: Optional[str]
     position: Optional[NonNegativeInt]
+
+
+class ManyQuestions(BaseModel):
+    questions: List[Question]

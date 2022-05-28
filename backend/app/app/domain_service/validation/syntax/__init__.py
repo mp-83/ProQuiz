@@ -18,6 +18,7 @@ from app.domain_service.validation.syntax.play import (  # noqa: F401
     StartPlay,
 )
 from app.domain_service.validation.syntax.question import (  # noqa: F401
+    ManyQuestions,
     Question,
     QuestionCreate,
     QuestionEdit,

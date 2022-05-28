@@ -127,3 +127,24 @@ class TestCaseQuestionEP:
         )
         assert response.ok
         assert question.answers_by_position[0].uid == a2.uid
+
+    def t_listAllQuestions(
+        self, client: TestClient, superuser_token_headers: dict, question_dto
+    ):
+        question_dto.add_many(
+            objects=[
+                question_dto.new(text="First Question", position=1),
+                question_dto.new(text="Second Question", position=2),
+                question_dto.new(text="Third Question", position=3),
+            ]
+        )
+        response = client.get(
+            f"{settings.API_V1_STR}/questions/",
+            json={"game_uid": None},
+            headers=superuser_token_headers,
+        )
+        assert len(response.json()["questions"]) == 3
+        questions_data = response.json()["questions"]
+        assert questions_data[0]["text"] == "First Question"
+        assert questions_data[1]["text"] == "Second Question"
+        assert questions_data[2]["text"] == "Third Question"

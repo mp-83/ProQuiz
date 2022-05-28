@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.domain_entities.game import Game
 from app.domain_entities.question import Question
 from app.domain_service.data_transfer.answer import AnswerDTO
 
@@ -22,6 +23,16 @@ class QuestionDTO:
         self._session.add_all(objects)
         self._session.commit()
         return objects
+
+    def all_questions(self, **filters):
+        match_uid = filters.get("match_uid")
+        base_query = self._session.query(self.klass)
+        if match_uid:
+            base_query = base_query.join(Game, Game.uid == Question.game_uid).filter(
+                Game.match_uid == match_uid
+            )
+
+        return base_query.filter_by(**filters).all()
 
     def at_position(self, position):
         return (
