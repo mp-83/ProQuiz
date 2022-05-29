@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime, timedelta, timezone
 from pprint import pprint
 
 import requests
@@ -7,6 +8,10 @@ import typer
 
 app = typer.Typer()
 
+
+"""
+alias quiz='clear && docker-compose exec backend python command/interact.py'
+"""
 
 BASE_URL = "http://localhost:7070/api/v1"
 
@@ -67,10 +72,20 @@ def match_details():
 
 
 def new_question():
-    text = input("Text: ")
+    text = input("Text ==> ")
     payload = {"text": text}
-    position = input("Position ")
+
+    position = input("Position ==> ")
     payload["position"] = position
+
+    answers = []
+    while True:
+        answer_text = input("Answer text ==> ")
+        if answer_text == "":
+            break
+        answers.append({"text": answer_text})
+
+    payload["answers"] = answers
 
     client = Client()
     client.authenticate()
@@ -84,30 +99,24 @@ def new_question():
 def new_match():
     client = Client()
     client.authenticate()
+    name = input("Match name ==> ")
+    with_code = input("With code? y/n ==> ")
+    with_code = with_code == "y"
+
+    is_restricted = input("Is restricted? y/n ==> ")
+    is_restricted = is_restricted == "y"
+
+    order = input("Order? y/n ==> ")
+    order = order == "y"
+
     payload = {
-        "name": "Wednesday match n.1",
-        "with_code": True,
-        "times": 0,
-        "from_time": "2023-05-21T06:19:43.780Z",
-        "to_time": "2023-05-22T06:19:43.780Z",
-        "is_restricted": False,
-        "order": True,
-        "questions": [
-            {
-                "text": "Following the machine’s debut, Kempelen was reluctant to display the Turk because",
-                "answers": [
-                    {"text": "The machine was undergoing repair"},
-                    {
-                        "text": "He had dismantled it following its match with Sir Robert Murray Keith."
-                    },
-                    {"text": "He preferred to spend time on his other projects."},
-                    {"text": "It had been destroyed by fire."},
-                ],
-                "position": 0,
-                "time": 0,
-                "content_url": "string",
-            },
-        ],
+        "name": name,
+        "with_code": with_code,
+        "times": 1,
+        "from_time": (datetime.now(tz=timezone.utc) + timedelta(minutes=1)).isoformat(),
+        "to_time": (datetime.now(tz=timezone.utc) + timedelta(days=1)).isoformat(),
+        "is_restricted": is_restricted,
+        "order": order,
     }
     result = client.post(f"{BASE_URL}/matches/new", json=payload)
     typer.echo((result.status_code, result.json()))
@@ -116,7 +125,9 @@ def new_match():
 def list_questions():
     client = Client()
     client.authenticate()
-    response = client.get(f"{BASE_URL}/questions/", params={})
+    match_uid = input("Match ID: ")
+    match_uid = None if match_uid == "" else int(match_uid)
+    response = client.get(f"{BASE_URL}/questions/", params={"match_uid": match_uid})
     if response.ok:
         for question in response.json()["questions"]:
             typer.echo(pprint(question))
