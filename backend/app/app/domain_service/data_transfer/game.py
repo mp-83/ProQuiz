@@ -14,3 +14,7 @@ class GameDTO:
     def save(self, instance):
         self._session.add(instance)
         self._session.commit()
+        return instance
+
+    def get(self, **filters):
+        return self._session.query(self.klass).filter_by(**filters).one_or_none()

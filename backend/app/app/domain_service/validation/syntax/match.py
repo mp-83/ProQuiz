@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 
 import yaml
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, PositiveInt, validator
 
 from app.domain_service.validation.syntax.question import Question, QuestionCreate
 
@@ -44,6 +44,12 @@ class MatchEdit(BaseModel):
     is_restricted: Optional[bool]
     order: Optional[bool]
     questions: List[QuestionCreate] = None
+
+
+class ImportQuestions(BaseModel):
+    uid: PositiveInt
+    questions: List[PositiveInt] = None
+    game_uid: PositiveInt = None
 
 
 class FileContent(BaseModel):

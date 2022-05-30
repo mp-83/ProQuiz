@@ -216,3 +216,28 @@ class TestCaseMatchEndpoints:
 
         assert response.json()["questions_list"][0]["text"] == "What is your name?"
         assert response.json()["questions_list"][0]["answers_list"][2]["is_correct"]
+
+    def t_importTemplateQuestions(
+        self, client: TestClient, superuser_token_headers: dict, question_dto
+    ):
+        match = self.match_dto.new()
+        self.match_dto.save(match)
+        new_game = self.game_dto.save(self.game_dto.new(match_uid=match.uid))
+        new_objects = question_dto.add_many(
+            objects=[
+                question_dto.new(text="First Question", position=1),
+                question_dto.new(text="Second Question", position=2),
+                question_dto.new(text="Third Question", position=3),
+            ]
+        )
+        response = client.post(
+            f"{settings.API_V1_STR}/matches/import_questions",
+            json={
+                "uid": match.uid,
+                "questions": [q.uid for q in new_objects],
+                "game_uid": new_game.uid,
+            },
+            headers=superuser_token_headers,
+        )
+        assert response.ok
+        assert len(match.questions_list) == 3

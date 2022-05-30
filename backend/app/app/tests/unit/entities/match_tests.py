@@ -102,7 +102,7 @@ class TestCaseMatchModel:
         questions_cnt = self.question_dto.count()
         answers_cnt = self.answer_dto.count()
         self.match_dto.import_template_questions(
-            new_match, question_1.uid, question_2.uid
+            new_match, [question_1.uid, question_2.uid]
         )
         assert self.question_dto.count() == questions_cnt + 2
         assert self.answer_dto.count() == answers_cnt + 0
@@ -118,7 +118,7 @@ class TestCaseMatchModel:
         )
         self.question_dto.save(question)
         with pytest.raises(NotUsableQuestionError):
-            self.match_dto.import_template_questions(match, question.uid)
+            self.match_dto.import_template_questions(match, [question.uid])
 
     def t_matchCannotBePlayedIfAreNoLeftAttempts(self, db_session):
         match = self.match_dto.save(self.match_dto.new())

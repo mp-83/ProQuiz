@@ -131,20 +131,13 @@ class TestCaseQuestionEP:
     def t_listAllQuestions(
         self, client: TestClient, superuser_token_headers: dict, question_dto
     ):
-        question_dto.add_many(
-            objects=[
-                question_dto.new(text="First Question", position=1),
-                question_dto.new(text="Second Question", position=2),
-                question_dto.new(text="Third Question", position=3),
-            ]
-        )
+        new_question = question_dto.new(text="First Question", position=1)
+        question_dto.save(new_question)
+
         response = client.get(
             f"{settings.API_V1_STR}/questions/",
-            params={"game_uid": None},
             headers=superuser_token_headers,
         )
-        assert len(response.json()["questions"]) == 3
+        assert len(response.json()["questions"]) == 1
         questions_data = response.json()["questions"]
         assert questions_data[0]["text"] == "First Question"
-        assert questions_data[1]["text"] == "Second Question"
-        assert questions_data[2]["text"] == "Third Question"

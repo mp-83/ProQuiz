@@ -93,3 +93,21 @@ def match_yaml_import(
     dto = MatchDTO(session=session)
     dto.insert_questions(match, user_input["data"]["questions"])
     return match
+
+
+@router.post("/import_questions", response_model=syntax.Match)
+def import_questions(
+    user_input: syntax.ImportQuestions,
+    session: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
+    user_input = user_input.dict()
+    match_uid = user_input.get("uid")
+    match = LogicValidation(ValidateMatchImport).validate(
+        match_uid=match_uid, db_session=session
+    )
+    dto = MatchDTO(session=session)
+    dto.import_template_questions(
+        match, user_input["questions"], game_uid=user_input["game_uid"]
+    )
+    return match

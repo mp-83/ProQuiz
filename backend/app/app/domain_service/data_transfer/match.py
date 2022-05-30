@@ -1,5 +1,6 @@
 from datetime import datetime
 from random import choices
+from typing import List
 from uuid import uuid1
 
 from sqlalchemy.orm import Session
@@ -75,11 +76,11 @@ class MatchDTO:
         return instance
 
     def get(self, **filters):
-        return self._session.query(Match).filter_by(**filters).one_or_none()
+        return self._session.query(self.klass).filter_by(**filters).one_or_none()
 
     def active_with_code(self, code):
         return (
-            self._session.query(Match)
+            self._session.query(self.klass)
             .filter(Match.code == code, Match.to_time > datetime.now())
             .one_or_none()
         )
@@ -122,14 +123,16 @@ class MatchDTO:
             self._session.commit()
         return result
 
-    def import_template_questions(self, instance: Match, *ids):
+    def import_template_questions(self, instance: Match, ids: List, game_uid=None):
         """Import already existing questions"""
         result = []
         if not ids:
             return result
 
         questions = self.question_dto.questions_with_ids(*ids).all()
-        new_game = self.game_dto.new(match_uid=instance.uid)
+        new_game = self.game_dto.get(uid=game_uid) or self.game_dto.save(
+            self.game_dto.new(match_uid=instance.uid, index=len(instance.games))
+        )
         for question in questions:
             if question.game_uid:
                 raise NotUsableQuestionError(

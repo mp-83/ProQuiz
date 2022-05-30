@@ -4,6 +4,7 @@ from app.domain_service.validation.syntax.answer import (  # noqa: F401
 )
 from app.domain_service.validation.syntax.game import Game  # noqa: F401
 from app.domain_service.validation.syntax.match import (  # noqa: F401
+    ImportQuestions,
     Match,
     MatchCreate,
     MatchEdit,
