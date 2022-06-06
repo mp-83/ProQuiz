@@ -6,28 +6,7 @@ from typing import List, Optional
 import yaml
 from pydantic import BaseModel, PositiveInt, validator
 
-from app.domain_service.schemas.syntax_validation.question import (
-    Question,
-    QuestionCreate,
-)
-
-
-class Match(BaseModel):
-    uid: Optional[int]
-    name: Optional[str]
-    uhash: Optional[str]
-    code: Optional[str]
-    password: Optional[str]
-    is_restricted: Optional[bool]
-    from_time: Optional[datetime]
-    to_time: Optional[datetime]
-    times: Optional[int]
-    order: Optional[bool]
-    expires: Optional[datetime]
-    questions_list: List[Question] = None
-
-    class Config:
-        orm_mode = True
+from app.domain_service.schemas.syntax_validation.question import QuestionCreate
 
 
 class MatchCreate(BaseModel):

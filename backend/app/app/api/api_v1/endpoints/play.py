@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.domain_entities.db.session import get_db
 from app.domain_service.data_transfer.user import UserDTO
 from app.domain_service.play import PlayerStatus, PlayScore, SinglePlayer
+from app.domain_service.schemas import response
 from app.domain_service.schemas import syntax_validation as syntax
 from app.domain_service.schemas.logical_validation import (
     LogicValidation,
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/h/{match_uhash}", response_model=syntax.PlaySchemaBase)
+@router.post("/h/{match_uhash}", response_model=response.PlaySchemaBase)
 def land(
     match_uhash: str,
     session: Session = Depends(get_db),
@@ -44,7 +45,7 @@ def land(
     return JSONResponse(content={"match": match.uid})
 
 
-@router.post("/code", response_model=syntax.PlaySchemaBase)
+@router.post("/code", response_model=response.PlaySchemaBase)
 def code(user_input: syntax.CodePlay, session: Session = Depends(get_db)):
     match_code = user_input.dict()["match_code"]
     data = LogicValidation(ValidatePlayCode).validate(

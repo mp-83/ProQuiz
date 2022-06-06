@@ -7,6 +7,7 @@ from app.api.deps import get_current_user
 from app.domain_entities.db.session import get_db
 from app.domain_entities.user import User
 from app.domain_service.data_transfer.match import MatchDTO
+from app.domain_service.schemas import response
 from app.domain_service.schemas import syntax_validation as syntax
 from app.domain_service.schemas.logical_validation import (
     LogicValidation,
@@ -31,7 +32,7 @@ def list_matches(
     return {"matches": [m.json for m in all_matches]}
 
 
-@router.get("/{uid}", response_model=syntax.Match)
+@router.get("/{uid}", response_model=response.Match)
 def get_match(
     uid: int,
     session: Session = Depends(get_db),
@@ -45,7 +46,7 @@ def get_match(
     return match
 
 
-@router.post("/new", response_model=syntax.Match)
+@router.post("/new", response_model=response.Match)
 def create_match(
     match_in: syntax.MatchCreate,
     session: Session = Depends(get_db),
@@ -63,7 +64,7 @@ def create_match(
     return new_match
 
 
-@router.put("/edit/{uid}", response_model=syntax.Match)
+@router.put("/edit/{uid}", response_model=response.Match)
 def edit_match(
     uid: int,
     user_input: syntax.MatchEdit,
@@ -79,7 +80,7 @@ def edit_match(
     return match
 
 
-@router.post("/yaml_import", response_model=syntax.Match)
+@router.post("/yaml_import", response_model=response.Match)
 def match_yaml_import(
     user_input: syntax.MatchYamlImport,
     session: Session = Depends(get_db),
@@ -95,7 +96,7 @@ def match_yaml_import(
     return match
 
 
-@router.post("/import_questions", response_model=syntax.Match)
+@router.post("/import_questions", response_model=response.Match)
 def import_questions(
     user_input: syntax.ImportQuestions,
     session: Session = Depends(get_db),

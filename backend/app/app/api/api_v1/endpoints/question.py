@@ -7,6 +7,7 @@ from app.api.deps import get_current_user
 from app.domain_entities.db.session import get_db
 from app.domain_entities.user import User
 from app.domain_service.data_transfer.question import QuestionDTO
+from app.domain_service.schemas import response
 from app.domain_service.schemas import syntax_validation as syntax
 from app.domain_service.schemas.logical_validation import (
     LogicValidation,
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/", response_model=syntax.ManyQuestions)
+@router.get("/", response_model=response.ManyQuestions)
 def list_questions(
     request: Request,
     session: Session = Depends(get_db),
@@ -31,7 +32,7 @@ def list_questions(
     return {"questions": all_questions}
 
 
-@router.get("/{uid}", response_model=syntax.Question)
+@router.get("/{uid}", response_model=response.Question)
 def get_question(
     uid: int,
     session: Session = Depends(get_db),
@@ -45,7 +46,7 @@ def get_question(
     return question
 
 
-@router.post("/new", response_model=syntax.Question)
+@router.post("/new", response_model=response.Question)
 def new_question(
     question_in: syntax.QuestionCreate,
     session: Session = Depends(get_db),
@@ -60,7 +61,7 @@ def new_question(
     return dto.save(new_instance)
 
 
-@router.put("/edit/{uid}", response_model=syntax.Question)
+@router.put("/edit/{uid}", response_model=response.Question)
 def edit_question(
     uid,
     question_in: syntax.QuestionEdit,
