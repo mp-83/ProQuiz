@@ -4,7 +4,7 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError
 
-from app.domain_service.validation import syntax
+from app.domain_service.schemas import syntax
 
 
 class TestCaseNullable:

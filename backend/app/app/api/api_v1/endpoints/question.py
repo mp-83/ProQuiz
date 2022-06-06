@@ -7,8 +7,8 @@ from app.api.deps import get_current_user
 from app.domain_entities.db.session import get_db
 from app.domain_entities.user import User
 from app.domain_service.data_transfer.question import QuestionDTO
-from app.domain_service.validation import syntax
-from app.domain_service.validation.logical import (
+from app.domain_service.schemas import syntax
+from app.domain_service.schemas.logical import (
     LogicValidation,
     RetrieveObject,
     ValidateNewQuestion,
