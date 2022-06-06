@@ -3,7 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel, HttpUrl, NonNegativeInt, validator
 
 from app.constants import QUESTION_TEXT_MAX_LENGTH, QUESTION_TEXT_MIN_LENGTH
-from app.domain_service.schemas.syntax import Answer, AnswerCreate, Game
+from app.domain_service.schemas.syntax_validation import Answer, AnswerCreate, Game
 
 
 class Question(BaseModel):

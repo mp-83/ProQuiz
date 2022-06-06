@@ -4,7 +4,7 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError
 
-from app.domain_service.schemas import syntax
+from app.domain_service.schemas import syntax_validation as syntax
 
 
 class TestCaseNullable:
@@ -378,7 +378,7 @@ class TestCaseYamlSchema:
 class TestCaseUserSchema:
     def t_emptyUserNameAndPassword(self):
         # arguments are too short
-        # is_valid = syntax({"email": "", "password": "pass"})
+        # is_valid = syntax_validation({"email": "", "password": "pass"})
         # assert not is_valid
         pass
 

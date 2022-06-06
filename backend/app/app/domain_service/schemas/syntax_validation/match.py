@@ -6,7 +6,10 @@ from typing import List, Optional
 import yaml
 from pydantic import BaseModel, PositiveInt, validator
 
-from app.domain_service.schemas.syntax.question import Question, QuestionCreate
+from app.domain_service.schemas.syntax_validation.question import (
+    Question,
+    QuestionCreate,
+)
 
 
 class Match(BaseModel):

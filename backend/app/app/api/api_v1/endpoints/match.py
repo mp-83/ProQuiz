@@ -7,8 +7,8 @@ from app.api.deps import get_current_user
 from app.domain_entities.db.session import get_db
 from app.domain_entities.user import User
 from app.domain_service.data_transfer.match import MatchDTO
-from app.domain_service.schemas import syntax
-from app.domain_service.schemas.logical import (
+from app.domain_service.schemas import syntax_validation as syntax
+from app.domain_service.schemas.logical_validation import (
     LogicValidation,
     RetrieveObject,
     ValidateEditMatch,

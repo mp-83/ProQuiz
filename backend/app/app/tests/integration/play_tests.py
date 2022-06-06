@@ -152,7 +152,7 @@ class TestCasePlayStart:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()["detail"] == f"Game {game.uid} has no questions"
 
-    # the password feature is tested more thoroughly in the logical tests
+    # the password feature is tested more thoroughly in the logical_validation tests
     def t_startRestrictedMatchUsingPassword(
         self, client: TestClient, superuser_token_headers: dict
     ):

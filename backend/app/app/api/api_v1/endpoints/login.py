@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.domain_entities import User
 from app.domain_entities.db.session import get_db
 from app.domain_service.data_transfer.user import UserDTO
-from app.domain_service.schemas import syntax
+from app.domain_service.schemas import syntax_validation as syntax
 
 router = APIRouter()
 

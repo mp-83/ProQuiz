@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 from app.domain_entities.db.session import get_db
 from app.domain_service.data_transfer.user import UserDTO
 from app.domain_service.play import PlayerStatus, PlayScore, SinglePlayer
-from app.domain_service.schemas import syntax
-from app.domain_service.schemas.logical import (
+from app.domain_service.schemas import syntax_validation as syntax
+from app.domain_service.schemas.logical_validation import (
     LogicValidation,
     ValidatePlayCode,
     ValidatePlayLand,

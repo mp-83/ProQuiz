@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.domain_service.data_transfer.match import MatchDTO
-from app.domain_service.schemas.logical import RetrieveObject
+from app.domain_service.schemas.logical_validation import RetrieveObject
 from app.exceptions import ValidateError
 
 

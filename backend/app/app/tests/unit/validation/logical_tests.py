@@ -8,7 +8,7 @@ from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.domain_service.data_transfer.user import UserDTO, WordDigest
-from app.domain_service.schemas.logical import (
+from app.domain_service.schemas.logical_validation import (
     RetrieveObject,
     ValidateMatchImport,
     ValidateNewMatch,
