@@ -22,8 +22,6 @@ Moreover I thought: if I want to grow this project or keep working the way I hav
 
 ### Different architecture
 
-##### Diagram [photo]
-
 This project still preserve the monolith structure. FastAPI and its intense adoption of the dependency injection pattern forced me to rethink the structure and more specifically where the logic ORM logic would reside.
 
 Still driven by the existing test suite I developed the new version as it is now. The test suite required a small initial effort to work, due to the way database session objects are fetched when a request reaches the endpoint. Things started to work quickly after.
