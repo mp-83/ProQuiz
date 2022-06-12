@@ -1,3 +1,5 @@
+## ProQuiz
+
 ProQuiz is a trivia game, pretty much like _Who wants to be a millionaire_.
 
 ### Glimpse of history
@@ -16,7 +18,7 @@ When the development of the first version, driven by tests (TDD), was completed 
 
 ### FastAPI
 
-Moreover I thought: if I want to grow this project or keep working the way I have in mind, maybe is suitable to switch to a more reliable framework. I decided to port the project to FastAPI as it seemed to fit better for a purely API based Backend. Its wide adoption was another reason I got conviced.
+Moreover I thought: if I want to grow this project or keep working the way I have in mind, maybe is suitable to switch to a more reliable framework. I decided to port the project to [FastAPI](https://fastapi.tiangolo.com/) as it seemed to fit better for a purely API based Backend. Its wide adoption was another reason I got conviced.
 
 ### Different architecture
 
