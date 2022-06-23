@@ -14,7 +14,7 @@ When I started working on the quiz I opted for [Pyramid](https://docs.pylonsproj
 
 When the development of the first version, driven by tests (TDD), was completed I started pursuing the idea to develop the Frontend too, or at least make it feasible for someone (most likely a friend) to jump in and code.
 
-![Diagram version 1]( "Diagram v.1")
+![Diagram version 1](docs/pyramid-diagram.png "Diagram v.1")
 
 ### FastAPI
 
@@ -28,7 +28,7 @@ Driven by the existing test suite I developed the new current version. The test 
 
 In the new structure I emptied the `entities` class of any logic but the simple properties used to return some internal date in a more comfortable mode. Moved the interface to the ORM to a new set of `classes` called `DataTransferObject`(`DTO`).
 
-![Diagram version 2]( "Diagram v.2")
+![Diagram version 2](docs/fastapi-diagram.png "Diagram v.2")
 
 ### Validation
 
