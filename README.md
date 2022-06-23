@@ -4,37 +4,39 @@ ProQuiz is a trivia game, pretty much like _Who wants to be a millionaire_.
 
 ### Glimpse of history
 
-I started this project with the idea to create a multistage simple interview quiz. Nothing new on the horizon. Something I would develop in my free time and I wanted to propose to my company. I quickly realized that this idea would not be suitable for the context so I decide to make a turn and develop something I always wanted to built.
+I started this project with the idea to create a multistage simple interview quiz. Nothing new on the horizon. Something I would develop in my free time and I wanted to propose to my company. I quickly realized that this idea would not be suitable for the context so I decide to make a U turn and develop something a bit different.
 
-There are plenty of similar solutions out there. It absolutely doesn't want to be something innovative. I just wanted to implement it and learn something new while doing something funny.
+There are plenty of similar solutions out there. Absolutely doesn't want to be something innovative. I just wanted to implement it and learn while doing something funny.
 
 ### Technologies
 
-When I started working on the quiz I opted for [Pyramid](https://docs.pylonsproject.org/projects/pyramid/en/latest/) because I wanted to learn this framework. So I completed the v.0.1 using Pyramid (plus many other libraries).
-
-Although Pyramid is more a Model-View-Template tool, I developed my solution using a standard REST CRUD approach. A set of endpoints mapped to a set of entities (aka `models`) with a simple validation mechanism in between, plus the _play_ logic.
+When I started working on the quiz I opted for [Pyramid](https://docs.pylonsproject.org/projects/pyramid/en/latest/) because I wanted to learn this framework. So I completed the v.0.1 using Pyramid (plus many other libraries). Although it is more a Model-View-Template tool, I developed my solution using a standard REST CRUD approach. A set of endpoints mapped to a set of entities (aka `models`) with a simple validation mechanism in between, plus the _play_ logic.
 
 When the development of the first version, driven by tests (TDD), was completed I started pursuing the idea to develop the Frontend too, or at least make it feasible for someone (most likely a friend) to jump in and code.
 
+![Diagram version 1]( "Diagram v.1")
+
 ### FastAPI
 
-Moreover I thought: if I want to grow this project or keep working the way I have in mind, maybe is suitable to switch to a more reliable framework. I decided to port the project to [FastAPI](https://fastapi.tiangolo.com/) as it seemed to fit better for a purely API based Backend. Its wide adoption was another reason I got conviced.
+Moreover I thought: if I want to grow this project or keep working the way I have in mind, maybe is suitable to switch to a more adopted framework. I decided to port the project to [FastAPI](https://fastapi.tiangolo.com/) as it seemed to fit better for a purely API based Backend.
 
-### Different architecture
+### Different structure
 
-This project still preserve the monolith structure. FastAPI and its intense adoption of the dependency injection pattern forced me to rethink the structure and more specifically where the logic ORM logic would reside.
+This project still preserve the monolithic architecture. FastAPI and its intense adoption of the dependency injection pattern forced me to rethink the structure and more specifically where the ORM logic resides.
 
-Still driven by the existing test suite I developed the new version as it is now. The test suite required a small initial effort to work, due to the way database session objects are fetched when a request reaches the endpoint. Things started to work quickly after.
+Driven by the existing test suite I developed the new current version. The test suite required a small initial effort to work, due to the way database session objects are fetched when a request reaches the endpoint. Things started to work quickly after.
 
-In the new architecture I emptied the entities class of any logic but the simple properties used to return some internal date in a more comfortable mode. Moved the interface to the ORM to a new set of `classes` called `DataTransferObject`(`DTO`).
+In the new structure I emptied the `entities` class of any logic but the simple properties used to return some internal date in a more comfortable mode. Moved the interface to the ORM to a new set of `classes` called `DataTransferObject`(`DTO`).
+
+![Diagram version 2]( "Diagram v.2")
 
 ### Validation
 
 To ease testing also the validation mechanism is structured into two components: `syntax` and `logical`. The former, as the terms indicates, verifies that the incoming data respects the expected data types.
 
-The latter verifies that the objects of the `Entities` involved, actually exists and can be manipulated.
+The latter verifies that the objects of the `Entities` involved, actually exists and can be manipulated in the sense that some logical constraints are respected.
 
-So the former one doesn't need a testing DB, the former one does.
+The syntax check is purely a type verification. The second one interacts with the database to retrieve the object.
 
 ### Play
 
@@ -53,7 +55,7 @@ Currently the interface consists of three methods:
 
 ### Compose
 
-To start the application is enought to
+To start the application is enough to
 ```
 docker-compose up -d
 ```
@@ -61,5 +63,5 @@ docker-compose up -d
 while to run the tests
 
 ```
-docker-compose exec backend sh tests-start.sh -vv --pdb
+docker-compose exec backend sh tests-start.sh -vv
 ```
