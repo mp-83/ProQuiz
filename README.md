@@ -52,7 +52,6 @@ Currently the interface consists of three methods:
 - `next`: move to the next question
 - `react`: answer the current question
 
-
 ### Compose
 
 To start the application is enough to
@@ -61,7 +60,39 @@ docker-compose up -d
 ```
 
 while to run the tests
-
 ```
 docker-compose exec backend sh tests-start.sh -vv
+```
+
+To start and fill in the database with some data
+```
+docker-compose exec backend sh prestart.sh
+```
+
+### PgAdmin
+
+Once the containers are started, you can navigate to the [PgAdmin Panel](http://localhost:5050/browser/) and access with the PGADMIN credentials stored in the `.env` file
+
+Once logged in, these are the steps to follow to access the DB:
+- click on `Add New Server`
+- give it a name (ex: `LocalDB`)
+- within the same popup/modal, move to the `Connection` tab and
+    - insert `quizdb` (or the name you assigned to the database service in the docker-compose file)
+	- leave the default port
+	- username is the `POSTGRES_USER` as specified in the `.env` file
+	- password is the `POSTGRES_PASSWORD` as specified in the `.env` file
+- click `SAVE`
+
+To browse the DB tables, this would be the path
+```
+LocalDB ==> app ==> Schemas ==> public ==> tables
+```
+
+Google *PgAdmin tutorial* for more info
+
+### Interaction
+
+There is a composed command that mimics the basic interactaction a user might perform using a GUI. This command can be started via
+```
+docker-compose exec backend sh gui.sh
 ```
