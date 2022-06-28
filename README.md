@@ -69,6 +69,11 @@ To start and fill in the database with some data
 docker-compose exec backend sh prestart.sh
 ```
 
+To generate one new migration
+```
+docker-compose exec backend alembic revision --autogenerate -m "give a name to the migration here"
+```
+
 ### PgAdmin
 
 Once the containers are started, you can navigate to the [PgAdmin Panel](http://localhost:5050/browser/) and access with the PGADMIN credentials stored in the `.env` file
