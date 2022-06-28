@@ -26,11 +26,9 @@ class Answer(TableMixin, Base):
     level = Column(Integer)
 
     __table_args__ = (
-        UniqueConstraint("question_uid", "text"),
-        UniqueConstraint("question_uid", "bool_value"),
-        CheckConstraint(
-            "CASE WHEN text NOTNULL THEN bool_value IS NULL END",
-            name="ck_answers_text_notnull",
+        UniqueConstraint("question_uid", "text", name="uq_answers_question_uid_text"),
+        UniqueConstraint(
+            "question_uid", "bool_value", name="uq_answers_question_uid_bool_value"
         ),
         CheckConstraint(
             "CASE WHEN bool_value NOTNULL THEN text IS NULL END",

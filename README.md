@@ -59,6 +59,11 @@ To start the application is enough to
 docker-compose up -d
 ```
 
+while to reset the environment (this also deletes the DB)
+```
+docker-compose rm -fs && docker-compose down -v && docker-compose up -d
+```
+
 while to run the tests
 ```
 docker-compose exec backend sh tests-start.sh -vv
@@ -73,6 +78,18 @@ To generate one new migration
 ```
 docker-compose exec backend alembic revision --autogenerate -m "give a name to the migration here"
 ```
+
+To apply one migration
+```
+docker-compose exec backend alembic upgrade head
+```
+
+To revert one migration
+```
+docker-compose exec backend alembic downgrade -1
+```
+
+
 
 ### PgAdmin
 

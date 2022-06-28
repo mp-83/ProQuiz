@@ -1,8 +1,8 @@
-"""Initial migration
+"""First migration
 
-Revision ID: 94232400b62e
+Revision ID: 6af14268c174
 Revises:
-Create Date: 2022-06-28 20:17:02.381846
+Create Date: 2022-06-28 21:17:49.722893
 
 """
 import sqlalchemy as sa
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "94232400b62e"
+revision = "6af14268c174"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -131,10 +131,6 @@ def upgrade():
             "CASE WHEN bool_value NOTNULL THEN text IS NULL END",
             name=op.f("ck_answers_ck_answers_bool_value_notnull"),
         ),
-        sa.CheckConstraint(
-            "CASE WHEN text NOTNULL THEN bool_value IS NULL END",
-            name=op.f("ck_answers_ck_answers_text_notnull"),
-        ),
         sa.ForeignKeyConstraint(
             ["question_uid"],
             ["questions.uid"],
@@ -143,10 +139,10 @@ def upgrade():
         ),
         sa.PrimaryKeyConstraint("uid", name=op.f("pk_answers")),
         sa.UniqueConstraint(
-            "question_uid", "bool_value", name=op.f("uq_answers_question_uid")
+            "question_uid", "bool_value", name="uq_answers_question_uid_bool_value"
         ),
         sa.UniqueConstraint(
-            "question_uid", "text", name=op.f("uq_answers_question_uid")
+            "question_uid", "text", name="uq_answers_question_uid_text"
         ),
     )
     op.create_table(
