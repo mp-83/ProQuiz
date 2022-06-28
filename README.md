@@ -74,6 +74,11 @@ To generate one new migration
 docker-compose exec backend alembic revision --autogenerate -m "give a name to the migration here"
 ```
 
+To apply one migration
+```
+docker-compose exec backend alembic upgrade head
+```
+
 ### PgAdmin
 
 Once the containers are started, you can navigate to the [PgAdmin Panel](http://localhost:5050/browser/) and access with the PGADMIN credentials stored in the `.env` file

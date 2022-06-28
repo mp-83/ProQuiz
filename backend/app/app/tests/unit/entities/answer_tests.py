@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 
-class TestCaseQuestion:
+class TestCaseAnswer:
     @pytest.fixture(autouse=True)
     def setUp(self, db_session, question_dto, answer_dto, match_dto):
         self.question_dto = question_dto
@@ -23,6 +23,7 @@ class TestCaseQuestion:
 
         db_session.rollback()
 
+    # DOES NOT WORK WITH IN-MEMORY DATABASE
     # def t_eitherTextOrBoolValue(self, db_session):
     #     question = self.question_dto.new(text="US has 40 states?", position=0)
     #     self.question_dto.save(question)
