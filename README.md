@@ -89,8 +89,6 @@ To revert one migration
 docker-compose exec backend alembic downgrade -1
 ```
 
-
-
 ### PgAdmin
 
 Once the containers are started, you can navigate to the [PgAdmin Panel](http://localhost:5050/browser/) and access with the PGADMIN credentials stored in the `.env` file
