@@ -50,7 +50,3 @@ class Reaction(TableMixin, Base):
     @property
     def answer(self):
         return self._open_answer if self.question.is_open else self._answer
-
-    @property
-    def json(self):
-        return {}

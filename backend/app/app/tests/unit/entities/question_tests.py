@@ -20,10 +20,6 @@ class TestCaseQuestion:
         )
         yield
 
-    def t_allQuestionsFilteredByMatchUid(self, match_dto):
-        match_dto = match_dto
-        assert True
-
     def t_theQuestionAtPosition(self, samples):
         question = self.question_dto.at_position(0)
         assert question.text == "q1.text"
