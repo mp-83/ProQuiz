@@ -215,7 +215,7 @@ class TestCaseMatchEndpoints:
         )
 
         assert response.json()["questions_list"][0]["text"] == "What is your name?"
-        assert response.json()["questions_list"][0]["answers_list"][0]["is_correct"]
+        assert response.json()["questions_list"][0]["answers_list"][2]["is_correct"]
 
     def t_importTemplateQuestions(
         self, client: TestClient, superuser_token_headers: dict, question_dto

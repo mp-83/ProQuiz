@@ -17,8 +17,9 @@ class Answer(TableMixin, Base):
     # reactions: implicit backward relation
 
     position = Column(Integer, nullable=False)
-    text = Column(String(ANSWER_TEXT_MAX_LENGTH))
-    bool_value = Column(Boolean)
+    text = Column(String(ANSWER_TEXT_MAX_LENGTH), nullable=False)
+    # whether is a boolean answer, thus the text contains only True|False
+    boolean = Column(Boolean, server_default="0")
     # whether the content of the answer is an image or any external source
     content_url = Column(String(URL_LENGTH))
     # no constraint are defined as there might be more than one correct answer
@@ -27,12 +28,9 @@ class Answer(TableMixin, Base):
 
     __table_args__ = (
         UniqueConstraint("question_uid", "text", name="uq_answers_question_uid_text"),
-        UniqueConstraint(
-            "question_uid", "bool_value", name="uq_answers_question_uid_bool_value"
-        ),
         CheckConstraint(
-            "CASE WHEN bool_value NOTNULL THEN text IS NULL END",
-            name="ck_answers_bool_value_notnull",
+            "CASE WHEN boolean = 'true' THEN (text = 'True' OR text = 'False') END",
+            name="ck_answers_boolean_text",
         ),
     )
 

@@ -1,8 +1,8 @@
 """First migration
 
-Revision ID: 6af14268c174
+Revision ID: fd674bc5c2ae
 Revises:
-Create Date: 2022-06-28 21:17:49.722893
+Create Date: 2022-06-29 15:53:58.017210
 
 """
 import sqlalchemy as sa
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "6af14268c174"
+revision = "fd674bc5c2ae"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -122,14 +122,14 @@ def upgrade():
         sa.Column("update_timestamp", sa.DateTime(timezone=True), nullable=True),
         sa.Column("question_uid", sa.Integer(), nullable=False),
         sa.Column("position", sa.Integer(), nullable=False),
-        sa.Column("text", sa.String(length=500), nullable=True),
-        sa.Column("bool_value", sa.Boolean(), nullable=True),
+        sa.Column("text", sa.String(length=500), nullable=False),
+        sa.Column("boolean", sa.Boolean(), server_default="0", nullable=True),
         sa.Column("content_url", sa.String(length=256), nullable=True),
         sa.Column("is_correct", sa.Boolean(), nullable=True),
         sa.Column("level", sa.Integer(), nullable=True),
         sa.CheckConstraint(
-            "CASE WHEN bool_value NOTNULL THEN text IS NULL END",
-            name=op.f("ck_answers_ck_answers_bool_value_notnull"),
+            "CASE WHEN boolean = 'true' THEN (text = 'True' OR text = 'False') END",
+            name=op.f("ck_answers_ck_answers_boolean_text"),
         ),
         sa.ForeignKeyConstraint(
             ["question_uid"],
@@ -138,9 +138,6 @@ def upgrade():
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("uid", name=op.f("pk_answers")),
-        sa.UniqueConstraint(
-            "question_uid", "bool_value", name="uq_answers_question_uid_bool_value"
-        ),
         sa.UniqueConstraint(
             "question_uid", "text", name="uq_answers_question_uid_text"
         ),

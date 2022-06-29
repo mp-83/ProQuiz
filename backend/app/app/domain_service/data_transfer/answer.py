@@ -10,6 +10,13 @@ class AnswerDTO:
 
     def new(self, **kwargs):
         kwargs.pop("uid", None)
+        text = kwargs.get("text")
+        if text in [False, "False"]:
+            text = "False"
+        elif text in [True, "True"]:
+            text = "True"
+
+        kwargs["text"] = text
         return self.klass(**kwargs)
 
     def save(self, instance):
