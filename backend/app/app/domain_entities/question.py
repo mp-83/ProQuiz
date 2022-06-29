@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
 
@@ -17,6 +17,7 @@ class Question(TableMixin, Base):
     text = Column(String(QUESTION_TEXT_MAX_LENGTH), nullable=False)
     position = Column(Integer, nullable=False)
     time = Column(Integer)  # in seconds
+    boolean = Column(Boolean, server_default="0")
     content_url = Column(String(URL_LENGTH))
 
     __table_args__ = (
@@ -53,5 +54,6 @@ class Question(TableMixin, Base):
         return {
             "text": self.text,
             "position": self.position,
+            "boolean": self.boolean,
             "answers": self.answers_list,
         }

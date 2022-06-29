@@ -59,6 +59,7 @@ class QuestionDTO:
                     text=_answer["text"],
                     position=position,
                     is_correct=position == 0,
+                    boolean=question.boolean,
                 )
             )
         self._session.commit()

@@ -44,4 +44,5 @@ class Answer(TableMixin, Base):
             "position": self.position,
             "level": self.level,
             "content_url": self.content_url,
+            "boolean": self.boolean,
         }

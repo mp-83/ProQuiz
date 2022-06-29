@@ -143,6 +143,30 @@ class TestCaseMatchModel:
         assert match.reactions[0].user == user
         assert match.left_attempts(user) == 0
 
+    def t_insertBooleanQuestions(self):
+        questions = [
+            {
+                "answers": [{"text": True}, {"text": False}],
+                "text": "There is no cream in the traditional Carbonara?",
+            },
+            {
+                "answers": [{"text": False}, {"text": True}],
+                "text": "Biscuits are the same in the US and in the UK?",
+            },
+        ]
+        match = self.match_dto.save(self.match_dto.new())
+        self.match_dto.insert_questions(match, questions)
+
+        assert match.questions[0][0].boolean
+
+        assert match.questions[0][0].answers_list[0]["boolean"]
+        assert match.questions[0][0].answers_list[0]["text"] == "False"
+        assert not match.questions[0][0].answers_list[0]["is_correct"]
+
+        assert match.questions[0][0].answers_list[1]["boolean"]
+        assert match.questions[0][0].answers_list[1]["text"] == "True"
+        assert match.questions[0][0].answers_list[1]["is_correct"]
+
 
 class TestCaseMatchHash:
     def t_hashMustBeUniqueForEachMatch(self, db_session, mocker, match_dto):

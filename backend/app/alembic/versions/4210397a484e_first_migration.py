@@ -1,8 +1,8 @@
 """First migration
 
-Revision ID: fd674bc5c2ae
+Revision ID: 4210397a484e
 Revises:
-Create Date: 2022-06-29 15:53:58.017210
+Create Date: 2022-06-29 21:11:33.154310
 
 """
 import sqlalchemy as sa
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "fd674bc5c2ae"
+revision = "4210397a484e"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -103,6 +103,7 @@ def upgrade():
         sa.Column("text", sa.String(length=500), nullable=False),
         sa.Column("position", sa.Integer(), nullable=False),
         sa.Column("time", sa.Integer(), nullable=True),
+        sa.Column("boolean", sa.Boolean(), server_default="0", nullable=True),
         sa.Column("content_url", sa.String(length=256), nullable=True),
         sa.ForeignKeyConstraint(
             ["game_uid"],

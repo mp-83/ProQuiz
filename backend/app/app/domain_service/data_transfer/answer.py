@@ -9,14 +9,15 @@ class AnswerDTO:
         self.klass = Answer
 
     def new(self, **kwargs):
-        kwargs.pop("uid", None)
-        text = kwargs.get("text")
-        if text in [False, "False"]:
-            text = "False"
-        elif text in [True, "True"]:
-            text = "True"
+        """
+        Instantiate a new object
 
-        kwargs["text"] = text
+        Cast the boolean value to text.
+        """
+        text = kwargs.get("text")
+        kwargs["text"] = {False: "False", True: "True"}.get(text, text)
+
+        kwargs.pop("uid", None)
         return self.klass(**kwargs)
 
     def save(self, instance):

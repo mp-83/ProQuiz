@@ -167,6 +167,9 @@ class MatchDTO:
                 setattr(instance, name, value)
         self.save(instance)
 
+    def _boolean_answers(self, answers_list: List) -> bool:
+        return [a["text"] for a in answers_list] == [True, False]
+
     def insert_questions(self, instance, questions: list):
         result = []
         game_dto = GameDTO(session=self._session)
@@ -175,10 +178,12 @@ class MatchDTO:
 
         question_dto = QuestionDTO(session=self._session)
         for data in questions:
+            boolean_question = self._boolean_answers(data["answers"])
             new_q_instance = question_dto.new(
                 game_uid=new_game.uid,
                 text=data.get("text"),
                 position=len(new_game.questions),
+                boolean=boolean_question,
             )
             question_dto.create_with_answers(new_q_instance, data["answers"])
             result.append(new_q_instance)
