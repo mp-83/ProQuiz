@@ -1,10 +1,14 @@
+import logging
 import os
 import sys
+from base64 import b64encode
 from datetime import datetime, timedelta, timezone
 from pprint import pprint
 
 import requests
 import typer
+
+logger = logging.getLogger(__name__)
 
 app = typer.Typer()
 
@@ -33,7 +37,10 @@ class Client:
     def authenticate(self, username=None, password=None):
         username = username or os.getenv("FIRST_SUPERUSER")
         password = password or os.getenv("FIRST_SUPERUSER_PASSWORD")
+        if "Authorization" in self._client.headers:
+            return
 
+        logger.info(f"Authenticating user: {username}")
         response = self._client.post(
             f"{BASE_URL}/login/access-token",
             data={"username": username, "password": password},
@@ -135,6 +142,26 @@ def list_questions():
         typer.echo(response.reason)
 
 
+def upload_yaml():
+    client = Client()
+    client.authenticate()
+
+    if input("Create a new match?  ") == "y":
+        new_match()
+
+    # the file must reside anywhere under proquiz/backend/app/
+    file_path = input("File path /proquiz/backend/app ==> ")
+    match_uid = input("The Match UID ==> ")
+
+    with open(file_path, "rb") as fp:
+        b64content = b64encode(fp.read()).decode()
+        b64string = f"data:application/x-yaml;base64,{b64content}"
+
+        payload = {"uid": match_uid, "data": b64string}
+        result = client.post(f"{BASE_URL}/matches/yaml_import", json=payload)
+        typer.echo((result.status_code, result.json()))
+
+
 def exit_command():
     typer.echo("Exiting")
     sys.exit(0)
@@ -148,6 +175,7 @@ def menu():
         3. create a new match
         4. create new question
         5. list all questions
+        6. upload quiz from YAML file
         Enter to exit
     """
     typer.echo(main_message)
@@ -164,6 +192,7 @@ def start():
             "3": new_match,
             "4": new_question,
             "5": list_questions,
+            "6": upload_yaml,
         }.get(user_choice)
         if not action:
             exit_command()

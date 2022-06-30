@@ -173,16 +173,19 @@ class MatchDTO:
     def insert_questions(self, instance, questions: list):
         result = []
         game_dto = GameDTO(session=self._session)
-        new_game = game_dto.new(match_uid=instance.uid)
-        game_dto.save(new_game)
+        # TODO write a test for this
+        match_game = game_dto.get(match_uid=instance.uid)
+        if not match_game:
+            match_game = game_dto.new(match_uid=instance.uid)
+            game_dto.save(match_game)
 
         question_dto = QuestionDTO(session=self._session)
         for data in questions:
             boolean_question = self._boolean_answers(data["answers"])
             new_q_instance = question_dto.new(
-                game_uid=new_game.uid,
+                game_uid=match_game.uid,
                 text=data.get("text"),
-                position=len(new_game.questions),
+                position=len(match_game.questions),
                 boolean=boolean_question,
             )
             question_dto.create_with_answers(new_q_instance, data["answers"])
