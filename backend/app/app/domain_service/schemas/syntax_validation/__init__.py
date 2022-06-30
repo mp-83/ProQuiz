@@ -21,6 +21,9 @@ from app.domain_service.schemas.syntax_validation.question import (  # noqa: F40
     QuestionCreate,
     QuestionEdit,
 )
+from app.domain_service.schemas.syntax_validation.token import (  # noqa: F401
+    TokenPayload,
+)
 from app.domain_service.schemas.syntax_validation.user import (  # noqa: F401
     Players,
     User,

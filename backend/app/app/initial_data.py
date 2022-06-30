@@ -1,5 +1,4 @@
 import logging
-from pprint import pprint
 
 import yaml
 from sqlalchemy.orm import Session
@@ -52,7 +51,6 @@ class EmptyDB:
         if not food_match:
             logger.info(f"Creating match: {name}")
             content = self.parse_yaml_content("/app/quizzes/quiz5.yaml")
-            pprint(content)
             food_match = self.match_dto.new(name=name)
             self.match_dto.save(food_match)
             self.match_dto.insert_questions(food_match, content["questions"])
