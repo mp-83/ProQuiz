@@ -61,51 +61,21 @@ class Client:
         return self._client.get(*args, **kwargs)
 
 
-def list_matches():
-    client = Client()
-    client.authenticate()
+def list_matches(client):
+    with_out_questions = (
+        input("Only match's details without questions and answers: y/n ==> ") == "y"
+    )
     result = client.get(f"{BASE_URL}/matches")
-    for match in result.json().values():
+    for match in result.json()["matches"]:
+        if with_out_questions:
+            match_details = match.copy()
+            match_details.pop("questions")
+            typer.echo(pprint(match_details))
+            continue
         typer.echo(pprint(match))
 
 
-def match_details():
-    typer.echo("Enter the match ID")
-    match_uid = input()
-    client = Client()
-    client.authenticate()
-    result = client.get(f"{BASE_URL}/matches/{match_uid}")
-    typer.echo(pprint(result.json()))
-
-
-def new_question():
-    text = input("Text ==> ")
-    payload = {"text": text}
-
-    position = input("Position ==> ")
-    payload["position"] = position
-
-    answers = []
-    while True:
-        answer_text = input("Answer text ==> ")
-        if answer_text == "":
-            break
-        answers.append({"text": answer_text})
-
-    payload["answers"] = answers
-
-    client = Client()
-    client.authenticate()
-    response = client.post(f"{BASE_URL}/questions/new", json=payload)
-    if response.ok:
-        typer.echo(pprint(response.json()))
-    else:
-        typer.echo(response.reason)
-
-
-def new_match():
-    client = Client()
-    client.authenticate()
+def new_match(client):
     name = input("Match name ==> ")
     with_code = input("With code? y/n ==> ")
     with_code = with_code == "y"
@@ -125,13 +95,125 @@ def new_match():
         "is_restricted": is_restricted,
         "order": order,
     }
-    result = client.post(f"{BASE_URL}/matches/new", json=payload)
-    typer.echo((result.status_code, result.json()))
+    response = client.post(f"{BASE_URL}/matches/new", json=payload)
+    typer.echo((response.status_code, response.json()))
 
 
-def list_questions():
-    client = Client()
-    client.authenticate()
+def match_details(client):
+    match_uid = input("Enter the match ID:  ")
+    with_out_questions = (
+        input("Only match's details without questions and answers: y/n ==> ") == "y"
+    )
+    response = client.get(f"{BASE_URL}/matches/{match_uid}")
+    if not response.ok:
+        typer.echo(f"ERROR: {response.reason}")
+        return
+    if with_out_questions:
+        match_details = response.json().copy()
+        match_details.pop("questions_list")
+        typer.echo(pprint(match_details))
+    return response.json()
+
+
+def edit_match(client):
+    current_match = match_details(client)
+    if not current_match:
+        return
+    match_uid = current_match["uid"]
+
+    name = input("Name: ") or current_match["name"]
+    times = input("Times: ") or current_match["times"]
+    order = input("Order: ") or current_match["order"]
+    payload = {"name": name, "times": times, "order": order}
+    changed = (
+        payload.values()
+        != {
+            k: v for k, v in current_match.items() if k in ["name", "times", "order"]
+        }.values()
+    )
+    if not changed:
+        typer.echo("Nothing changed")
+        return
+
+    typer.echo("Updating Match")
+    response = client.put(f"{BASE_URL}/matches/edit/{match_uid}", json=payload)
+    if response.ok:
+        typer.echo(pprint(response.json()))
+    else:
+        typer.echo(f"ERROR: {response.reason}")
+
+
+def new_question(client):
+    text = input("Text ==> ")
+    payload = {"text": text}
+
+    position = input("Position ==> ")
+    payload["position"] = position
+
+    answers = []
+    while True:
+        answer_text = input("Answer text ==> ")
+        if answer_text == "":
+            break
+        answers.append({"text": answer_text})
+
+    payload["answers"] = answers
+
+    response = client.post(f"{BASE_URL}/questions/new", json=payload)
+    if response.ok:
+        typer.echo(pprint(response.json()))
+    else:
+        typer.echo(response.reason)
+
+
+def question_details(client):
+    question_uid = input("ID of the question to edit:  ")
+    response = client.get(f"{BASE_URL}/questions/{question_uid}")
+    if not response.ok:
+        typer.echo(f"{response.status_code}: {response.reason}")
+        return
+
+    pprint(response.json())
+    typer.echo(f"\n\nQuestion ID => {question_uid}")
+    return response.json()
+
+
+def edit_question(client):
+    # Retrieve current question
+    current_status = question_details(client)
+    if not current_status:
+        return
+
+    question_uid = current_status["uid"]
+
+    text = input("Text:  ") or current_status["text"]
+    position = input("Position:  ") or current_status["position"]
+    boolean = input("Boolean:  ") or current_status["boolean"]
+    time = input("Time:  ") or current_status["time"]
+
+    payload = {"text": text, "position": position, "boolean": boolean, "time": time}
+    changed = (
+        payload.values()
+        != {
+            k: v
+            for k, v in current_status.items()
+            if k not in ["uid", "answers_list", "game", "content_url"]
+        }.values()
+    )
+    if not changed:
+        typer.echo("Nothing changed")
+        return
+
+    typer.echo("Updating Question")
+    response = client.put(f"{BASE_URL}/questions/edit/{question_uid}", json=payload)
+
+    if response.ok:
+        typer.echo(pprint(response.json()))
+    else:
+        typer.echo(f"ERROR: {response.reason}")
+
+
+def list_questions(client):
     match_uid = input("Match ID: ")
     match_uid = None if match_uid == "" else int(match_uid)
     response = client.get(f"{BASE_URL}/questions/", params={"match_uid": match_uid})
@@ -139,12 +221,10 @@ def list_questions():
         for question in response.json()["questions"]:
             typer.echo(pprint(question))
     else:
-        typer.echo(response.reason)
+        typer.echo(f"ERROR: {response.reason}")
 
 
-def upload_yaml():
-    client = Client()
-    client.authenticate()
+def upload_yaml(client):
 
     if input("Create a new match?  ") == "y":
         new_match()
@@ -173,9 +253,11 @@ def menu():
         1. list matches
         2. get match details
         3. create a new match
-        4. create new question
-        5. list all questions
-        6. upload quiz from YAML file
+        4. edit one match
+        5. create new question
+        6. edit question
+        7. list all questions
+        8. upload quiz from YAML file
         Enter to exit
     """
     typer.echo(main_message)
@@ -184,20 +266,25 @@ def menu():
 
 @app.command()
 def start():
+    client = Client()
+    client.authenticate()
+
     while True:
         user_choice = menu()
         action = {
             "1": list_matches,
             "2": match_details,
             "3": new_match,
-            "4": new_question,
-            "5": list_questions,
-            "6": upload_yaml,
+            "4": edit_match,
+            "5": new_question,
+            "6": edit_question,
+            "7": list_questions,
+            "8": upload_yaml,
         }.get(user_choice)
         if not action:
             exit_command()
 
-        action()
+        action(client)
 
 
 if __name__ == "__main__":

@@ -79,6 +79,7 @@ class Match(TableMixin, Base):
         Store questions as list, one per game
         """
         return {
+            "uid": self.uid,
             "name": self.name,
             "is_restricted": self.is_restricted,
             "expires": self.expires.isoformat() if self.to_time else None,

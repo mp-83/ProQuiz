@@ -27,7 +27,7 @@ router = APIRouter()
 def list_matches(
     session: Session = Depends(get_db), _user: User = Depends(get_current_user)
 ):
-    # TODO: to fix the filtering parameters
+    # TODO: to fix the filtering parameters and add Response Model
     all_matches = MatchDTO(session=session).all_matches(**{})
     return {"matches": [m.json for m in all_matches]}
 

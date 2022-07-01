@@ -11,6 +11,7 @@ class Question(BaseModel):
     text: str
     time: int = None
     content_url: str = None
+    boolean: bool = None
     game: Game = None
     answers_list: List[Answer] = []
 

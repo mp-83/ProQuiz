@@ -52,8 +52,10 @@ class Question(TableMixin, Base):
     @property
     def json(self):
         return {
+            "uid": self.uid,
             "text": self.text,
             "position": self.position,
             "boolean": self.boolean,
+            "time": self.time,
             "answers": self.answers_list,
         }
