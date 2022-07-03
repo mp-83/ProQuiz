@@ -42,7 +42,7 @@ class TestCasePlayLand:
 
 class TestCasePlayCode:
     def t_playCode(self, client: TestClient, superuser_token_headers: dict, db_session):
-        in_one_hour = datetime.now() + timedelta(hours=1)
+        in_one_hour = datetime.now(tz=timezone.utc) + timedelta(hours=1)
         match_dto = MatchDTO(session=db_session)
         match = match_dto.new(with_code=True, expires=in_one_hour)
         match_dto.save(match)

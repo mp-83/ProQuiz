@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
 
@@ -55,7 +55,12 @@ class Match(TableMixin, Base):
     @property
     def is_active(self):
         if self.expires:
-            return (self.expires - datetime.now()).total_seconds() > 0
+            # TODO to better fix. now should be tz aware all the times
+            # to investigate why SQL does not save timezone aware datetime
+            now = (
+                datetime.now(tz=timezone.utc) if self.expires.tzinfo else datetime.now()
+            )
+            return (self.expires - now).total_seconds() > 0
         return True
 
     @property

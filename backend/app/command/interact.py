@@ -108,10 +108,10 @@ def match_details(client):
     if not response.ok:
         typer.echo(f"ERROR: {response.reason}")
         return
+    match_details = response.json().copy()
     if with_out_questions:
-        match_details = response.json().copy()
         match_details.pop("questions_list")
-        typer.echo(pprint(match_details))
+    typer.echo(pprint(match_details))
     return response.json()
 
 
@@ -124,11 +124,14 @@ def edit_match(client):
     name = input("Name: ") or current_match["name"]
     times = input("Times: ") or current_match["times"]
     order = input("Order: ") or current_match["order"]
-    payload = {"name": name, "times": times, "order": order}
+    password = input("Password:  ") or current_match["password"]
+    payload = {"name": name, "times": times, "order": order, "password": password}
     changed = (
         payload.values()
         != {
-            k: v for k, v in current_match.items() if k in ["name", "times", "order"]
+            k: v
+            for k, v in current_match.items()
+            if k in ["name", "times", "order", "password"]
         }.values()
     )
     if not changed:
@@ -136,8 +139,10 @@ def edit_match(client):
         return
 
     typer.echo("Updating Match")
+    # TODO update questions. this is a temporary patch to avoid HTTP-500
+    payload["questions"] = current_match["questions_list"]
     response = client.put(f"{BASE_URL}/matches/edit/{match_uid}", json=payload)
-    if response.ok:
+    if response.status_code in [200, 422, 400]:
         typer.echo(pprint(response.json()))
     else:
         typer.echo(f"ERROR: {response.reason}")
@@ -160,7 +165,7 @@ def new_question(client):
     payload["answers"] = answers
 
     response = client.post(f"{BASE_URL}/questions/new", json=payload)
-    if response.ok:
+    if response.status_code in [200, 422, 400]:
         typer.echo(pprint(response.json()))
     else:
         typer.echo(response.reason)
@@ -207,7 +212,7 @@ def edit_question(client):
     typer.echo("Updating Question")
     response = client.put(f"{BASE_URL}/questions/edit/{question_uid}", json=payload)
 
-    if response.ok:
+    if response.status_code in [200, 422, 400]:
         typer.echo(pprint(response.json()))
     else:
         typer.echo(f"ERROR: {response.reason}")
@@ -230,7 +235,7 @@ def upload_yaml(client):
         new_match()
 
     # the file must reside anywhere under proquiz/backend/app/
-    file_path = input("File path /proquiz/backend/app ==> ")
+    file_path = input("File path /proquiz/backend/app ==>\t")
     match_uid = input("The Match UID ==> ")
 
     with open(file_path, "rb") as fp:
@@ -240,6 +245,74 @@ def upload_yaml(client):
         payload = {"uid": match_uid, "data": b64string}
         result = client.post(f"{BASE_URL}/matches/yaml_import", json=payload)
         typer.echo((result.status_code, result.json()))
+
+
+def play(client):
+    response = client.get(f"{BASE_URL}/matches")
+    typer.echo("List of Matches:\n")
+    all_matches = {}
+    for i, _match in enumerate(response.json()["matches"]):
+        all_matches[i] = (_match["uhash"], _match["name"])
+        typer.echo(f"{i} :: {_match['name']}")
+
+    typer.echo("\n\n")
+    match_number = input("Enter match number:\t")
+    uhash = all_matches[int(match_number)][0]
+    name = all_matches[int(match_number)][1]
+
+    typer.echo(f"Playing...at {name}")
+
+    client = Client()
+    response = client.post(f"{BASE_URL}/play/h/{uhash}")
+
+    if response.status_code in [200, 422, 400]:
+        typer.echo(pprint(response.json()))
+    else:
+        typer.echo(f"ERROR: {response.reason}")
+
+    match_uid = response.json()["match"]
+    response = client.post(f"{BASE_URL}/play/start", json={"match_uid": match_uid})
+    if response.status_code in [200, 422, 400]:
+        typer.echo(pprint(response.json()))
+    else:
+        typer.echo(f"ERROR: {response.reason}")
+
+    response_data = response.json()
+    while response_data["question"] is not None:
+        answer_map = print_question_and_answers(response_data["question"])
+
+        index = input("Answer ==>\t")
+        if int(index) not in answer_map:
+            index = 0
+
+        response = client.post(
+            f"{BASE_URL}/play/next",
+            json={
+                "match_uid": response_data["match"],
+                "question_uid": response_data["question"]["uid"],
+                "answer_uid": answer_map[int(index)],
+                "user_uid": response_data["user"],
+            },
+        )
+        response_data = response.json()
+
+    typer.echo("\n\n")
+    typer.echo(f"Match Over. Your score is: {response_data['score']}")
+
+
+def print_question_and_answers(question):
+    answer_map = {}
+    typer.echo(f"{question['text']}\n")
+    for i, answer in enumerate(question["answers"]):
+        typer.echo(f"\t{i}:\t{answer['text']}")
+        answer_map[i] = answer["uid"]
+
+    typer.echo("\n\n")
+    return answer_map
+
+
+def import_questions_to_match(client):
+    pass
 
 
 def exit_command():
@@ -254,10 +327,12 @@ def menu():
         2. get match details
         3. create a new match
         4. edit one match
-        5. create new question
-        6. edit question
-        7. list all questions
-        8. upload quiz from YAML file
+        5. import question to a match
+        6. play
+        7. create new question
+        8. edit question
+        9. list all questions
+        10. upload quiz from YAML file
         Enter to exit
     """
     typer.echo(main_message)
@@ -276,10 +351,12 @@ def start():
             "2": match_details,
             "3": new_match,
             "4": edit_match,
-            "5": new_question,
-            "6": edit_question,
-            "7": list_questions,
-            "8": upload_yaml,
+            "5": import_questions_to_match,
+            "6": play,
+            "7": new_question,
+            "8": edit_question,
+            "9": list_questions,
+            "10": upload_yaml,
         }.get(user_choice)
         if not action:
             exit_command()

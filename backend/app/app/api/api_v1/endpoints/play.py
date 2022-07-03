@@ -101,12 +101,14 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
     try:
         next_q = player.react(answer)
     except MatchOver:
-        PlayScore(
+        score = PlayScore(
             match.uid, user.uid, player_status.current_score(), db_session=session
         ).save_to_ranking()
-        return JSONResponse(content={"question": None})
+        return JSONResponse(content={"question": None, "score": score.score})
 
-    return JSONResponse(content={"question": next_q.json, "user": user.uid})
+    return JSONResponse(
+        content={"question": next_q.json, "user": user.uid, "match": match.uid}
+    )
 
 
 @router.post("/sign")

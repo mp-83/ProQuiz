@@ -279,3 +279,4 @@ class PlayScore:
             score=self.score,
         )
         dto.save(new_ranking)
+        return new_ranking
