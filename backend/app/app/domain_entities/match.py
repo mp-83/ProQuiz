@@ -87,6 +87,7 @@ class Match(TableMixin, Base):
             "uid": self.uid,
             "name": self.name,
             "is_restricted": self.is_restricted,
+            "password": self.password,
             "expires": self.expires.isoformat() if self.to_time else None,
             "order": self.order,
             "times": self.times,

@@ -14,7 +14,6 @@ class Match(BaseModel):
     password: Optional[str]
     is_restricted: Optional[bool]
     from_time: Optional[datetime]
-    to_time: Optional[datetime]
     times: Optional[int]
     order: Optional[bool]
     expires: Optional[datetime]

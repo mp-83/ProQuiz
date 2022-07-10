@@ -124,30 +124,26 @@ class TestCaseMatchEndpoints:
             },
         ]
 
-    def t_matchCannotBeChangedIfStarted(
+    def t_updateFromTimeAndToTime(
         self, client: TestClient, superuser_token_headers: dict
     ):
-        match_name = "New Match"
-        match = self.match_dto.new(name=match_name)
+        match = self.match_dto.new(is_restricted=True)
         self.match_dto.save(match)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
-            text="Where is London?",
-            game_uid=game.uid,
-            position=0,
-        )
-        self.question_dto.save(question)
-        user = self.user_dto.new(email="t@t.com")
-        self.user_dto.save(user)
-        reaction = self.reaction_dto.new(match=match, question=question, user=user)
-        self.reaction_dto.save(reaction)
         response = client.put(
             f"{settings.API_V1_STR}/matches/edit/{match.uid}",
-            json={"times": 1, "name": match.name},
+            json={
+                "from_time": "2022-01-01T00:00:01+00:00",
+                "to_time": "2022-12-31T23:59:59+00:00",
+            },
             headers=superuser_token_headers,
         )
-        assert response.json()["detail"] == "Match started. Cannot be edited"
+
+        assert response.ok
+        self.match_dto.refresh(match)
+        assert match.from_time == datetime.fromisoformat("2022-01-01T00:00:01")
+        assert match.to_time == datetime.fromisoformat("2022-12-31T23:59:59")
+        assert match.order
+        assert match.is_restricted
 
     def t_addQuestionToExistingMatchWithOneGameOnly(
         self, client: TestClient, superuser_token_headers: dict

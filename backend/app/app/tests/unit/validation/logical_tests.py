@@ -10,6 +10,7 @@ from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.domain_service.data_transfer.user import UserDTO, WordDigest
 from app.domain_service.schemas.logical_validation import (
     RetrieveObject,
+    ValidateEditMatch,
     ValidateMatchImport,
     ValidateNewMatch,
     ValidateNewQuestion,
@@ -236,6 +237,38 @@ class TestCaseCreateMatch:
             ValidateNewMatch({"name": name}, db_session=db_session).is_valid()
 
         assert e.value.message == "A Match with the same name already exists."
+
+
+class TestCaseMatchEdit:
+    def t_matchCannotBeChangedIfStarted(self, db_session):
+        match_name = "New Match"
+        match_dto = MatchDTO(session=db_session)
+        match = match_dto.new(name=match_name)
+        match_dto.save(match)
+
+        game_dto = GameDTO(session=db_session)
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+
+        question_dto = QuestionDTO(session=db_session)
+        question = question_dto.new(
+            text="Where is London?",
+            game_uid=game.uid,
+            position=0,
+        )
+        question_dto.save(question)
+        user_dto = UserDTO(session=db_session)
+        user = user_dto.new(email="t@t.com")
+        user_dto.save(user)
+
+        reaction_dto = ReactionDTO(session=db_session)
+        reaction = reaction_dto.new(match=match, question=question, user=user)
+        reaction_dto.save(reaction)
+
+        with pytest.raises(ValidateError) as e:
+            ValidateEditMatch(match_uid=match.uid, db_session=db_session).is_valid()
+
+        assert e.value.message == "Match started. Cannot be edited"
 
 
 class TestCaseImportFromYaml:

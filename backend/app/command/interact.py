@@ -108,10 +108,11 @@ def match_details(client):
     if not response.ok:
         typer.echo(f"ERROR: {response.reason}")
         return
-    match_details = response.json().copy()
+
+    details = response.json().copy()
     if with_out_questions:
-        match_details.pop("questions_list")
-    typer.echo(pprint(match_details))
+        details.pop("questions_list")
+    typer.echo(pprint(details))
     return response.json()
 
 
@@ -124,23 +125,29 @@ def edit_match(client):
     name = input("Name: ") or current_match["name"]
     times = input("Times: ") or current_match["times"]
     order = input("Order: ") or current_match["order"]
-    password = input("Password:  ") or current_match["password"]
-    payload = {"name": name, "times": times, "order": order, "password": password}
-    changed = (
-        payload.values()
-        != {
-            k: v
-            for k, v in current_match.items()
-            if k in ["name", "times", "order", "password"]
-        }.values()
-    )
-    if not changed:
-        typer.echo("Nothing changed")
-        return
+    password = input("Password: ") or current_match["password"]
+    from_time = input("Active from date (YYYY-MM-DD): ")
+    if from_time:
+        from_time += "T00:01:00"
+    else:
+        from_time = current_match["from_time"]
+
+    to_time = input("Expiration (YYYY-MM-DD): ")
+    if to_time:
+        to_time += "T23:59:00"
+    else:
+        to_time = current_match["expires"]
+
+    payload = {
+        "name": name,
+        "times": times,
+        "order": order,
+        "password": password,
+        "to_time": to_time,
+        "from_time": from_time,
+    }
 
     typer.echo("Updating Match")
-    # TODO update questions. this is a temporary patch to avoid HTTP-500
-    payload["questions"] = current_match["questions_list"]
     response = client.put(f"{BASE_URL}/matches/edit/{match_uid}", json=payload)
     if response.status_code in [200, 422, 400]:
         typer.echo(pprint(response.json()))
@@ -253,7 +260,8 @@ def play(client):
     all_matches = {}
     for i, _match in enumerate(response.json()["matches"]):
         all_matches[i] = (_match["uhash"], _match["name"])
-        typer.echo(f"{i} :: {_match['name']}")
+        visibility = "restricted" if _match["is_restricted"] else "public"
+        typer.echo(f"{i} :: {_match['name']} :: {visibility}")
 
     typer.echo("\n\n")
     match_number = input("Enter match number:\t")
@@ -267,15 +275,15 @@ def play(client):
 
     if response.status_code in [200, 422, 400]:
         typer.echo(pprint(response.json()))
-    else:
-        typer.echo(f"ERROR: {response.reason}")
+        if not response.ok:
+            return
 
     match_uid = response.json()["match"]
     response = client.post(f"{BASE_URL}/play/start", json={"match_uid": match_uid})
     if response.status_code in [200, 422, 400]:
         typer.echo(pprint(response.json()))
-    else:
-        typer.echo(f"ERROR: {response.reason}")
+        if not response.ok:
+            return
 
     response_data = response.json()
     while response_data["question"] is not None:

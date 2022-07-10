@@ -171,10 +171,18 @@ class TestCaseMatchSchema:
             assert schema
             assert schema.dict()["with_code"]
 
-    def t_allowForPartialUpdate(self):
-        schema = syntax.MatchEdit(**{"is_restricted": False})
+    def t_partialPayloadValidation(self):
+        schema = syntax.MatchEdit(
+            **{
+                "from_time": "2022-01-01T00:00:01+00:00",
+                "to_time": "2022-12-31T23:59:59+00:00",
+            }
+        )
         assert schema
-        assert not schema.dict()["is_restricted"]
+        assert isinstance(schema.dict()["from_time"], datetime)
+        assert schema.dict()["from_time"].tzinfo
+        assert isinstance(schema.dict()["to_time"], datetime)
+        assert schema.dict()["to_time"].tzinfo
 
 
 class TestCaseYamlSchema:

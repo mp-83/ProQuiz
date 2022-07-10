@@ -74,9 +74,11 @@ def edit_match(
     match = LogicValidation(ValidateEditMatch).validate(
         match_uid=uid, db_session=session
     )
-    user_input = user_input.dict()
+    validated_data = user_input.dict()
+    _initial_fields = validated_data.pop("_initial_fields")
+    fields_to_update = {f: v for f, v in validated_data.items() if f in _initial_fields}
     dto = MatchDTO(session=session)
-    dto.update(match, **user_input)
+    dto.update(match, **fields_to_update)
     return match
 
 

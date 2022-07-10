@@ -158,6 +158,9 @@ class MatchDTO:
     def update(self, instance: Match, **attrs):
         for name, value in attrs.items():
             if name == "questions":
+                if not value:
+                    continue
+
                 self.update_questions(instance, value, commit=True)
             elif not hasattr(instance, name) or (
                 value is None and not self.nullable_column(name)

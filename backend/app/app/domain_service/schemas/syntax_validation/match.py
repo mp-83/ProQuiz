@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 
 import yaml
-from pydantic import BaseModel, PositiveInt, validator
+from pydantic import BaseModel, PositiveInt, PrivateAttr, validator
 
 from app.domain_service.schemas.syntax_validation.question import QuestionCreate
 
@@ -25,7 +25,19 @@ class MatchEdit(BaseModel):
     times: Optional[int]
     is_restricted: Optional[bool]
     order: Optional[bool]
+    from_time: Optional[datetime]
+    to_time: Optional[datetime]
     questions: List[QuestionCreate] = None
+    _initial_fields: List = PrivateAttr()
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self._initial_fields = list(data.keys())
+
+    def dict(self, **kwargs):
+        data = super().dict(**kwargs)
+        data["_initial_fields"] = self._initial_fields
+        return data
 
 
 class ImportQuestions(BaseModel):
