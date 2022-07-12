@@ -26,8 +26,8 @@ from app.domain_service.schemas.syntax_validation.token import (  # noqa: F401
 )
 from app.domain_service.schemas.syntax_validation.user import (  # noqa: F401
     Players,
+    SignedUserCreate,
     User,
     UserBase,
-    UserCreate,
     UserUpdate,
 )

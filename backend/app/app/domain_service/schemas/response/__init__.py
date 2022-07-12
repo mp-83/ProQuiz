@@ -8,6 +8,6 @@ from app.domain_service.schemas.response.question import (  # noqa: F401
 )
 from app.domain_service.schemas.response.ranking import MatchRanking  # noqa: F401
 from app.domain_service.schemas.response.reaction import Reaction  # noqa: F401
-from app.domain_service.schemas.response.user import Players  # noqa: F401
+from app.domain_service.schemas.response.user import Player, Players  # noqa: F401
 
 from .token import Token, TokenPayload  # noqa: F401

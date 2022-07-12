@@ -22,20 +22,24 @@ class TestCaseUser:
         user_3 = self.user_dto.fetch()
         response = client.get(f"{settings.API_V1_STR}/players")
         assert response.ok
-        assert response.json()["players"] == [
-            {"uid": user_1.uid, "full_name": "", "is_active": True, "signed": True},
-            {"uid": user_2.uid, "full_name": "", "is_active": True, "signed": False},
-            {"uid": user_3.uid, "full_name": "", "is_active": True, "signed": False},
-        ]
+        returned_players = response.json()["players"]
+
+        assert returned_players[0]["uid"] == user_1.uid
+        assert returned_players[0]["signed"]
+
+        assert returned_players[1]["uid"] == user_2.uid
+        assert not returned_players[1]["signed"]
+
+        assert returned_players[2]["uid"] == user_3.uid
+        assert not returned_players[2]["signed"]
 
     def t_listOnlySignedPlayers(self, client: TestClient):
         user_1 = self.user_dto.fetch(signed=True)
         self.user_dto.fetch()
         response = client.get(f"{settings.API_V1_STR}/players", params={"signed": True})
         assert response.ok
-        assert response.json()["players"] == [
-            {"uid": user_1.uid, "full_name": "", "is_active": True, "signed": True},
-        ]
+        assert response.json()["players"][0]["uid"] == user_1.uid
+        assert response.json()["players"][0]["signed"]
 
     def t_listOnlyUnSignedPlayers(self, client: TestClient):
         self.user_dto.fetch(signed=True)
@@ -44,9 +48,8 @@ class TestCaseUser:
             f"{settings.API_V1_STR}/players", params={"signed": False}
         )
         assert response.ok
-        assert response.json()["players"] == [
-            {"uid": user_2.uid, "full_name": "", "is_active": True, "signed": False},
-        ]
+        assert response.json()["players"][0]["uid"] == user_2.uid
+        assert not response.json()["players"][0]["signed"]
 
     def t_listAllPlayersOfMatch(self, client: TestClient, match_dto):
         first_match = match_dto.save(match_dto.new())
@@ -119,7 +122,18 @@ class TestCaseUser:
         # user_3 played to first_match only
         response = client.get(f"{settings.API_V1_STR}/players/{second_match.uid}")
         assert response.ok
-        assert response.json()["players"] == [
-            {"uid": user_1.uid, "full_name": "", "is_active": True, "signed": True},
-            {"uid": user_2.uid, "full_name": "", "is_active": True, "signed": False},
-        ]
+        assert response.json()["players"][0]["uid"] == user_1.uid
+        assert response.json()["players"][0]["signed"]
+
+        assert response.json()["players"][1]["uid"] == user_2.uid
+        assert not response.json()["players"][1]["signed"]
+
+    def t_registerSignedUser(self, client: TestClient):
+        response = client.post(
+            f"{settings.API_V1_STR}/players/sign",
+            json={"email": "user@domain.com", "token": "01012022"},
+        )
+        assert response.ok
+        assert response.json()["uid"] > 0
+        assert response.json()["is_active"]
+        assert response.json()["email"].endswith("@progame.io")

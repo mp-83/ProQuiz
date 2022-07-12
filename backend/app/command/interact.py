@@ -362,6 +362,38 @@ def list_all_players(client):
         typer.echo(pprint(user))
 
 
+def player_sign(_):
+    original_email = input("Original email: ")
+    token = input("Token (birthday ddmmyyyy): ")
+    if not (original_email or token):
+        return
+
+    client = Client()
+    response = client.post(
+        f"{BASE_URL}/play/sign", json={"email": original_email, "token": token}
+    )
+    if response.status_code in [200, 422, 400]:
+        typer.echo(pprint(response.json()))
+    else:
+        typer.echo(response.reason)
+
+
+def create_new_signed_user(_):
+    original_email = input("Original email: ")
+    token = input("Token (birthday ddmmyyyy): ")
+    if not (original_email or token):
+        return
+
+    client = Client()
+    response = client.post(
+        f"{BASE_URL}/players/sign", json={"email": original_email, "token": token}
+    )
+    if response.status_code in [200, 422, 400]:
+        typer.echo(pprint(response.json()))
+    else:
+        typer.echo(response.reason)
+
+
 def import_questions_to_match(client):
     typer.echo("Work in progress")
     if client:
@@ -392,7 +424,9 @@ def menu():
         8. edit question
         9. list all questions
         10: list all players
-        11. import question to a match
+        11: create new signed user
+        12: player sign-in
+        13. import question to a match
         Enter to exit
     """
     typer.echo(main_message)
@@ -417,7 +451,9 @@ def start():
             "8": edit_question,
             "9": list_questions,
             "10": list_all_players,
-            "11": import_questions_to_match,
+            "11": create_new_signed_user,
+            "12": player_sign,
+            "13": import_questions_to_match,
         }.get(user_choice)
         if not action:
             exit_command()

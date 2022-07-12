@@ -2,6 +2,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr
 
+from app.domain_service.schemas.syntax_validation.play import SignPlay
+
 
 # Shared properties
 class UserBase(BaseModel):
@@ -27,9 +29,8 @@ class Players(BaseModel):
 
 
 # Properties to receive via API on creation
-class UserCreate(UserBase):
-    email: EmailStr
-    password: str
+class SignedUserCreate(SignPlay):
+    """"""
 
 
 # Properties to receive via API on update

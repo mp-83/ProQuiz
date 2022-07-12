@@ -17,6 +17,7 @@ class UserBase(BaseModel):
 class Player(BaseModel):
     uid: int
     signed: bool
+    email: str
     full_name: Optional[str] = ""
     is_active: Optional[bool] = True
 

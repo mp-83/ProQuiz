@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.domain_entities.db.session import get_db
 from app.domain_service.data_transfer.user import UserDTO
 from app.domain_service.schemas import response
+from app.domain_service.schemas import syntax_validation as syntax
 
 logger = logging.getLogger(__name__)
 
@@ -28,3 +29,12 @@ def players(signed: bool = None, session: Session = Depends(get_db)):
     }.get(signed, dto.all)
     all_players = query_method()
     return {"players": all_players}
+
+
+@router.post("/sign", response_model=response.Player)
+def register_signed_user(
+    user_input: syntax.SignedUserCreate, session: Session = Depends(get_db)
+):
+    user_input = user_input.dict()
+    dto = UserDTO(session=session)
+    return dto.fetch(original_email=user_input["email"], token=user_input["token"])
