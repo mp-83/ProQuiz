@@ -32,7 +32,7 @@ class Match(TableMixin, Base):
     to_time = Column(DateTime(timezone=True))
     # how many times a match can be played
     times = Column(Integer, default=1)
-    # when True games should be played in order
+    # indicates if games should be played in order
     order = Column(Boolean, default=True)
 
     @property

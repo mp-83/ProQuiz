@@ -278,9 +278,11 @@ def play(client):
         typer.echo(f"n. {i} :: {_match['name']} :: {visibility}")
 
     typer.echo("\n\n")
-    match_number = input("Enter match number: ")
-    name = all_matches[int(match_number)]["name"]
+    match_number = input("Enter match number or q(quit): ")
+    if match_number == "q":
+        return
 
+    name = all_matches[int(match_number)]["name"]
     typer.echo(f"Playing...at {name}")
 
     # create a new client with new headers (i.e. unauthenticated)
@@ -313,7 +315,7 @@ def play(client):
     while response_data["question"] is not None:
         answer_map = print_question_and_answers(response_data["question"])
 
-        index = input("Answer ==>\t")
+        index = input("Answer ==> ")
         if int(index) not in answer_map:
             index = 0
 
@@ -343,8 +345,28 @@ def print_question_and_answers(question):
     return answer_map
 
 
+def list_all_players(client):
+    match_uid = input("Match ID: ")
+    if not match_uid:
+        signed = input("Signed y/n: ") == "y"
+        response = client.get(f"{BASE_URL}/players", params={"signed": signed})
+    else:
+        response = client.get(f"{BASE_URL}/players/{match_uid}")
+
+    if response.status_code in [422, 400]:
+        typer.echo(pprint(response.json()))
+    else:
+        typer.echo(response.reason)
+
+    for user in response.json()["players"]:
+        typer.echo(pprint(user))
+
+
 def import_questions_to_match(client):
     typer.echo("Work in progress")
+    if client:
+        return
+
     response = client.post(f"{BASE_URL}/matches/import_questions")
     if response.status_code in [200, 422, 400]:
         typer.echo(pprint(response.json()))
@@ -369,7 +391,8 @@ def menu():
         7. create new question
         8. edit question
         9. list all questions
-        10. import question to a match
+        10: list all players
+        11. import question to a match
         Enter to exit
     """
     typer.echo(main_message)
@@ -393,7 +416,8 @@ def start():
             "7": new_question,
             "8": edit_question,
             "9": list_questions,
-            "10": import_questions_to_match,
+            "10": list_all_players,
+            "11": import_questions_to_match,
         }.get(user_choice)
         if not action:
             exit_command()

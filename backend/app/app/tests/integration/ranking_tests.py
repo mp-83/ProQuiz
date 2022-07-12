@@ -6,7 +6,7 @@ from app.domain_service.data_transfer.user import UserDTO
 
 
 class TestCaseRankingEndpoints:
-    def t_match_rankings(self, client: TestClient, db_session, match_dto):
+    def t_matchRankings(self, client: TestClient, db_session, match_dto):
         match = match_dto.save(match_dto.new())
         user_1 = UserDTO(session=db_session).fetch()
         user_2 = UserDTO(session=db_session).fetch()

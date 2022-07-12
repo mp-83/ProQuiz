@@ -35,6 +35,20 @@ class UserDTO:
     def all(self):
         return self._session.query(self.klass).all()
 
+    def signed(self):
+        return (
+            self._session.query(self.klass)
+            .filter(self.klass.email_digest.isnot(None))
+            .all()
+        )
+
+    def unsigned(self):
+        return (
+            self._session.query(self.klass)
+            .filter(self.klass.email_digest.is_(None))
+            .all()
+        )
+
     def fetch(self, **kwargs):
         original_email = kwargs.pop("original_email", "")
         signed = kwargs.pop("signed", None) or original_email

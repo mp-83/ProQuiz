@@ -16,7 +16,39 @@ class TestCaseUser:
         self.game_dto = GameDTO(session=db_session)
         self.user_dto = UserDTO(session=db_session)
 
-    def t_list_all_players(self, client: TestClient, match_dto):
+    def t_listAllPlayersOf(self, client: TestClient):
+        user_1 = self.user_dto.fetch(signed=True)
+        user_2 = self.user_dto.fetch()
+        user_3 = self.user_dto.fetch()
+        response = client.get(f"{settings.API_V1_STR}/players")
+        assert response.ok
+        assert response.json()["players"] == [
+            {"uid": user_1.uid, "full_name": "", "is_active": True, "signed": True},
+            {"uid": user_2.uid, "full_name": "", "is_active": True, "signed": False},
+            {"uid": user_3.uid, "full_name": "", "is_active": True, "signed": False},
+        ]
+
+    def t_listOnlySignedPlayers(self, client: TestClient):
+        user_1 = self.user_dto.fetch(signed=True)
+        self.user_dto.fetch()
+        response = client.get(f"{settings.API_V1_STR}/players", params={"signed": True})
+        assert response.ok
+        assert response.json()["players"] == [
+            {"uid": user_1.uid, "full_name": "", "is_active": True, "signed": True},
+        ]
+
+    def t_listOnlyUnSignedPlayers(self, client: TestClient):
+        self.user_dto.fetch(signed=True)
+        user_2 = self.user_dto.fetch()
+        response = client.get(
+            f"{settings.API_V1_STR}/players", params={"signed": False}
+        )
+        assert response.ok
+        assert response.json()["players"] == [
+            {"uid": user_2.uid, "full_name": "", "is_active": True, "signed": False},
+        ]
+
+    def t_listAllPlayersOfMatch(self, client: TestClient, match_dto):
         first_match = match_dto.save(match_dto.new())
         first_game = self.game_dto.new(match_uid=first_match.uid, index=0)
         self.game_dto.save(first_game)
@@ -29,7 +61,7 @@ class TestCaseUser:
         question_2 = self.question_dto.new(text="1+1 = ", time=1, position=1)
         self.question_dto.save(question_2)
 
-        user_1 = self.user_dto.fetch()
+        user_1 = self.user_dto.fetch(signed=True)
         user_2 = self.user_dto.fetch()
         user_3 = self.user_dto.fetch()
         self.reaction_dto.save(
@@ -82,10 +114,12 @@ class TestCaseUser:
             )
         )
 
-        response = client.get(f"{settings.API_V1_STR}/players/{first_match.uid}")
+        # user_1 played to first_match & second_match
+        # user_2 played to first_match & second_match
+        # user_3 played to first_match only
+        response = client.get(f"{settings.API_V1_STR}/players/{second_match.uid}")
         assert response.ok
         assert response.json()["players"] == [
-            {"full_name": None, "is_active": True},
-            {"full_name": None, "is_active": True},
-            {"full_name": None, "is_active": True},
+            {"uid": user_1.uid, "full_name": "", "is_active": True, "signed": True},
+            {"uid": user_2.uid, "full_name": "", "is_active": True, "signed": False},
         ]
