@@ -85,18 +85,32 @@ def new_match(client):
 
     order = input("Order? y/n ==> ")
     order = order == "y"
+    from_time = input("Active from date (YYYY-MM-DD): ")
+    if from_time:
+        from_time += "T00:01:00"
+    else:
+        from_time = (datetime.now(tz=timezone.utc) + timedelta(minutes=1)).isoformat()
+
+    to_time = input("Expiration (YYYY-MM-DD): ")
+    if to_time:
+        to_time += "T23:59:00+00:00"
+    else:
+        to_time = (datetime.now(tz=timezone.utc) + timedelta(days=1)).isoformat()
 
     payload = {
         "name": name,
         "with_code": with_code,
         "times": 1,
-        "from_time": (datetime.now(tz=timezone.utc) + timedelta(minutes=1)).isoformat(),
-        "to_time": (datetime.now(tz=timezone.utc) + timedelta(days=1)).isoformat(),
+        "from_time": from_time,
+        "to_time": to_time,
         "is_restricted": is_restricted,
         "order": order,
     }
     response = client.post(f"{BASE_URL}/matches/new", json=payload)
-    typer.echo((response.status_code, response.json()))
+    if response.status_code in [200, 422, 400]:
+        typer.echo(pprint(response.json()))
+    else:
+        typer.echo(f"ERROR: {response.reason}")
 
 
 def match_details(client):
@@ -241,10 +255,10 @@ def upload_yaml(client):
     if input("Create a new match?  ") == "y":
         new_match()
 
-    # the file must reside anywhere under proquiz/backend/app/
-    file_path = input("File path /proquiz/backend/app ==>\t")
+    # the file must reside anywhere under proquiz/backend/app/quizzes
+    file_name = input("File name ==> ")
     match_uid = input("The Match UID ==> ")
-
+    file_path = "/app/quizzes/" + file_name + ".yaml"
     with open(file_path, "rb") as fp:
         b64content = b64encode(fp.read()).decode()
         b64string = f"data:application/x-yaml;base64,{b64content}"
@@ -259,31 +273,41 @@ def play(client):
     typer.echo("List of Matches:\n")
     all_matches = {}
     for i, _match in enumerate(response.json()["matches"]):
-        all_matches[i] = (_match["uhash"], _match["name"])
+        all_matches[i] = _match
         visibility = "restricted" if _match["is_restricted"] else "public"
-        typer.echo(f"{i} :: {_match['name']} :: {visibility}")
+        typer.echo(f"n. {i} :: {_match['name']} :: {visibility}")
 
     typer.echo("\n\n")
-    match_number = input("Enter match number:\t")
-    uhash = all_matches[int(match_number)][0]
-    name = all_matches[int(match_number)][1]
+    match_number = input("Enter match number: ")
+    name = all_matches[int(match_number)]["name"]
 
     typer.echo(f"Playing...at {name}")
 
+    # create a new client with new headers (i.e. unauthenticated)
     client = Client()
-    response = client.post(f"{BASE_URL}/play/h/{uhash}")
+
+    if all_matches[int(match_number)]["uhash"]:
+        uhash = all_matches[int(match_number)]["uhash"]
+        response = client.post(f"{BASE_URL}/play/h/{uhash}")
+    else:
+        code = all_matches[int(match_number)]["code"]
+        response = client.post(f"{BASE_URL}/play/code", json={"match_code": code})
 
     if response.status_code in [200, 422, 400]:
         typer.echo(pprint(response.json()))
-        if not response.ok:
-            return
+
+    if not response.ok:
+        typer.echo(response.reason)
+        return
 
     match_uid = response.json()["match"]
     response = client.post(f"{BASE_URL}/play/start", json={"match_uid": match_uid})
     if response.status_code in [200, 422, 400]:
         typer.echo(pprint(response.json()))
-        if not response.ok:
-            return
+
+    if not response.ok:
+        typer.echo(response.reason)
+        return
 
     response_data = response.json()
     while response_data["question"] is not None:
@@ -320,7 +344,12 @@ def print_question_and_answers(question):
 
 
 def import_questions_to_match(client):
-    pass
+    typer.echo("Work in progress")
+    response = client.post(f"{BASE_URL}/matches/import_questions")
+    if response.status_code in [200, 422, 400]:
+        typer.echo(pprint(response.json()))
+    else:
+        typer.echo(response.reason)
 
 
 def exit_command():
@@ -335,12 +364,12 @@ def menu():
         2. get match details
         3. create a new match
         4. edit one match
-        5. import question to a match
+        5. import questions with answers from YAML file to a match
         6. play
         7. create new question
         8. edit question
         9. list all questions
-        10. upload quiz from YAML file
+        10. import question to a match
         Enter to exit
     """
     typer.echo(main_message)
@@ -359,12 +388,12 @@ def start():
             "2": match_details,
             "3": new_match,
             "4": edit_match,
-            "5": import_questions_to_match,
+            "5": upload_yaml,
             "6": play,
             "7": new_question,
             "8": edit_question,
             "9": list_questions,
-            "10": upload_yaml,
+            "10": import_questions_to_match,
         }.get(user_choice)
         if not action:
             exit_command()
