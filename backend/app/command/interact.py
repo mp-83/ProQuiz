@@ -63,7 +63,7 @@ class Client:
 
 def list_matches(client):
     with_out_questions = (
-        input("Only match's details without questions and answers: y/n ==> ") == "y"
+        input("Only match's details W/OUT questions and answers: y/n ==> ") == "y"
     )
     result = client.get(f"{BASE_URL}/matches")
     for match in result.json()["matches"]:
@@ -87,7 +87,7 @@ def new_match(client):
     order = order == "y"
     from_time = input("Active from date (YYYY-MM-DD): ")
     if from_time:
-        from_time += "T00:01:00"
+        from_time += "T00:01:00+00:00"
     else:
         from_time = (datetime.now(tz=timezone.utc) + timedelta(minutes=1)).isoformat()
 
@@ -95,7 +95,7 @@ def new_match(client):
     if to_time:
         to_time += "T23:59:00+00:00"
     else:
-        to_time = (datetime.now(tz=timezone.utc) + timedelta(days=1)).isoformat()
+        to_time = (datetime.now(tz=timezone.utc) + timedelta(days=100)).isoformat()
 
     payload = {
         "name": name,
@@ -116,7 +116,7 @@ def new_match(client):
 def match_details(client):
     match_uid = input("Enter the match ID:  ")
     with_out_questions = (
-        input("Only match's details without questions and answers: y/n ==> ") == "y"
+        input("Only match's details W/OUT questions and answers: y/n ==> ") == "y"
     )
     response = client.get(f"{BASE_URL}/matches/{match_uid}")
     if not response.ok:
@@ -285,8 +285,18 @@ def play(client):
     name = all_matches[int(match_number)]["name"]
     typer.echo(f"Playing...at {name}")
 
+    if all_matches[int(match_number)]["is_restricted"]:
+        match_password = input("Insert password for the match: ")
+    else:
+        match_password = None
+
     # create a new client with new headers (i.e. unauthenticated)
     client = Client()
+
+    sign_in = input("Do you want to sign-in (y/n) ? ")
+    user_uid = None
+    if sign_in == "y":
+        user_uid = player_sign(None)
 
     if all_matches[int(match_number)]["uhash"]:
         uhash = all_matches[int(match_number)]["uhash"]
@@ -302,8 +312,13 @@ def play(client):
         typer.echo(response.reason)
         return
 
-    match_uid = response.json()["match"]
-    response = client.post(f"{BASE_URL}/play/start", json={"match_uid": match_uid})
+    payload = {"match_uid": response.json()["match"]}
+    if user_uid:
+        payload.update(user_uid=user_uid)
+    if match_password:
+        payload.update(password=match_password)
+
+    response = client.post(f"{BASE_URL}/play/start", json=payload)
     if response.status_code in [200, 422, 400]:
         typer.echo(pprint(response.json()))
 
@@ -374,6 +389,7 @@ def player_sign(_):
     )
     if response.status_code in [200, 422, 400]:
         typer.echo(pprint(response.json()))
+        return response.json()["user"]
     else:
         typer.echo(response.reason)
 

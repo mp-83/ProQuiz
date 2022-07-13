@@ -40,12 +40,18 @@ class TestCasePlaySchemas:
     def t_validStartPayloadWithoutPassword(self):
         assert syntax.StartPlay(**{"match_uid": 1, "user_uid": 1})
 
-    def t_startPayloadWithPassword(self):
+    def t_startPayloadWithInvalidPassword(self):
         password = "IJD34KOP"
         try:
             syntax.StartPlay(**{"match_uid": 1, "user_uid": 1, "password": password})
         except ValidationError as err:
             assert err.errors()[0]["msg"] == f"Password {password} does not match regex"
+
+    def t_validStartPayloadWithValidPassword(self):
+        schema = syntax.StartPlay(
+            **{"match_uid": 1, "user_uid": 1, "password": "04542"}
+        )
+        assert schema.dict()["password"] == "04542"
 
     def t_validNextPayload(self):
         assert syntax.NextPlay(

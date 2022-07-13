@@ -50,6 +50,11 @@ class UserDTO:
         )
 
     def fetch(self, **kwargs):
+        """
+        Get or create a new user
+
+        This method acts like a proxy
+        """
         original_email = kwargs.pop("original_email", "")
         signed = kwargs.pop("signed", None) or original_email
         email = kwargs.get("email")
