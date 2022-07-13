@@ -312,7 +312,7 @@ def play(client):
         typer.echo(response.reason)
         return
 
-    payload = {"match_uid": response.json()["match"]}
+    payload = {"match_uid": response.json()["match_uid"]}
     if user_uid:
         payload.update(user_uid=user_uid)
     if match_password:
@@ -337,7 +337,7 @@ def play(client):
         response = client.post(
             f"{BASE_URL}/play/next",
             json={
-                "match_uid": response_data["match"],
+                "match_uid": response_data["match_uid"],
                 "question_uid": response_data["question"]["uid"],
                 "answer_uid": answer_map[int(index)],
                 "user_uid": response_data["user"],

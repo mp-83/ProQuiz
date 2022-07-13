@@ -37,7 +37,7 @@ class TestCasePlayLand:
             headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["match"] == match.uid
+        assert response.json()["match_uid"] == match.uid
 
 
 class TestCasePlayCode:
@@ -54,7 +54,7 @@ class TestCasePlayCode:
         assert response.status_code == status.HTTP_200_OK
         # the user.uid value can't be known ahead, but it will be > 0
         assert response.json()["user"]
-        assert response.json()["match"] == match.uid
+        assert response.json()["match_uid"] == match.uid
 
 
 class TestCasePlaySign:
@@ -129,7 +129,7 @@ class TestCasePlayStart:
         )
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["match"] == match.uid
+        assert response.json()["match_uid"] == match.uid
         assert response.json()["question"] == question.json
         assert response.json()["question"]["answers"] == []
         # the user.uid value can't be known ahead, but it will be > 0

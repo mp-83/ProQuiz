@@ -42,7 +42,7 @@ def land(
         match_uhash=match_uhash, db_session=session
     )
     match = data.get("match")
-    return JSONResponse(content={"match": match.uid})
+    return JSONResponse(content={"match_uid": match.uid})
 
 
 @router.post("/code", response_model=response.PlaySchemaBase)
@@ -53,7 +53,7 @@ def code(user_input: syntax.CodePlay, session: Session = Depends(get_db)):
     )
     match = data.get("match")
     user = UserDTO(session=session).fetch(signed=True)
-    return JSONResponse(content={"match": match.uid, "user": user.uid})
+    return JSONResponse(content={"match_uid": match.uid, "user": user.uid})
 
 
 @router.post("/start")
@@ -75,7 +75,7 @@ def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
         ) from exc
 
     match_data = {
-        "match": match.uid,
+        "match_uid": match.uid,
         "question": current_question.json,
         "user": user.uid,
     }
@@ -107,7 +107,7 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
         return JSONResponse(content={"question": None, "score": score.score})
 
     return JSONResponse(
-        content={"question": next_q.json, "user": user.uid, "match": match.uid}
+        content={"question": next_q.json, "user": user.uid, "match_uid": match.uid}
     )
 
 
