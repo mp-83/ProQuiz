@@ -410,6 +410,18 @@ def create_new_signed_user(_):
         typer.echo(response.reason)
 
 
+def get_ranking_for_a_match(_):
+    match_uid = input("Enter the match ID:  ")
+    client = Client()
+    response = client.get(f"{BASE_URL}/rankings/{match_uid}")
+    if not response.ok:
+        typer.echo(response.reason)
+        return
+
+    for rank in response.json()["rankings"]:
+        typer.echo(f"User {rank['user']['name'] or 'no-name'} ({rank['user']['uid']})")
+
+
 def import_questions_to_match(client):
     typer.echo("Work in progress")
     if client:
@@ -442,7 +454,8 @@ def menu():
         10: list all players
         11: create new signed user
         12: player sign-in
-        13. import question to a match
+        13: rankings of a match
+        14. import question to a match
         Enter to exit
     """
     typer.echo(main_message)
@@ -469,7 +482,8 @@ def start():
             "10": list_all_players,
             "11": create_new_signed_user,
             "12": player_sign,
-            "13": import_questions_to_match,
+            "13": get_ranking_for_a_match,
+            "14": import_questions_to_match,
         }.get(user_choice)
         if not action:
             exit_command()
