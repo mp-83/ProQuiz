@@ -24,7 +24,7 @@ class AnswerCreate(BaseModel):
 
     @validator("text")
     def coerce_boolean_text(cls, v):
-        falsy = {
+        false = {
             "off",
             "F",
             "OFF",
@@ -39,7 +39,7 @@ class AnswerCreate(BaseModel):
             "false",
             "False",
         }
-        truthy = {
+        truth = {
             "Y",
             "Yes",
             "True",
@@ -55,9 +55,9 @@ class AnswerCreate(BaseModel):
             "yes",
         }
 
-        if v in falsy:
+        if v in false:
             v = "False"
-        elif v in truthy:
+        elif v in truth:
             v = "True"
 
         return v

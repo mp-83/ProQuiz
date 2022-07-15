@@ -83,6 +83,7 @@ class TestCaseQuestion:
         assert new_question
         assert {e.text for e in new_question.answers} == expected
         assert self.answer_dto.get(text="The machine was undergoing repair").is_correct
+        assert self.answer_dto.get(text="The machine was undergoing repair").level == 1
 
     def t_cloningQuestion(self):
         new_question = self.question_dto.new(text="new-question", position=0)
@@ -111,9 +112,11 @@ class TestCaseQuestion:
         self.answer_dto.save(answer)
 
         assert question.answers[0].text == "Answer1"
+        assert question.answers[0].level == 1
         assert question.answers[1].text == "Answer2"
 
-    def t_updateAnswers(self):
+    def t_updateAnswersPosition(self):
+        # submitting the array with answers rearranged
         question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
         a1 = self.answer_dto.new(question_uid=question.uid, text="Answer1", position=0)

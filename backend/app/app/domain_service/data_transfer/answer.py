@@ -13,12 +13,15 @@ class AnswerDTO:
         Instantiate a new object
 
         Cast the boolean value to text.
+        The `level` might not be present
         """
         text = kwargs.get("text")
         boolean_texts = {False: "False", True: "True"}
         kwargs["text"] = boolean_texts.get(text, text)
         kwargs["boolean"] = kwargs["text"] in boolean_texts.values()
         kwargs.pop("uid", None)
+        if kwargs.get("level") is None:
+            kwargs["level"] = 1 if kwargs["position"] == 0 else 0
         return self.klass(**kwargs)
 
     def save(self, instance):
