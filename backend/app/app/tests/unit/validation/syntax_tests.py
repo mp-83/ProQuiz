@@ -115,14 +115,10 @@ class TestCaseMatchSchema:
                 "is_restricted": "true",
                 "questions": [
                     {
-                        "text": "Which of the following statements cannot be inferred from the passage?",
+                        "text": "Austria is in Europe?",
                         "answers": [
-                            {
-                                "text": "The Turk began its tour of Europe in April of 1783."
-                            },
-                            {
-                                "text": "Philidor found his match with the Turk challenging."
-                            },
+                            {"text": "false"},
+                            {"text": "true"},
                         ],
                     },
                 ],
@@ -130,6 +126,9 @@ class TestCaseMatchSchema:
         )
         assert schema
         assert schema.dict()["is_restricted"] is True
+        answers = schema.dict()["questions"][0]["answers"]
+        assert answers[0]["text"] == "False"
+        assert answers[1]["text"] == "True"
 
     def t_expirationValuesCannotBeNone(self):
         try:

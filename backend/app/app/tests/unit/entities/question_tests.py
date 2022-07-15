@@ -61,7 +61,7 @@ class TestCaseQuestion:
 
         db_session.rollback()
 
-    def t_createManyQuestionsAtOnce(self):
+    def t_createManyAnswersAtOnce(self):
         data = {
             "text": "Following the machine’s debut, Kempelen was reluctant to display the Turk because",
             "answers": [

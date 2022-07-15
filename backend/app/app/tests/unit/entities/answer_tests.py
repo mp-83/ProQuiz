@@ -15,3 +15,4 @@ class TestCaseAnswer:
         )
         self.answer_dto.save(ans)
         assert ans.text == "False"
+        assert ans.boolean

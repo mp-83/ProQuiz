@@ -15,8 +15,9 @@ class AnswerDTO:
         Cast the boolean value to text.
         """
         text = kwargs.get("text")
-        kwargs["text"] = {False: "False", True: "True"}.get(text, text)
-
+        boolean_texts = {False: "False", True: "True"}
+        kwargs["text"] = boolean_texts.get(text, text)
+        kwargs["boolean"] = kwargs["text"] in boolean_texts.values()
         kwargs.pop("uid", None)
         return self.klass(**kwargs)
 
