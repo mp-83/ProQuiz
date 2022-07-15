@@ -27,17 +27,20 @@ from app.exceptions import (
 
 class TestCaseBase:
     @pytest.fixture(autouse=True)
-    def setUp(self, db_session):
+    def setUp(self, db_session, mocker):
         self.question_dto = QuestionDTO(session=db_session)
         self.match_dto = MatchDTO(session=db_session)
         self.reaction_dto = ReactionDTO(session=db_session)
         self.answer_dto = AnswerDTO(session=db_session)
         self.game_dto = GameDTO(session=db_session)
         self.user_dto = UserDTO(session=db_session)
+        mocker.patch(
+            "app.domain_service.play.single_player.shuffle", side_effect=lambda arr: arr
+        )
 
 
 class TestCaseQuestionFactory(TestCaseBase):
-    def t_nextQuestionWhenNotOrdered(self):
+    def t_questionsAreShuffledWhenNotOrdered(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1, order=False)
         self.game_dto.save(game)
@@ -49,11 +52,16 @@ class TestCaseQuestionFactory(TestCaseBase):
             text="Where is Zurich?", game_uid=game.uid, position=1
         )
         self.question_dto.save(q_zurich)
+        q_paris = self.question_dto.new(
+            text="Where is Paris?", game_uid=game.uid, position=2
+        )
+        self.question_dto.save(q_paris)
 
         question_factory = QuestionFactory(game, *())
-        assert question_factory.next() == q_berlin
-        assert question_factory.next() == q_zurich
+        assert question_factory.next().text == q_berlin.text
+        assert question_factory.next().text == q_zurich.text
         assert question_factory.current == q_zurich
+        assert question_factory.next().text == q_paris.text
 
     def t_nextQuestionWhenOrdered(self):
         """Questions are inversely created

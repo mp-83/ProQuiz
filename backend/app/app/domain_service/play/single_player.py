@@ -1,3 +1,5 @@
+from random import shuffle
+
 from app.domain_service.data_transfer.ranking import RankingDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.exceptions import (
@@ -17,9 +19,12 @@ class QuestionFactory:
         self._question = None
 
     def next(self):
-        questions = (
-            self._game.ordered_questions if self._game.order else self._game.questions
-        )
+        if not self._game.order:
+            questions = self._game.questions
+            shuffle(questions)
+        else:
+            questions = self._game.ordered_questions
+
         for q in questions:
             if q.uid not in self.displayed_ids:
                 self._question = q

@@ -133,7 +133,7 @@ class TestCaseQuestion:
         ans_2_data = a2.json
         ans_2_data.update(level=1)
 
-        self.question_dto.update_answers(question, [ans_2_data])
+        self.question_dto.update_answers(question, [ans_1_data, ans_2_data])
         assert question.answers_by_position[0].level == 2
 
         assert question.answers_by_position[1].level == 1
