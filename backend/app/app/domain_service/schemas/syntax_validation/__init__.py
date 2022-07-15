@@ -1,6 +1,7 @@
 from app.domain_service.schemas.syntax_validation.answer import (  # noqa: F401
     Answer,
     AnswerCreate,
+    AnswerEdit,
 )
 from app.domain_service.schemas.syntax_validation.game import Game  # noqa: F401
 from app.domain_service.schemas.syntax_validation.match import (  # noqa: F401

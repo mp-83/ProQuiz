@@ -115,20 +115,27 @@ class TestCaseQuestion:
         assert question.answers[0].level == 1
         assert question.answers[1].text == "Answer2"
 
-    def t_updateAnswersPosition(self):
-        # submitting the array with answers rearranged
+    def t_updateLevelOfOneAnswerAndTextOfAnother(self):
         question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
-        a1 = self.answer_dto.new(question_uid=question.uid, text="Answer1", position=0)
+        a1 = self.answer_dto.new(
+            question_uid=question.uid, text="False", position=0, level=1
+        )
         self.answer_dto.save(a1)
-        a2 = self.answer_dto.new(question_uid=question.uid, text="Answer2", position=1)
+        a2 = self.answer_dto.new(
+            question_uid=question.uid, text="True", position=1, level=0
+        )
         self.answer_dto.save(a2)
-        a3 = self.answer_dto.new(question_uid=question.uid, text="Answer3", position=2)
-        self.answer_dto.save(a3)
 
-        ans_2_json = a2.json
-        ans_2_json.update(text="Answer text 2")
-        self.question_dto.update_answers(question, [a3.json, a1.json, ans_2_json])
-        assert question.answers_by_position[0].text == "Answer3"
-        assert question.answers_by_position[1].text == "Answer1"
-        assert question.answers_by_position[2].text == "Answer text 2"
+        ans_1_data = a1.json
+        ans_1_data.update(level=2)
+
+        ans_2_data = a2.json
+        ans_2_data.update(level=1)
+
+        self.question_dto.update_answers(question, [ans_2_data])
+        assert question.answers_by_position[0].level == 2
+
+        assert question.answers_by_position[1].level == 1
+
+        assert question.answers_by_position[0].text == "False"

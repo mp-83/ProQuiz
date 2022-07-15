@@ -61,3 +61,8 @@ class AnswerCreate(BaseModel):
             v = "True"
 
         return v
+
+
+class AnswerEdit(BaseModel):
+    uid: NonNegativeInt
+    text: Optional[str]

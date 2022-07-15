@@ -80,10 +80,19 @@ class QuestionDTO:
             self._session.add(answer)
 
     def update_answers(self, instance: Question, answers: list):
-        for p, data in enumerate(answers):
-            data.update(position=p)
+        if not answers:
+            return
+
+        for data in answers:
             answer = instance.answers_by_uid[data["uid"]]
             self.answer_dto.update(answer, **data)
+
+        self._session.commit()
+
+    def reorder_answers(self, instance: Question, answers_ids: list):
+        for p, uid in enumerate(answers_ids):
+            answer = instance.answers_by_uid[uid]
+            answer.position = p
 
         self._session.commit()
 
@@ -99,9 +108,10 @@ class QuestionDTO:
             elif hasattr(instance, k):
                 setattr(instance, k, value)
 
-        if answers:
+        if data.get("reorder"):
+            self.reorder_answers(instance, [a["uid"] for a in answers])
+        else:
             self.update_answers(instance, answers)
-
         self.save(instance)
 
     def clone(self, instance: Question, many=False):

@@ -96,38 +96,59 @@ class TestCaseQuestionEP:
         self.question_dto.save(question)
         response = client.put(
             f"{settings.API_V1_STR}/questions/edit/{question.uid}",
-            json={"text": None, "position": 1, "content_url": url},
+            json={"text": None, "content_url": url},
             headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["content_url"] == url
         assert response.json()["text"] == "ContentURL"
+        assert response.json()["position"] == 0
 
-    def t_updateAnswerTextAndPosition(
-        self, client: TestClient, superuser_token_headers: dict
-    ):
+    def t_reorderAnswers(self, client: TestClient, superuser_token_headers: dict):
         question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
         a1 = self.answer_dto.new(question_uid=question.uid, text="Answer1", position=0)
         self.answer_dto.save(a1)
         a2 = self.answer_dto.new(question_uid=question.uid, text="Answer2", position=1)
         self.answer_dto.save(a2)
+        a3 = self.answer_dto.new(question_uid=question.uid, text="Answer3", position=2)
+        self.answer_dto.save(a3)
 
         response = client.put(
             f"{settings.API_V1_STR}/questions/edit/{question.uid}",
             json={
-                "answers": [
-                    {
-                        "uid": a2.uid,
-                        "text": "changed answer 2 and moved it to pos 1",
-                    },
-                    {"uid": a1.uid, "text": a1.text},
-                ]
+                "answers": [{"uid": a2.uid}, {"uid": a3.uid}, {"uid": a1.uid}],
+                "reorder": True,
             },
             headers=superuser_token_headers,
         )
         assert response.ok
         assert question.answers_by_position[0].uid == a2.uid
+        assert question.answers_by_position[1].uid == a3.uid
+        assert question.answers_by_position[2].uid == a1.uid
+
+    def t_partialUpdateAnswerTextAndLevel(
+        self, client: TestClient, superuser_token_headers: dict
+    ):
+        question = self.question_dto.new(text="new-question", position=0)
+        self.question_dto.save(question)
+        a1 = self.answer_dto.new(
+            question_uid=question.uid, text="Answer1", position=0, level=1
+        )
+        self.answer_dto.save(a1)
+
+        response = client.put(
+            f"{settings.API_V1_STR}/questions/edit/{question.uid}",
+            json={
+                "answers": [
+                    {"uid": a1.uid, "text": "updated text"},
+                ]
+            },
+            headers=superuser_token_headers,
+        )
+        assert response.ok
+        assert question.answers_by_position[0].text == "updated text"
+        assert question.answers_by_position[0].level == 1
 
     def t_listAllQuestions(
         self, client: TestClient, superuser_token_headers: dict, question_dto
