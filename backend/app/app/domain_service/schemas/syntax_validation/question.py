@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, HttpUrl, NonNegativeInt, validator
+from pydantic import BaseModel, HttpUrl, NonNegativeInt, PrivateAttr, validator
 
 from app.constants import QUESTION_TEXT_MAX_LENGTH, QUESTION_TEXT_MIN_LENGTH
 from app.domain_service.schemas.syntax_validation import Answer, AnswerCreate, Game
@@ -38,3 +38,14 @@ class QuestionCreate(BaseModel):
 class QuestionEdit(QuestionCreate):
     text: Optional[str]
     position: Optional[NonNegativeInt]
+
+    _initial_fields: List = PrivateAttr()
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self._initial_fields = list(data.keys())
+
+    def dict(self, **kwargs):
+        data = super().dict(**kwargs)
+        data["_initial_fields"] = self._initial_fields
+        return data

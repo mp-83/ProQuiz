@@ -77,7 +77,7 @@ def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
     match_data = {
         "match_uid": match.uid,
         "question": current_question.json,
-        "user": user.uid,
+        "user_uid": user.uid,
     }
     return JSONResponse(content=match_data)
 
@@ -107,7 +107,7 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
         return JSONResponse(content={"question": None, "score": score.score})
 
     return JSONResponse(
-        content={"question": next_q.json, "user": user.uid, "match_uid": match.uid}
+        content={"question": next_q.json, "user_uid": user.uid, "match_uid": match.uid}
     )
 
 

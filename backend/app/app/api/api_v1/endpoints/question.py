@@ -73,6 +73,9 @@ def edit_question(
     except NotFoundObjectError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
 
+    validated_data = question_in.dict()
+    _initial_fields = validated_data.pop("_initial_fields")
+    fields_to_update = {f: v for f, v in validated_data.items() if f in _initial_fields}
     dto = QuestionDTO(session=session)
-    dto.update(question, question_in.dict())
+    dto.update(question, fields_to_update)
     return question

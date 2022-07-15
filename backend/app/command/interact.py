@@ -204,6 +204,40 @@ def question_details(client):
     return response.json()
 
 
+def edit_answers_of_question(client):
+    typer.echo("This function only edits the answers of a questions")
+    # Retrieve current question
+    current_match = match_details(client)
+    if not current_match:
+        return
+
+    current_status = question_details(client)
+    if not current_status:
+        return
+
+    question_uid = current_status["uid"]
+    answers = current_status["answers_list"]
+    answer_uid = input("Enter answer UID: ")
+    position, current_answer = [
+        (pos, ans) for pos, ans in enumerate(answers) if ans["uid"] == int(answer_uid)
+    ][0]
+
+    change_pos = input("Change position? y/n ") == "y"
+    if change_pos:
+        new_pos_no = input("New position: ")
+        data = answers.pop(position)
+        answers.insert(int(new_pos_no), data)
+
+    response = client.put(
+        f"{BASE_URL}/questions/edit/{question_uid}",
+        json={"answers": answers},
+    )
+    if response.status_code in [200, 422, 400]:
+        typer.echo(pprint(response.json()))
+    else:
+        typer.echo(f"ERROR: {response.reason}")
+
+
 def edit_question(client):
     # Retrieve current question
     current_status = question_details(client)
@@ -218,17 +252,6 @@ def edit_question(client):
     time = input("Time:  ") or current_status["time"]
 
     payload = {"text": text, "position": position, "boolean": boolean, "time": time}
-    changed = (
-        payload.values()
-        != {
-            k: v
-            for k, v in current_status.items()
-            if k not in ["uid", "answers_list", "game", "content_url"]
-        }.values()
-    )
-    if not changed:
-        typer.echo("Nothing changed")
-        return
 
     typer.echo("Updating Question")
     response = client.put(f"{BASE_URL}/questions/edit/{question_uid}", json=payload)
@@ -340,7 +363,7 @@ def play(client):
                 "match_uid": response_data["match_uid"],
                 "question_uid": response_data["question"]["uid"],
                 "answer_uid": answer_map[int(index)],
-                "user_uid": response_data["user"],
+                "user_uid": response_data["user_uid"],
             },
         )
         response_data = response.json()
@@ -456,6 +479,7 @@ def menu():
         12: player sign-in
         13: rankings of a match
         14. import question to a match
+        15: edit_answers_of_question
         Enter to exit
     """
     typer.echo(main_message)
@@ -484,6 +508,7 @@ def start():
             "12": player_sign,
             "13": get_ranking_for_a_match,
             "14": import_questions_to_match,
+            "15": edit_answers_of_question,
         }.get(user_choice)
         if not action:
             exit_command()

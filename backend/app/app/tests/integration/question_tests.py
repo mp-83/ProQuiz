@@ -61,7 +61,7 @@ class TestCaseQuestionEP:
     def t_changeTextAndPositionOfAQuestion(
         self, client: TestClient, superuser_token_headers: dict
     ):
-        question = self.question_dto.new(text="Text", position=0)
+        question = self.question_dto.new(text="Text", position=0, time=10)
         self.question_dto.save(question)
         response = client.put(
             f"{settings.API_V1_STR}/questions/edit/{question.uid}",
@@ -74,6 +74,7 @@ class TestCaseQuestionEP:
         assert response.ok
         assert response.json()["text"] == "Edited text"
         assert response.json()["position"] == 2
+        assert response.json()["time"] == 10
 
     def t_positionCannotBeNegative(
         self, client: TestClient, superuser_token_headers: dict

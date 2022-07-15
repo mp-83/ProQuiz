@@ -133,7 +133,7 @@ class TestCasePlayStart:
         assert response.json()["question"] == question.json
         assert response.json()["question"]["answers"] == []
         # the user.uid value can't be known ahead, but it will be > 0
-        assert response.json()["user"] > 0
+        assert response.json()["user_uid"] > 0
 
     def t_startMatchWithoutQuestion(
         self, client: TestClient, superuser_token_headers: dict
@@ -251,7 +251,7 @@ class TestCasePlayNext:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] == match.questions[0][1].json
-        assert response.json()["user"] == user.uid
+        assert response.json()["user_uid"] == user.uid
 
     def t_completeMatch(
         self, client: TestClient, superuser_token_headers: dict, db_session
