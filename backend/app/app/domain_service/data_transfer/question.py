@@ -19,6 +19,10 @@ class QuestionDTO:
         self._session.commit()
         return instance
 
+    def refresh(self, instance):
+        self._session.refresh(instance)
+        return instance
+
     def add_many(self, objects):
         self._session.add_all(objects)
         self._session.commit()

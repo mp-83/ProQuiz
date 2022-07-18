@@ -162,6 +162,7 @@ class TestCaseMatchEndpoints:
             "times": 10,
             "questions": [
                 {
+                    "question_uid": question.uid,
                     "game": game.index,
                     "text": "What is the capital of Sweden?",
                     "answers": [

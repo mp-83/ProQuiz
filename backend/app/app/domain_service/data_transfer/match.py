@@ -105,8 +105,7 @@ class MatchDTO:
 
             if question_data.get("uid") in existing:
                 question = existing.get(question_data.get("uid"))
-                question.text = question_data.get("text", question.text)
-                question.position = question_data.get("position", question.position)
+                self.question_dto.update(question, question_data)
             else:
                 question = self.question_dto.new(
                     game_uid=game.uid,

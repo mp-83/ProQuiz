@@ -2,14 +2,17 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
+from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.schemas.logical_validation import RetrieveObject
 from app.exceptions import ValidateError
 
 
 class ValidateEditMatch:
-    def __init__(self, match_uid, db_session: Session):
+    def __init__(self, match_uid, match_in: dict, db_session: Session):
         self.match_uid = match_uid
+        self.match_in = match_in
         self._session = db_session
 
     def valid_match(self):
@@ -21,7 +24,27 @@ class ValidateEditMatch:
 
         raise ValidateError("Match started. Cannot be edited")
 
+    def valid_questions(self):
+        question_dto = QuestionDTO(session=self._session)
+        game_dto = GameDTO(session=self._session)
+        questions = self.match_in.get("questions") or []
+        error = False
+        error_uid = None
+        for question in questions:
+            if "uid" in question:
+                error = question_dto.get(uid=question["uid"]) is None
+                error_uid = question["uid"]
+            if "game_uid" in question:
+                error = game_dto.get(uid=question["game_uid"]) is None
+                error_uid = question["game_uid"]
+
+            if error:
+                raise ValidateError(
+                    f"Unexistent Question/Game object with ID: {error_uid}"
+                )
+
     def is_valid(self):
+        self.valid_questions()
         return self.valid_match()
 
 

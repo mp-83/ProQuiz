@@ -34,6 +34,7 @@ class TestCaseBase:
         self.answer_dto = AnswerDTO(session=db_session)
         self.game_dto = GameDTO(session=db_session)
         self.user_dto = UserDTO(session=db_session)
+        # make the shuffle transparent by returning the same input array
         mocker.patch(
             "app.domain_service.play.single_player.shuffle", side_effect=lambda arr: arr
         )

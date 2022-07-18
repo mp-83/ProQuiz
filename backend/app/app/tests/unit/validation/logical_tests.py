@@ -266,9 +266,44 @@ class TestCaseMatchEdit:
         reaction_dto.save(reaction)
 
         with pytest.raises(ValidateError) as e:
-            ValidateEditMatch(match_uid=match.uid, db_session=db_session).is_valid()
+            ValidateEditMatch(
+                match_uid=match.uid, match_in={}, db_session=db_session
+            ).is_valid()
 
         assert e.value.message == "Match started. Cannot be edited"
+
+    def t_moveQuestionToNotExistingGame(self, db_session):
+        match_name = "New Match"
+        match_dto = MatchDTO(session=db_session)
+        match = match_dto.new(name=match_name)
+        match_dto.save(match)
+
+        game_dto = GameDTO(session=db_session)
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+
+        question_dto = QuestionDTO(session=db_session)
+        question = question_dto.new(
+            text="Where is London?",
+            game_uid=game.uid,
+            position=0,
+        )
+        question_dto.save(question)
+
+        erroneous_uid = 30
+        with pytest.raises(ValidateError) as e:
+            ValidateEditMatch(
+                match_uid=match.uid,
+                match_in={
+                    "questions": [{"uid": question.uid, "game_uid": erroneous_uid}]
+                },
+                db_session=db_session,
+            ).is_valid()
+
+        assert (
+            e.value.message
+            == f"Unexistent Question/Game object with ID: {erroneous_uid}"
+        )
 
 
 class TestCaseImportFromYaml:

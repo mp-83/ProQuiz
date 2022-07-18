@@ -4,10 +4,11 @@ from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 class TestCaseQuestion:
     @pytest.fixture(autouse=True)
-    def setUp(self, db_session, question_dto, answer_dto, match_dto):
+    def setUp(self, db_session, question_dto, answer_dto, match_dto, game_dto):
         self.question_dto = question_dto
         self.answer_dto = answer_dto
         self.match_dto = match_dto
+        self.game_dto = game_dto
 
     @pytest.fixture
     def samples(self):
@@ -42,10 +43,22 @@ class TestCaseQuestion:
         assert self.answer_dto.count() == 2
         assert question.answers[0].question_uid == question.uid
 
-    def t_createQuestionWithoutPosition(self, samples):
+    def t_createQuestionWithoutGame(self, samples):
         new_question = self.question_dto.new(text="new-question", position=1)
         self.question_dto.save(new_question)
         assert new_question.is_open
+        assert new_question.is_template
+
+    def t_updateQuestionGameAndSetItToNone(self, samples):
+        match = self.match_dto.save(self.match_dto.new())
+        game = self.game_dto.new(match_uid=match.uid, index=1, order=False)
+        self.game_dto.save(game)
+        new_question = self.question_dto.new(
+            text="new-question", position=1, game_uid=game.uid
+        )
+        self.question_dto.save(new_question)
+
+        self.question_dto.update(new_question, {"game": None})
         assert new_question.is_template
 
     def t_allAnswersOfAQuestionMustDiffer(self, samples, db_session):

@@ -71,12 +71,12 @@ def edit_match(
     session: Session = Depends(get_db),
     _user: User = Depends(get_current_user),
 ):
+    match_in = user_input.dict()
+    _initial_fields = match_in.pop("_initial_fields")
     match = LogicValidation(ValidateEditMatch).validate(
-        match_uid=uid, db_session=session
+        match_uid=uid, match_in=match_in, db_session=session
     )
-    validated_data = user_input.dict()
-    _initial_fields = validated_data.pop("_initial_fields")
-    fields_to_update = {f: v for f, v in validated_data.items() if f in _initial_fields}
+    fields_to_update = {f: v for f, v in match_in.items() if f in _initial_fields}
     dto = MatchDTO(session=session)
     dto.update(match, **fields_to_update)
     return match

@@ -120,6 +120,34 @@ class TestCaseMatchModel:
         with pytest.raises(NotUsableQuestionError):
             self.match_dto.import_template_questions(match, [question.uid])
 
+    def t_moveFirstQuestionToSecondGame(self):
+        match = self.match_dto.save(self.match_dto.new())
+        first_game = self.game_dto.new(match_uid=match.uid, index=1)
+        self.game_dto.save(first_game)
+        second_game = self.game_dto.new(match_uid=match.uid, index=2)
+        self.game_dto.save(second_game)
+        question_1 = self.question_dto.new(
+            text="Where is London?",
+            game_uid=first_game.uid,
+            position=0,
+        )
+        self.question_dto.save(question_1)
+        question_2 = self.question_dto.new(
+            text="Where is New York?",
+            game_uid=first_game.uid,
+            position=1,
+        )
+        self.question_dto.save(question_2)
+        question_3 = self.question_dto.new(
+            text="Where is Tokyo?",
+            game_uid=second_game.uid,
+            position=1,
+        )
+        self.question_dto.save(question_3)
+        data = {"questions": [{"uid": question_1.uid, "game_uid": second_game.uid}]}
+        self.match_dto.update(match, **data)
+        assert question_1.game == second_game
+
     def t_matchCannotBePlayedIfAreNoLeftAttempts(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=2)
