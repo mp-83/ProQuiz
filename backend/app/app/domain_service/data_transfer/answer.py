@@ -39,10 +39,13 @@ class AnswerDTO:
 
     def update(self, instance, **kwargs):
         commit = kwargs.pop("commit", False)
-        kwargs.pop("uid", None)
         for k, v in kwargs.items():
+            if k == "uid":
+                continue
+
             if not hasattr(instance, k) or (v is None and not self.nullable_column(k)):
                 continue
+
             setattr(instance, k, v)
 
         if commit:

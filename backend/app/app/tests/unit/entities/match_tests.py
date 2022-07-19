@@ -148,6 +148,13 @@ class TestCaseMatchModel:
         self.match_dto.update(match, **data)
         assert question_1.game == second_game
 
+    def t_updateGameProperty(self):
+        match = self.match_dto.save(self.match_dto.new())
+        game = self.game_dto.new(match_uid=match.uid, index=1)
+        data = {"games": [{"uid": game.uid, "order": False}]}
+        self.match_dto.update(match, **data)
+        assert not game.order
+
     def t_matchCannotBePlayedIfAreNoLeftAttempts(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=2)

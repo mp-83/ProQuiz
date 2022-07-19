@@ -45,6 +45,10 @@ class Match(TableMixin, Base):
         # return [[q.json for q in g.ordered_questions] for g in self.games]
 
     @property
+    def games_list(self):
+        return self.games
+
+    @property
     def questions_count(self):
         return sum(len(g.questions) for g in self.games)
 

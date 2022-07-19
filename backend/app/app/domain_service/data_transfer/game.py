@@ -18,3 +18,23 @@ class GameDTO:
 
     def get(self, **filters):
         return self._session.query(self.klass).filter_by(**filters).one_or_none()
+
+    def refresh(self, instance):
+        self._session.refresh(instance)
+        return instance
+
+    def nullable_column(self, name):
+        return self.klass.__table__.columns.get(name).nullable
+
+    def update(self, instance, **kwargs):
+        commit = kwargs.pop("commit", False)
+        for k, v in kwargs.items():
+            if k == "uid":
+                continue
+
+            if not hasattr(instance, k) or (v is None and not self.nullable_column(k)):
+                continue
+            setattr(instance, k, v)
+
+        if commit:
+            self._session.commit()

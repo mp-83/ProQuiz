@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 
 import yaml
-from pydantic import BaseModel, PositiveInt, PrivateAttr, validator
+from pydantic import BaseModel, NonNegativeInt, PositiveInt, PrivateAttr, validator
 
 from app.domain_service.schemas.syntax_validation.question import QuestionCreate
 
@@ -20,6 +20,11 @@ class MatchCreate(BaseModel):
     questions: List[QuestionCreate] = None
 
 
+class GameEdit(BaseModel):
+    uid: NonNegativeInt
+    order: bool
+
+
 class MatchEdit(BaseModel):
     name: Optional[str]
     times: Optional[int]
@@ -28,6 +33,7 @@ class MatchEdit(BaseModel):
     from_time: Optional[datetime]
     to_time: Optional[datetime]
     questions: List[QuestionCreate] = None
+    games: List[GameEdit] = None
     _initial_fields: List = PrivateAttr()
 
     def __init__(self, **data):

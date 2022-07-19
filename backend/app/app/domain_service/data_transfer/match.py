@@ -122,6 +122,14 @@ class MatchDTO:
             self._session.commit()
         return result
 
+    def update_games(self, games: list, commit=False):
+        for data in games:
+            game = self.game_dto.get(uid=data["uid"])
+            self.game_dto.update(game, **data)
+
+        if commit:
+            self._session.commit()
+
     def import_template_questions(self, instance: Match, ids: List, game_uid=None):
         """Import already existing questions"""
         result = []
@@ -161,6 +169,11 @@ class MatchDTO:
                     continue
 
                 self.update_questions(instance, value, commit=True)
+            elif name == "games":
+                if not value:
+                    continue
+
+                self.update_games(value, commit=True)
             elif not hasattr(instance, name) or (
                 value is None and not self.nullable_column(name)
             ):

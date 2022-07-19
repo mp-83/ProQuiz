@@ -145,6 +145,22 @@ class TestCaseMatchEndpoints:
         assert match.order
         assert match.is_restricted
 
+    def t_changeGamesOrder(self, client: TestClient, superuser_token_headers: dict):
+        match = self.match_dto.new()
+        self.match_dto.save(match)
+        first_game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(first_game)
+        response = client.put(
+            f"{settings.API_V1_STR}/matches/edit/{match.uid}",
+            json={"games": [{"uid": first_game.uid, "order": False}]},
+            headers=superuser_token_headers,
+        )
+
+        assert response.ok
+        assert response.json()["games_list"][0]["order"] is False
+        self.game_dto.refresh(first_game)
+        assert not first_game.order
+
     def t_addQuestionToExistingMatchWithOneGameOnly(
         self, client: TestClient, superuser_token_headers: dict
     ):
