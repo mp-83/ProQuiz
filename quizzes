@@ -1,0 +1,14 @@
+quiz_bool.1.yaml:: 5 questions
+quiz_bool.2.yaml:: 5 questions
+quiz_food.1.yaml:: 4 questions
+quiz_gen.1.yaml:: 13 questions
+quiz_gen.2.yaml:: 5 questions
+quiz_geo.1.yaml:: 4 questions
+quiz_geo.2.yaml:: 4 questions
+quiz_geo.3.yaml:: 4 questions
+quiz_geo.4.yaml:: 4 questions
+quiz_geo.5.yaml:: 4 questions
+quiz_geo.6.yaml:: 2 questions
+quiz_history.1.yaml:: 9 questions
+quiz_history.2.yaml:: 6 questions
+quiz_music.yaml:: 10 questions

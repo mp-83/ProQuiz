@@ -1,0 +1,25 @@
+questions:
+    - Duck confit is cooked in its own fat?
+    - answers:
+        - True
+        - False
+
+    - Burrata is made from mozzarella and cream?
+    - answers:
+        - True
+        - False
+
+    - There are peanuts in Pad Thai?
+    - answers:
+        - True
+        - False
+
+    - Gazpacho is a cold soup?
+    - answers:
+        - True
+        - False
+
+    - France is the largest cheese producer?
+    - answers:
+        - True
+        - False
