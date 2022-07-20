@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
 
@@ -28,8 +28,8 @@ class Match(TableMixin, Base):
     # designates the accessibility to this match
     is_restricted = Column(Boolean, default=True)
     # determine the time range the match is playable
-    from_time = Column(DateTime(timezone=True))
-    to_time = Column(DateTime(timezone=True))
+    from_time = Column(DateTime)
+    to_time = Column(DateTime)
     # how many times a match can be played
     times = Column(Integer, default=1)
     # indicates if games should be played in order
@@ -42,7 +42,6 @@ class Match(TableMixin, Base):
     @property
     def questions_list(self):
         return [q for g in self.games for q in g.ordered_questions]
-        # return [[q.json for q in g.ordered_questions] for g in self.games]
 
     @property
     def games_list(self):
@@ -59,11 +58,7 @@ class Match(TableMixin, Base):
     @property
     def is_active(self):
         if self.expires:
-            # TODO to better fix. now should be tz aware all the times
-            # to investigate why SQL does not save timezone aware datetime
-            now = (
-                datetime.now(tz=timezone.utc) if self.expires.tzinfo else datetime.now()
-            )
+            now = datetime.now() if self.expires.tzinfo else datetime.now()
             return (self.expires - now).total_seconds() > 0
         return True
 
