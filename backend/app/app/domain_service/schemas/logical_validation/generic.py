@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.domain_service.data_transfer.answer import AnswerDTO
+from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.user import UserDTO
@@ -20,6 +21,7 @@ class RetrieveObject:
         klass = {
             "answer": AnswerDTO,
             "match": MatchDTO,
+            "game": GameDTO,
             "question": QuestionDTO,
             "user": UserDTO,
         }.get(self.otype)

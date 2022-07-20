@@ -219,11 +219,12 @@ class TestCaseMatchEndpoints:
     ):
         match = self.match_dto.new()
         self.match_dto.save(match)
+        game = self.game_dto.save(self.game_dto.new(match_uid=match.uid))
         base64_content, fname = yaml_file_handler
         superuser_token_headers.update(filename=fname)
         response = client.post(
             f"{settings.API_V1_STR}/matches/yaml_import",
-            json={"uid": match.uid, "data": base64_content},
+            json={"uid": match.uid, "data": base64_content, "game_uid": game.uid},
             headers=superuser_token_headers,
         )
 

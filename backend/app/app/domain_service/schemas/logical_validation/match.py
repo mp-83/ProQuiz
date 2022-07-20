@@ -74,14 +74,22 @@ class ValidateNewMatch:
 
 
 class ValidateMatchImport:
-    def __init__(self, match_uid, db_session: Session):
+    def __init__(self, match_uid, db_session: Session, game_uid=None):
         self.match_uid = match_uid
         self._session = db_session
+        self.game_uid = game_uid
 
     def valid_match(self):
         return RetrieveObject(
             self.match_uid, otype="match", db_session=self._session
         ).get()
 
+    def valid_game(self):
+        return RetrieveObject(
+            self.game_uid, otype="game", db_session=self._session
+        ).get()
+
     def is_valid(self):
+        if self.game_uid:
+            self.valid_game()
         return self.valid_match()

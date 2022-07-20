@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 
 import yaml
-from pydantic import BaseModel, NonNegativeInt, PositiveInt, PrivateAttr, validator
+from pydantic import BaseModel, PositiveInt, PrivateAttr, validator
 
 from app.domain_service.schemas.syntax_validation.question import QuestionCreate
 
@@ -21,7 +21,7 @@ class MatchCreate(BaseModel):
 
 
 class GameEdit(BaseModel):
-    uid: NonNegativeInt
+    uid: PositiveInt
     order: bool
 
 
@@ -57,8 +57,9 @@ class FileContent(BaseModel):
 
 
 class MatchYamlImport(BaseModel):
-    uid: int
+    uid: PositiveInt
     data: FileContent
+    game_uid: PositiveInt = None
 
     @validator("data", pre=True)
     def coerce(cls, value):

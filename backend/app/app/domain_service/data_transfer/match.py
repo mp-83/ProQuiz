@@ -185,11 +185,10 @@ class MatchDTO:
     def _boolean_answers(self, answers_list: List) -> bool:
         return [a["text"] for a in answers_list] == [True, False]
 
-    def insert_questions(self, instance, questions: list):
+    def insert_questions(self, instance, questions: list, game_uid=None):
         result = []
         game_dto = GameDTO(session=self._session)
-        # TODO write a test for this
-        match_game = game_dto.get(match_uid=instance.uid)
+        match_game = game_dto.get(uid=game_uid) if game_uid else None
         if not match_game:
             match_game = game_dto.new(match_uid=instance.uid)
             game_dto.save(match_game)

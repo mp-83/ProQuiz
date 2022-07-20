@@ -90,11 +90,12 @@ def match_yaml_import(
 ):
     user_input = user_input.dict()
     match_uid = user_input.get("uid")
+    game_uid = user_input.get("game_uid")
     match = LogicValidation(ValidateMatchImport).validate(
-        match_uid=match_uid, db_session=session
+        match_uid=match_uid, db_session=session, game_uid=game_uid
     )
     dto = MatchDTO(session=session)
-    dto.insert_questions(match, user_input["data"]["questions"])
+    dto.insert_questions(match, user_input["data"]["questions"], game_uid)
     return match
 
 

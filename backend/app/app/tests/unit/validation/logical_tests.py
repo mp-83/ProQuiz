@@ -309,7 +309,15 @@ class TestCaseMatchEdit:
 class TestCaseImportFromYaml:
     def t_matchDoesNotExists(self, db_session):
         with pytest.raises(NotFoundObjectError):
-            ValidateMatchImport(match_uid=1, db_session=db_session).valid_match()
+            ValidateMatchImport(match_uid=1, db_session=db_session).is_valid()
+
+    def t_gameDoesNotExists(self, db_session):
+        match_dto = MatchDTO(session=db_session)
+        match = match_dto.save(match_dto.new())
+        with pytest.raises(NotFoundObjectError):
+            ValidateMatchImport(
+                match_uid=match.uid, db_session=db_session, game_uid=2
+            ).is_valid()
 
 
 class TestCaseQuestionCreate:

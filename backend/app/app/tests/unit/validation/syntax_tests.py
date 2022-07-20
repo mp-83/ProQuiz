@@ -217,6 +217,7 @@ class TestCaseYamlSchema:
         assert schema
         assert schema.dict() == {
             "uid": 1,
+            "game_uid": None,
             "data": {
                 "questions": [
                     {
@@ -350,9 +351,9 @@ class TestCaseYamlSchema:
         b64content = b64encode(document.encode("utf-8")).decode()
         b64string = f"data:application/x-yaml;base64,{b64content}"
 
-        schema = syntax.MatchYamlImport(**{"uid": 1, "data": b64string})
+        schema = syntax.MatchYamlImport(**{"uid": 1, "data": b64string, "game_uid": 3})
         assert schema
-        assert schema.dict() == {"uid": 1, "data": {"questions": []}}
+        assert schema.dict() == {"uid": 1, "data": {"questions": []}, "game_uid": 3}
 
     def t_expectedMappingMethod(self):
         # test meant to document input => output transformation
