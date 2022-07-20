@@ -291,7 +291,7 @@ class TestCaseMatchEdit:
         question_dto.save(question)
 
         erroneous_uid = 30
-        with pytest.raises(ValidateError) as e:
+        with pytest.raises(NotFoundObjectError) as e:
             ValidateEditMatch(
                 match_uid=match.uid,
                 match_in={
@@ -300,10 +300,7 @@ class TestCaseMatchEdit:
                 db_session=db_session,
             ).is_valid()
 
-        assert (
-            e.value.message
-            == f"Unexistent Question/Game object with ID: {erroneous_uid}"
-        )
+        assert e.value.message == f"Game with Id:: {erroneous_uid} does not exist"
 
 
 class TestCaseImportFromYaml:
@@ -312,12 +309,15 @@ class TestCaseImportFromYaml:
             ValidateMatchImport(match_uid=1, db_session=db_session).is_valid()
 
     def t_gameDoesNotExists(self, db_session):
+        erroneous_uid = 2
         match_dto = MatchDTO(session=db_session)
         match = match_dto.save(match_dto.new())
-        with pytest.raises(NotFoundObjectError):
+        with pytest.raises(NotFoundObjectError) as e:
             ValidateMatchImport(
-                match_uid=match.uid, db_session=db_session, game_uid=2
+                match_uid=match.uid, db_session=db_session, game_uid=erroneous_uid
             ).is_valid()
+
+        assert e.value.message == f"Game with Id:: {erroneous_uid} does not exist"
 
 
 class TestCaseQuestionCreate:

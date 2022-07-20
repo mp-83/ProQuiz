@@ -29,7 +29,9 @@ class RetrieveObject:
         obj = klass(self.db_session).get(uid=self.object_uid)
         if obj:
             return obj
-        raise NotFoundObjectError()
+        raise NotFoundObjectError(
+            f"{self.otype.title()} with Id:: {self.object_uid} does not exist"
+        )
 
 
 class LogicValidation:
