@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.domain_entities.db.session import session_factory
 from app.domain_service.data_transfer.answer import AnswerDTO
+from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.user import UserDTO
@@ -19,6 +20,7 @@ class EmptyDB:
         self.question_dto = QuestionDTO(session=db_session)
         self.answer_dto = AnswerDTO(session=db_session)
         self.match_dto = MatchDTO(session=db_session)
+        self.game_dto = GameDTO(session=db_session)
 
     def parse_yaml_content(self, fname):
         with open(fname, "r") as fp:
@@ -62,14 +64,22 @@ class EmptyDB:
             logger.info(f"Creating match: {name}")
             geo_match = self.match_dto.new(name=name)
             self.match_dto.save(geo_match)
-            for fname in [
-                "quiz_geo.1.yaml",
-                "quiz_geo.2.yaml",
-                "quiz_geo.3.yaml",
-                "quiz_geo.6.yaml",
-            ]:
+            for index, fname in enumerate(
+                [
+                    "quiz_geo.1.yaml",
+                    "quiz_geo.2.yaml",
+                    "quiz_geo.3.yaml",
+                    "quiz_geo.6.yaml",
+                ],
+                start=1,
+            ):
+                game = self.game_dto.save(
+                    self.game_dto.new(match_uid=geo_match.uid, index=index)
+                )
                 content = self.parse_yaml_content(f"/app/quizzes/{fname}")
-                self.match_dto.insert_questions(geo_match, content["questions"])
+                self.match_dto.insert_questions(
+                    geo_match, content["questions"], game.uid
+                )
 
         name = "Brief GEO quiz.1"
         geo_match = self.match_dto.get(name=name)
@@ -86,9 +96,16 @@ class EmptyDB:
             logger.info(f"Creating match: {name}")
             geo_match = self.match_dto.new(name=name)
             self.match_dto.save(geo_match)
-            for fname in ["quiz_geo.5.yaml", "quiz_geo.6.yaml"]:
+            for index, fname in enumerate(
+                ["quiz_geo.5.yaml", "quiz_geo.6.yaml"], start=1
+            ):
+                game = self.game_dto.save(
+                    self.game_dto.new(match_uid=geo_match.uid, index=index)
+                )
                 content = self.parse_yaml_content(f"/app/quizzes/{fname}")
-                self.match_dto.insert_questions(geo_match, content["questions"])
+                self.match_dto.insert_questions(
+                    geo_match, content["questions"], game.uid
+                )
 
     def create_history_matches(self):
         name = "History quiz.1"
@@ -109,15 +126,36 @@ class EmptyDB:
             content = self.parse_yaml_content("/app/quizzes/quiz_history.2.yaml")
             self.match_dto.insert_questions(history_match_2, content["questions"])
 
-    def create_music_match(self):
-        name = "Music quiz.1"
-        music_match = self.match_dto.get(name=name)
-        if not music_match:
+    def create_misc_matches(self):
+        name = "Misc quiz.1"
+        match = self.match_dto.get(name=name)
+        if not match:
             logger.info(f"Creating match: {name}")
-            music_match = self.match_dto.new(name=name)
-            self.match_dto.save(music_match)
-            content = self.parse_yaml_content("/app/quizzes/quiz_music.yaml")
-            self.match_dto.insert_questions(music_match, content["questions"])
+            match = self.match_dto.new(name=name)
+            self.match_dto.save(match)
+            for index, fname in enumerate(
+                ["quiz_music.yaml", "quiz_geo.3.yaml"], start=1
+            ):
+                game = self.game_dto.save(
+                    self.game_dto.new(match_uid=match.uid, index=index)
+                )
+                content = self.parse_yaml_content(f"/app/quizzes/{fname}")
+                self.match_dto.insert_questions(match, content["questions"], game.uid)
+
+        name = "Misc quiz.2"
+        match = self.match_dto.get(name=name)
+        if not match:
+            logger.info(f"Creating match: {name}")
+            match = self.match_dto.new(name=name)
+            self.match_dto.save(match)
+            for index, fname in enumerate(
+                ["quiz_bool.1.yaml", "quiz_geo.6.yaml", "quiz_food.1.yaml"], start=1
+            ):
+                game = self.game_dto.save(
+                    self.game_dto.new(match_uid=match.uid, index=index)
+                )
+                content = self.parse_yaml_content(f"/app/quizzes/{fname}")
+                self.match_dto.insert_questions(match, content["questions"], game.uid)
 
     def create_boolean_matches(self):
         name = "Boolean quiz.1"
@@ -143,7 +181,7 @@ class EmptyDB:
         self.create_general_match()
         self.create_geography_matches()
         self.create_history_matches()
-        self.create_music_match()
+        self.create_misc_matches()
         self.create_boolean_matches()
 
 

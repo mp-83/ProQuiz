@@ -212,6 +212,27 @@ class TestCaseMatchModel:
         assert match.questions[1][0].answers_list[1]["text"] == "True"
         assert match.questions[1][0].answers_list[0]["is_correct"]
 
+    def t_secondGameIsTheSameOfPreviousQuestionsUnlessSpecified(self):
+        match = self.match_dto.save(self.match_dto.new())
+        first_game = self.game_dto.save(self.game_dto.new(match_uid=match.uid, index=1))
+        questions = [
+            {
+                "answers": [{"text": False}, {"text": True}],
+                "text": "Question.1",
+            },
+        ]
+        self.match_dto.insert_questions(match, questions, game_uid=first_game.uid)
+        assert match.questions[0][0].game_uid == first_game.uid
+
+        questions = [
+            {
+                "answers": [{"text": False}, {"text": True}],
+                "text": "Question.2",
+            },
+        ]
+        self.match_dto.insert_questions(match, questions)
+        assert match.questions[1][0].game_uid == first_game.uid
+
 
 class TestCaseMatchHash:
     def t_hashMustBeUniqueForEachMatch(self, db_session, mocker, match_dto):
