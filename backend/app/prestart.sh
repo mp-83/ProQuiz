@@ -4,7 +4,7 @@
 python /app/app/backend_pre_start.py
 
 # Run migrations
-#alembic upgrade head
+alembic upgrade head
 
 # Read current migration
 alembic current
