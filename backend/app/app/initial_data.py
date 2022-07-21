@@ -53,9 +53,9 @@ class EmptyDB:
         name = "GEO quiz"
         geo_match = self.match_dto.get(name=name)
         if not geo_match:
-            geo_match = self.match_dto.new(name=name, with_code=True)
+            geo_match = self.match_dto.new(name=name)
             logger.info(
-                f"Creating match: {name} :: with-code {geo_match.code} :: not-restricted"
+                f"Creating multi-game match: {name} :: with-hash {geo_match.uhash} :: not-restricted"
             )
             self.match_dto.save(geo_match)
             for index, fname in enumerate(
@@ -78,9 +78,9 @@ class EmptyDB:
         name = "Brief GEO quiz.1"
         geo_match = self.match_dto.get(name=name)
         if not geo_match:
-            geo_match = self.match_dto.new(name=name)
+            geo_match = self.match_dto.new(name=name, with_code=True)
             logger.info(
-                f"Creating match: {name} :: with-hash {geo_match.uhash} :: not-restricted"
+                f"Creating match: {name} :: with-code {geo_match.code} :: not-restricted"
             )
             self.match_dto.save(geo_match)
             content = self.parse_yaml_content("/app/quizzes/quiz_geo.4.yaml")
@@ -91,7 +91,7 @@ class EmptyDB:
         if not geo_match:
             geo_match = self.match_dto.new(name=name, with_code=True)
             logger.info(
-                f"Creating match: {name} :: with-code {geo_match.code} :: not-restricted"
+                f"Creating multi-game match: {name} :: with-code {geo_match.code} :: not-restricted"
             )
             self.match_dto.save(geo_match)
             for index, fname in enumerate(
@@ -132,9 +132,9 @@ class EmptyDB:
         name = "Misc quiz.1"
         match = self.match_dto.get(name=name)
         if not match:
-            match = self.match_dto.new(name=name, with_code=True)
+            match = self.match_dto.new(name=name, with_code=True, is_restricted=True)
             logger.info(
-                f"Creating match: {name} :: with-code {match.code} :: not-restricted"
+                f"Creating multi-game match: {name} :: with-hash {match.code} :: restricted"
             )
             self.match_dto.save(match)
             for index, fname in enumerate(
@@ -151,7 +151,7 @@ class EmptyDB:
         if not match:
             match = self.match_dto.new(name=name, with_code=True)
             logger.info(
-                f"Creating match: {name} :: with-code {match.code} :: not-restricted"
+                f"Creating multi-game match: {name} :: with-code {match.code} :: not-restricted"
             )
             self.match_dto.save(match)
             for index, fname in enumerate(
