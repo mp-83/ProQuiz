@@ -206,13 +206,27 @@ class TestCaseMatchEndpoints:
         assert match.times == 10
 
     def t_listAllMatches(self, client: TestClient):
-        m1 = self.match_dto.save(self.match_dto.new())
-        m2 = self.match_dto.save(self.match_dto.new())
-        m3 = self.match_dto.save(self.match_dto.new())
+        self.match_dto.save(self.match_dto.new())
+        self.match_dto.save(self.match_dto.new())
+        self.match_dto.save(self.match_dto.new())
 
         response = client.get(f"{settings.API_V1_STR}/matches/")
         assert response.ok
-        assert response.json()["matches"] == [m.json for m in [m1, m2, m3]]
+        assert len(response.json()["matches"]) == 3
+        assert set(response.json()["matches"][0].keys()) == {
+            "code",
+            "expires",
+            "from_time",
+            "games_list",
+            "is_restricted",
+            "name",
+            "order",
+            "password",
+            "questions_list",
+            "times",
+            "uhash",
+            "uid",
+        }
 
     def t_importQuestionsFromYaml(
         self, client: TestClient, superuser_token_headers: dict, yaml_file_handler

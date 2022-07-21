@@ -23,3 +23,7 @@ class Match(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class Matches(BaseModel):
+    matches: List[Match] = []

@@ -62,17 +62,29 @@ class Client:
 
 
 def list_matches(client):
-    with_out_questions = (
-        input("Only match's details W/OUT questions and answers: y/n ==> ") == "y"
-    )
-    result = client.get(f"{BASE_URL}/matches")
+    result = client.get(f"{BASE_URL}/matches/")
+    typer.echo("\n\tMATCHES \n\n")
     for match in result.json()["matches"]:
-        if with_out_questions:
-            match_details = match.copy()
-            match_details.pop("questions")
-            typer.echo(pprint(match_details))
-            continue
-        typer.echo(pprint(match))
+        if match["uhash"]:
+            substr = (
+                f"Password {match['password']}"
+                if match["is_restricted"]
+                else "W/Out password"
+            )
+            mm_substr = (
+                "[MM]"
+                if len(match["games_list"]) > 1 and "[multi-game]" not in match["name"]
+                else ""
+            )
+            msg = f"{match['name']} {mm_substr}:: ID {match['uid']} :: Hash {match['uhash']} :: {substr}"
+        else:
+            mm_substr = (
+                "[MM]"
+                if len(match["games_list"]) > 1 and "[multi-game]" not in match["name"]
+                else ""
+            )
+            msg = f"{match['name']} {mm_substr}:: ID {match['uid']} :: Code {match['code']}"
+        typer.echo(f"\t{msg}")
 
 
 def new_match(client):

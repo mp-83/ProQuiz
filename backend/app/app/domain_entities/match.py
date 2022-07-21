@@ -26,7 +26,7 @@ class Match(TableMixin, Base):
     # password needed to start the match if it's restricted
     password = Column(String(MATCH_PASSWORD_LEN))
     # designates the accessibility to this match
-    is_restricted = Column(Boolean, default=True)
+    is_restricted = Column(Boolean, default=False)
     # determine the time range the match is playable
     from_time = Column(DateTime)
     to_time = Column(DateTime)

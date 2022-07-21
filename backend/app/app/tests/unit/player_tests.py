@@ -614,7 +614,7 @@ class TestCaseSinglePlayer(TestCaseBase):
 
 class TestCaseResumeMatch(TestCaseBase):
     def t_matchCanBeResumedWhenThereIsStillOneQuestionToDisplay(self, db_session):
-        match = self.match_dto.save(self.match_dto.new())
+        match = self.match_dto.save(self.match_dto.new(is_restricted=True))
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
         question = self.question_dto.new(
