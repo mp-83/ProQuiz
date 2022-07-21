@@ -140,7 +140,18 @@ class PlayerStatus:
         }
 
     def all_games_played(self):
-        return {r.game.uid: r.game for r in self._all_reactions_query.all()}
+        """
+        Return games that were completed
+        """
+        result = {}
+        for game in self._current_match.games:
+            if (
+                len(game.questions) > 0
+                and len(game.questions)
+                == self._all_reactions_query.filter_by(game_uid=game.uid).count()
+            ):
+                result[game.uid] = game
+        return result
 
     def current_score(self):
         return sum(r.score for r in self.all_reactions())
@@ -164,7 +175,6 @@ class SinglePlayer:
 
     def start(self):
         self._session.refresh(self._match)
-        # TODO to fix
         if self._match.left_attempts(self._user) == 0:
             raise MatchNotPlayableError(
                 f"User {self._user.email} has no left attempts for Match {self._match.name}"
@@ -201,10 +211,6 @@ class SinglePlayer:
 
     def next_game(self):
         return self._game_factory.next_game()
-
-    @property
-    def can_be_resumed(self):
-        return self._game_factory
 
     @property
     def match_score(self):

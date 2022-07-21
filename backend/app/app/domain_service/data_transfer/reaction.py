@@ -80,7 +80,7 @@ class ReactionScore:
 
     def value(self):
         if not self.question_time:
-            return 0
+            return self.answer_level or 0
 
         v = self.question_time - self.timing
         v = v / self.question_time

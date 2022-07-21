@@ -354,6 +354,10 @@ class TestCaseStatus(TestCaseBase):
         assert status.questions_displayed_by_game(game) == {q2.uid: q2, q1.uid: q1}
 
     def t_allGamesPlayed(self, db_session):
+        """
+        there is no reaction for q3, that implies was not displayed
+        therefore g2 should not be considered
+        """
         match = self.match_dto.save(self.match_dto.new())
         g1 = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(g1)
@@ -363,6 +367,8 @@ class TestCaseStatus(TestCaseBase):
         self.question_dto.save(q1)
         q2 = self.question_dto.new(text="Where is London", position=0, game=g2)
         self.question_dto.save(q2)
+        q3 = self.question_dto.new(text="Where is Montreal", position=1, game=g2)
+        self.question_dto.save(q3)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
         self.reaction_dto.save(
@@ -383,7 +389,7 @@ class TestCaseStatus(TestCaseBase):
         )
 
         status = PlayerStatus(user, match, db_session=db_session)
-        assert status.all_games_played() == {g1.uid: g1, g2.uid: g2}
+        assert status.all_games_played() == {g1.uid: g1}
 
     def t_matchTotalScore(self, db_session):
         match = self.match_dto.save(self.match_dto.new())

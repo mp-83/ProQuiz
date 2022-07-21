@@ -63,7 +63,7 @@ class Client:
 
 def list_matches(client):
     result = client.get(f"{BASE_URL}/matches/")
-    typer.echo("\n\tMATCHES \n\n")
+    typer.echo("\nMATCHES \n\n")
     for match in result.json()["matches"]:
         if match["uhash"]:
             substr = (
@@ -84,7 +84,7 @@ def list_matches(client):
                 else ""
             )
             msg = f"{match['name']} {mm_substr}:: ID {match['uid']} :: {len(match['questions_list'])} Questions :: Code {match['code']}"
-        typer.echo(f"\t{msg}")
+        typer.echo(f"{msg}")
 
 
 def new_match(client):
@@ -354,7 +354,7 @@ def play(client):
         payload.update(password=match_password)
 
     response = client.post(f"{BASE_URL}/play/start", json=payload)
-    if response.status_code in [200, 422, 400]:
+    if response.status_code in [422, 400]:
         typer.echo(pprint(response.json()))
 
     if not response.ok:
@@ -388,7 +388,7 @@ def print_question_and_answers(question):
     answer_map = {}
     typer.echo(f"{question['text']}\n")
     for i, answer in enumerate(question["answers"]):
-        typer.echo(f"\t{i}:\t{answer['text']}")
+        typer.echo(f"{i}:\t{answer['text']}")
         answer_map[i] = answer["uid"]
 
     typer.echo("\n\n")
@@ -453,8 +453,10 @@ def get_ranking_for_a_match(_):
         typer.echo(response.reason)
         return
 
+    typer.echo("\n\n")
     for rank in response.json()["rankings"]:
-        typer.echo(f"User {rank['user']['name'] or 'no-name'} ({rank['user']['uid']})")
+        username = rank["user"]["name"] or "no-name"
+        typer.echo(f"User {username} ({rank['user']['uid']}): {rank['score']}")
 
 
 def import_questions_to_match(client):
@@ -476,23 +478,24 @@ def exit_command():
 
 def menu():
     main_message = """
-    Choose your option:
-        1. list matches
-        2. get match details
-        3. create a new match
-        4. edit one match
-        5. import questions with answers from YAML file to a match
-        6. play
-        7. create new question
-        8. edit question
-        9. list all questions
-        10: list all players
-        11: create new signed user
-        12: player sign-in
-        13: rankings of a match
-        14. import question to a match
-        15: edit_answers_of_question
-        Enter to exit
+Choose your option:
+
+    1. list matches
+    2. get match details
+    3. create a new match
+    4. edit one match
+    5. import questions with answers from YAML file to a match
+    6. play
+    7. create new question
+    8. edit question
+    9. list all questions
+    10: list all players
+    11: create new signed user
+    12: player sign-in
+    13: rankings of a match
+    14. import question to a match
+    15: edit_answers_of_question
+    [enter] to exit
     """
     typer.echo(main_message)
     return input()
