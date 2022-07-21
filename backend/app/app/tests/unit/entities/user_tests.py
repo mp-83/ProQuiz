@@ -53,8 +53,8 @@ class TestCaseUserFactory:
             "SIGNED_KEY", "3ba57f9a004e42918eee6f73326aa89d", prepend=None
         )
         signed_user = self.user_dto.fetch(signed=True)
-        assert signed_user.email == "9a1cfb41abc50c3f37630b673323cef5@progame.io"
-        assert signed_user.email_digest == "9a1cfb41abc50c3f37630b673323cef5"
+        another_user = self.user_dto.fetch(signed=True)
+        assert signed_user.email != another_user.email
 
     def t_createNewInternalUser(self):
         internal_user = self.user_dto.fetch(

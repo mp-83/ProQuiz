@@ -137,7 +137,8 @@ class UserFactory:
         if not self.signed:
             return self.unsigned_user()
 
-        email_digest = WordDigest(self.original_email).value()
+        word = self.original_email or uuid4().hex
+        email_digest = WordDigest(word).value()
         token_digest = WordDigest(self.token).value()
         if self.existing_user(email_digest, token_digest):
             return self.existing_user(email_digest, token_digest)

@@ -76,14 +76,14 @@ def list_matches(client):
                 if len(match["games_list"]) > 1 and "[multi-game]" not in match["name"]
                 else ""
             )
-            msg = f"{match['name']} {mm_substr}:: ID {match['uid']} :: Hash {match['uhash']} :: {substr}"
+            msg = f"{match['name']} {mm_substr}:: ID {match['uid']} :: {len(match['questions_list'])} Questions :: Hash {match['uhash']} :: {substr}"
         else:
             mm_substr = (
                 "[MM]"
                 if len(match["games_list"]) > 1 and "[multi-game]" not in match["name"]
                 else ""
             )
-            msg = f"{match['name']} {mm_substr}:: ID {match['uid']} :: Code {match['code']}"
+            msg = f"{match['name']} {mm_substr}:: ID {match['uid']} :: {len(match['questions_list'])} Questions :: Code {match['code']}"
         typer.echo(f"\t{msg}")
 
 
@@ -504,6 +504,9 @@ def start():
     client.authenticate()
 
     while True:
+        if input("\n\n[enter] for Menu, q/Q to exit: ") in ["q", "Q"]:
+            exit_command()
+
         user_choice = menu()
         action = {
             "1": list_matches,

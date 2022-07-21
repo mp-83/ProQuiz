@@ -21,6 +21,7 @@ class EmptyDB:
         self.answer_dto = AnswerDTO(session=db_session)
         self.match_dto = MatchDTO(session=db_session)
         self.game_dto = GameDTO(session=db_session)
+        self.user_dto = UserDTO(session=db_session)
 
     def parse_yaml_content(self, fname):
         with open(fname, "r") as fp:
@@ -53,7 +54,7 @@ class EmptyDB:
         name = "GEO quiz [multi-game]"
         geo_match = self.match_dto.get(name=name)
         if not geo_match:
-            geo_match = self.match_dto.new(name=name)
+            geo_match = self.match_dto.new(name=name, order=False)
             logger.info(
                 f"Creating multi-game match: {name} :: with-hash {geo_match.uhash} :: not-restricted"
             )
@@ -78,7 +79,7 @@ class EmptyDB:
         name = "Brief GEO quiz.1"
         geo_match = self.match_dto.get(name=name)
         if not geo_match:
-            geo_match = self.match_dto.new(name=name, with_code=True)
+            geo_match = self.match_dto.new(name=name, with_code=True, order=False)
             logger.info(
                 f"Creating match: {name} :: with-code {geo_match.code} :: not-restricted"
             )
@@ -167,7 +168,9 @@ class EmptyDB:
         name = "Boolean quiz.1"
         boolean_match_1 = self.match_dto.get(name=name)
         if not boolean_match_1:
-            boolean_match_1 = self.match_dto.new(name=name, is_restricted=True)
+            boolean_match_1 = self.match_dto.new(
+                name=name, is_restricted=True, order=False
+            )
             logger.info(
                 f"Creating match: {name} :: with-hash {boolean_match_1.uhash} :: restricted"
             )
@@ -196,6 +199,19 @@ class EmptyDB:
             )
             self.question_dto.create_with_answers(new_question, question["answers"])
 
+    def create_signed_user(self):
+        data = [
+            ("rob@aol.com", "20081990"),
+            ("alixa@gm.com", "05031950"),
+            ("greg@yahoo.com", "28041980"),
+            ("ross@gl.com", "11052001"),
+            ("paul@mail.com", "30091995"),
+        ]
+        logger.info(f"Creating {len(data)} signed users")
+        for email, birthday in data:
+            new_user = self.user_dto.fetch(original_email=email, token=birthday)
+            self.user_dto.save(new_user)
+
     def prefill(self):
         self.create_food_match()
         self.create_geography_matches()
@@ -203,6 +219,7 @@ class EmptyDB:
         self.create_misc_matches()
         self.create_boolean_matches()
         self.create_template_questions()
+        self.create_signed_user()
 
 
 # make sure all SQL Alchemy models are imported (app.db.base) before initializing DB

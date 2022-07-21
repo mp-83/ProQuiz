@@ -1,3 +1,4 @@
+import logging
 from random import shuffle
 
 from app.domain_service.data_transfer.ranking import RankingDTO
@@ -9,6 +10,8 @@ from app.exceptions import (
     MatchNotPlayableError,
     MatchOver,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class QuestionFactory:
