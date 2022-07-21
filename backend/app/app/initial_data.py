@@ -50,7 +50,7 @@ class EmptyDB:
             self.match_dto.insert_questions(food_match, content["questions"])
 
     def create_geography_matches(self):
-        name = "GEO quiz"
+        name = "GEO quiz [multi-game]"
         geo_match = self.match_dto.get(name=name)
         if not geo_match:
             geo_match = self.match_dto.new(name=name)
@@ -86,7 +86,7 @@ class EmptyDB:
             content = self.parse_yaml_content("/app/quizzes/quiz_geo.4.yaml")
             self.match_dto.insert_questions(geo_match, content["questions"])
 
-        name = "Brief GEO quiz.2"
+        name = "GEO quiz.2 [multi-game]"
         geo_match = self.match_dto.get(name=name)
         if not geo_match:
             geo_match = self.match_dto.new(name=name, with_code=True)
@@ -129,7 +129,7 @@ class EmptyDB:
             self.match_dto.insert_questions(history_match_2, content["questions"])
 
     def create_misc_matches(self):
-        name = "Misc quiz.1"
+        name = "MISC quiz.1 [multi-game]"
         match = self.match_dto.get(name=name)
         if not match:
             match = self.match_dto.new(name=name, with_code=True, is_restricted=True)
@@ -146,7 +146,7 @@ class EmptyDB:
                 content = self.parse_yaml_content(f"/app/quizzes/{fname}")
                 self.match_dto.insert_questions(match, content["questions"], game.uid)
 
-        name = "Misc quiz.2"
+        name = "MISC quiz.2 [multi-game]"
         match = self.match_dto.get(name=name)
         if not match:
             match = self.match_dto.new(name=name, with_code=True)
