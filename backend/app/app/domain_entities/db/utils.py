@@ -38,7 +38,6 @@ class TableMixin:
 
     uid = Column(Integer, primary_key=True)
     create_timestamp = Column(DateTime(timezone=True), nullable=False, default=t_now)
-    # TODO: to fix/update using db.event
     update_timestamp = Column(DateTime(timezone=True), nullable=True, onupdate=t_now)
 
     @declared_attr

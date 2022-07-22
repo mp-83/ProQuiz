@@ -30,7 +30,7 @@ class ReactionDTO:
             filters.update(question=question)
         qs = self._session.query(self.klass).filter_by(**filters)
         field = Reaction.uid.asc if asc else Reaction.uid.desc
-        return qs.order_by(field())  # todo to fix field
+        return qs.order_by(field())
 
     def record_answer(self, instance, answer):
         """Save the answer given by the user
@@ -61,7 +61,6 @@ class ReactionDTO:
             )
             instance.score = rs.value()
 
-        # TODO to fix. The update_timestamp should be updated via handler
         instance.update_timestamp = response_datetime
         if answer:
             instance.answer_time = instance.update_timestamp

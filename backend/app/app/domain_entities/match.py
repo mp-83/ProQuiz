@@ -72,8 +72,6 @@ class Match(TableMixin, Base):
     def is_started(self):
         return len(self.reactions)
 
-    # TODO: to fix. It should not count the reaction but the number of completed
-    # attempts for this match.
     def left_attempts(self, user):
         return len([r for r in self.reactions if r.user.uid == user.uid]) - self.times
 

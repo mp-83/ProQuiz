@@ -124,10 +124,10 @@ class PlayerStatus:
     def _all_reactions_query(self):
         return self.reaction_dto.all_reactions_of_user_to_match(
             self._user, self._current_match
-        )  # .filter_by(_answer=None)
+        )
 
     def all_reactions(self):
-        return self._all_reactions_query.all()  # TODO to fix: or _open_answer=None
+        return self._all_reactions_query.all()
 
     def questions_displayed(self):
         return {r.question.uid: r.question for r in self._all_reactions_query.all()}
@@ -226,9 +226,7 @@ class SinglePlayer:
     def last_reaction(self, question):
         reactions = self.reaction_dto.all_reactions_of_user_to_match(
             self._user, self._match, question
-        ).filter_by(
-            _answer=None
-        )  # TODO to fix: or _open_answer=None
+        ).filter_by(_answer=None)
 
         if reactions.count() > 0:
             return reactions.first()

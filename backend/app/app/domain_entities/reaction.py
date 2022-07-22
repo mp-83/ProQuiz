@@ -29,8 +29,6 @@ class Reaction(TableMixin, Base):
         Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False
     )
     user = relationship("User", backref="reactions")
-    # this column might be saved as the game might be fetched via the question
-    # TODO: open point, keep or remove it
     game_uid = Column(
         Integer, ForeignKey("games.uid", ondelete="CASCADE"), nullable=False
     )
