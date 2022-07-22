@@ -24,8 +24,11 @@ class ReactionDTO:
     def count(self):
         return self._session.query(self.klass).count()
 
-    def all_reactions_of_user_to_match(self, user, match, asc=False):
-        qs = self._session.query(self.klass).filter_by(user=user, match=match)
+    def all_reactions_of_user_to_match(self, user, match, question=None, asc=False):
+        filters = {"user": user, "match": match}
+        if question:
+            filters.update(question=question)
+        qs = self._session.query(self.klass).filter_by(**filters)
         field = Reaction.uid.asc if asc else Reaction.uid.desc
         return qs.order_by(field())  # todo to fix field
 
@@ -49,19 +52,24 @@ class ReactionDTO:
             instance.question.time is not None
             and instance.question.time - response_time_in_secs < 0
         )
-        if question_expired or not answer:
+        if question_expired:
             return instance
 
-        rs = ReactionScore(response_time_in_secs, instance.question.time, answer.level)
-        instance.score = rs.value()
+        if answer:
+            rs = ReactionScore(
+                response_time_in_secs, instance.question.time, answer.level
+            )
+            instance.score = rs.value()
 
         # TODO to fix. The update_timestamp should be updated via handler
         instance.update_timestamp = response_datetime
-        if instance.question.is_open:
-            instance.open_answer_uid = answer.uid
-        else:
-            instance.answer_uid = answer.uid
-        instance.answer_time = instance.update_timestamp
+        if answer:
+            instance.answer_time = instance.update_timestamp
+            if instance.question.is_open:
+                instance.open_answer_uid = answer.uid
+            else:
+                instance.answer_uid = answer.uid
+
         return self.save(instance)
 
     def reaction_of_user_to_question(self, user, question):

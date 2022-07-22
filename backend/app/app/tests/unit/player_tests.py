@@ -623,7 +623,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
         assert player.start() == first_question
-        next_q = player.react(first_answer, first_question)
+        next_q = player.react(None, first_question)
         assert next_q == second_question
 
         status = PlayerStatus(user, match, db_session=db_session)

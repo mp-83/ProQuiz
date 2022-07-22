@@ -1,5 +1,6 @@
 import logging
 import os
+import select
 import sys
 from base64 import b64encode
 from datetime import datetime, timedelta, timezone
@@ -366,13 +367,11 @@ def play(client):
     while response_data["question"] is not None:
         answer_map = print_question_and_answers(response_data["question"])
 
-        import select
-        import sys
-
         question_time = response_data["question"]["time"]
-        print(f"You have {question_time} seconds to answer!")
+        if question_time:
+            typer.echo(f"You have {question_time} seconds to answer!")
 
-        index, o, e = select.select([sys.stdin], [], [], 10)
+        index, o, e = select.select([sys.stdin], [], [], question_time)
 
         if index:
             index = sys.stdin.readline().strip()
@@ -380,7 +379,7 @@ def play(client):
                 index = 0
             answer_uid = answer_map[int(index)]
         else:
-            print("No answer!")
+            typer.echo("No answer!")
             answer_uid = None
 
         response = client.post(

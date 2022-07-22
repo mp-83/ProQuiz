@@ -225,7 +225,7 @@ class SinglePlayer:
 
     def last_reaction(self, question):
         reactions = self.reaction_dto.all_reactions_of_user_to_match(
-            self._user, self._match
+            self._user, self._match, question
         ).filter_by(
             _answer=None
         )  # TODO to fix: or _open_answer=None
