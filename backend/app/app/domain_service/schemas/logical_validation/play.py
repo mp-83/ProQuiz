@@ -127,6 +127,7 @@ class ValidatePlayNext:
         question = self._data.get("question")
         if not question:
             question = QuestionDTO(session=self._session).get(uid=self.question_uid)
+            self._data["question"] = question
 
         reaction = ReactionDTO(session=self._session).reaction_of_user_to_question(
             user, question
@@ -135,6 +136,9 @@ class ValidatePlayNext:
             raise ValidateError("Duplicate Reactions")
 
     def valid_answer(self):
+        if self.answer_uid is None:
+            return
+
         answer = AnswerDTO(session=self._session).get(uid=self.answer_uid)
         if answer is None:
             raise NotFoundObjectError("Unexisting answer")

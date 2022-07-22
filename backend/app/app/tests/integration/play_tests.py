@@ -253,6 +253,27 @@ class TestCasePlayNext:
         assert response.json()["question"] == match.questions[0][1].json
         assert response.json()["user_uid"] == user.uid
 
+    def t_notAnsweringQuestion(
+        self, client: TestClient, superuser_token_headers: dict, trivia_match
+    ):
+        match = trivia_match
+        user = self.user_dto.fetch(signed=match.is_restricted)
+        question = match.questions[0][0]
+
+        response = client.post(
+            f"{settings.API_V1_STR}/play/next",
+            json={
+                "match_uid": match.uid,
+                "question_uid": question.uid,
+                "answer_uid": None,
+                "user_uid": user.uid,
+            },
+            headers=superuser_token_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["question"] == match.questions[0][1].json
+        assert response.json()["user_uid"] == user.uid
+
     def t_completeMatch(
         self, client: TestClient, superuser_token_headers: dict, db_session
     ):

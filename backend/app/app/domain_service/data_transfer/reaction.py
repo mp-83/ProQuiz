@@ -49,7 +49,7 @@ class ReactionDTO:
             instance.question.time is not None
             and instance.question.time - response_time_in_secs < 0
         )
-        if question_expired:
+        if question_expired or not answer:
             return instance
 
         rs = ReactionScore(response_time_in_secs, instance.question.time, answer.level)

@@ -4,6 +4,7 @@ import sys
 from base64 import b64encode
 from datetime import datetime, timedelta, timezone
 from pprint import pprint
+from time import sleep
 
 import requests
 import typer
@@ -365,20 +366,36 @@ def play(client):
     while response_data["question"] is not None:
         answer_map = print_question_and_answers(response_data["question"])
 
-        index = input("Answer ==> ")
-        if int(index) not in answer_map:
-            index = 0
+        import select
+        import sys
+
+        question_time = response_data["question"]["time"]
+        print(f"You have {question_time} seconds to answer!")
+
+        index, o, e = select.select([sys.stdin], [], [], 10)
+
+        if index:
+            index = sys.stdin.readline().strip()
+            if int(index[0]) not in answer_map:
+                index = 0
+            answer_uid = answer_map[int(index)]
+        else:
+            print("No answer!")
+            answer_uid = None
 
         response = client.post(
             f"{BASE_URL}/play/next",
             json={
                 "match_uid": response_data["match_uid"],
                 "question_uid": response_data["question"]["uid"],
-                "answer_uid": answer_map[int(index)],
+                "answer_uid": answer_uid,
                 "user_uid": response_data["user_uid"],
             },
         )
         response_data = response.json()
+        if response.status_code in [422, 400]:
+            typer.echo(pprint(response.json()))
+            break
 
     typer.echo("\n\n")
     typer.echo(f"Match Over. Your score is: {response_data['score']}")
@@ -469,6 +486,15 @@ def import_questions_to_match(client):
         typer.echo(pprint(response.json()))
     else:
         typer.echo(response.reason)
+
+
+def countdown(question_time):
+    for sec in range(question_time):
+        sys.stdout.write("\r")
+        value = question_time - sec
+        sys.stdout.flush()
+        sys.stdout.write("%d seconds left" % value)
+        sleep(1)
 
 
 def exit_command():

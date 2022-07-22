@@ -154,7 +154,14 @@ class PlayerStatus:
         return result
 
     def current_score(self):
-        return sum(r.score for r in self.all_reactions())
+        """
+        Sum the scores of all reactions for the match
+
+        If reaction.score is None it either means the
+        the answer was recorded after question.time or
+        it was an open-answer
+        """
+        return sum(r.score or 0 for r in self.all_reactions())
 
     @property
     def match(self):
@@ -246,12 +253,12 @@ class SinglePlayer:
             and len(self._status.all_reactions()) < self._match.questions_count
         )
 
-    def react(self, answer):
+    def react(self, answer, question):
         if not self._match.is_active:
             raise MatchError("Expired match")
 
         if not self._current_reaction:
-            self._current_reaction = self.last_reaction(answer.question)
+            self._current_reaction = self.last_reaction(question)
             self._game_factory = GameFactory(
                 self._match, *self._status.all_games_played()
             )

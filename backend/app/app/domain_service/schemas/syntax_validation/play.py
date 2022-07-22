@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 
-from pydantic import BaseModel, ValidationError, validator
+from pydantic import BaseModel, PositiveInt, ValidationError, validator
 
 from app.constants import (
     CODE_POPULATION,
@@ -43,15 +43,9 @@ class CodePlay(BaseModel):
 
 
 class StartPlay(BaseModel):
-    match_uid: int
-    user_uid: int = None
+    match_uid: PositiveInt
+    user_uid: PositiveInt = None
     password: str = None
-
-    @validator("match_uid", "user_uid")
-    def greater_than_one(cls, v):
-        if v < 1:
-            raise ValidationError()
-        return v
 
     @validator("password")
     def valid(cls, v):
@@ -62,16 +56,10 @@ class StartPlay(BaseModel):
 
 
 class NextPlay(BaseModel):
-    match_uid: int
-    user_uid: int
-    answer_uid: int
-    question_uid: int
-
-    @validator("*")
-    def greater_than_one(cls, v):
-        if v < 1:
-            raise ValidationError()
-        return v
+    match_uid: PositiveInt
+    user_uid: PositiveInt
+    answer_uid: PositiveInt = None
+    question_uid: PositiveInt
 
 
 class SignPlay(BaseModel):

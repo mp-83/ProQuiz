@@ -1,4 +1,5 @@
 import logging
+from random import randint
 
 import yaml
 from sqlalchemy.orm import Session
@@ -110,7 +111,7 @@ class EmptyDB:
         name = "History quiz.1"
         history_match_1 = self.match_dto.get(name=name)
         if not history_match_1:
-            history_match_1 = self.match_dto.new(name=name)
+            history_match_1 = self.match_dto.new(name=name, is_restricted=True)
             logger.info(
                 f"Creating match: {name} :: with-hash {history_match_1.uhash} :: restricted"
             )
@@ -123,10 +124,12 @@ class EmptyDB:
         if not history_match_2:
             history_match_2 = self.match_dto.new(name=name)
             logger.info(
-                f"Creating match: {name} :: with-hash {history_match_2.uhash} :: restricted"
+                f"Creating match: {name} :: with times questions :: with-hash {history_match_2.uhash} :: not-restricted"
             )
             self.match_dto.save(history_match_2)
             content = self.parse_yaml_content("/app/quizzes/quiz_history.2.yaml")
+            for question_data in content["questions"]:
+                question_data["time"] = randint(3, 10)
             self.match_dto.insert_questions(history_match_2, content["questions"])
 
     def create_misc_matches(self):

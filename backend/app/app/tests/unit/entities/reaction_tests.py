@@ -88,6 +88,7 @@ class TestCaseReactionModel:
         assert reaction.question.text == "1+2 is = to"
 
     def t_whenQuestionIsElapsedAnswerIsNotRecorded(self):
+        # and the score remains Null
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -108,6 +109,7 @@ class TestCaseReactionModel:
         self.reaction_dto.record_answer(reaction, answer)
 
         assert reaction.answer is None
+        assert reaction.score is None
 
     def t_recordAnswerInTime(self):
         match = self.match_dto.save(self.match_dto.new())
