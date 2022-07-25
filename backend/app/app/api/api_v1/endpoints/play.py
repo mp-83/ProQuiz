@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/h/{match_uhash}", response_model=response.PlaySchemaBase)
+@router.post("/h/{match_uhash}", response_model=response.UIDSchemaBase)
 def land(
     match_uhash: str,
     session: Session = Depends(get_db),
@@ -45,7 +45,7 @@ def land(
     return JSONResponse(content={"match_uid": match.uid})
 
 
-@router.post("/code", response_model=response.PlaySchemaBase)
+@router.post("/code", response_model=response.UIDSchemaBase)
 def code(user_input: syntax.CodePlay, session: Session = Depends(get_db)):
     match_code = user_input.dict()["match_code"]
     data = LogicValidation(ValidatePlayCode).validate(
@@ -56,7 +56,7 @@ def code(user_input: syntax.CodePlay, session: Session = Depends(get_db)):
     return JSONResponse(content={"match_uid": match.uid, "user": user.uid})
 
 
-@router.post("/start")
+@router.post("/start", response_model=response.StartResponse)
 def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
     user_input = user_input.dict()
     data = LogicValidation(ValidatePlayStart).validate(db_session=session, **user_input)
@@ -74,15 +74,14 @@ def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
         ) from exc
 
-    match_data = {
+    return {
         "match_uid": match.uid,
         "question": current_question.json,
         "user_uid": user.uid,
     }
-    return JSONResponse(content=match_data)
 
 
-@router.post("/next")
+@router.post("/next", response_model=response.NextResponse)
 def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
     user_input = user_input.dict()
     data = LogicValidation(ValidatePlayNext).validate(db_session=session, **user_input)
@@ -105,16 +104,14 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
         score = PlayScore(
             match.uid, user.uid, player_status.current_score(), db_session=session
         ).save_to_ranking()
-        return JSONResponse(content={"question": None, "score": score.score})
+        return {"question": None, "score": score.score}
 
-    return JSONResponse(
-        content={"question": next_q.json, "user_uid": user.uid, "match_uid": match.uid}
-    )
+    return {"question": next_q.json, "user_uid": user.uid, "match_uid": match.uid}
 
 
-@router.post("/sign")
+@router.post("/sign", response_model=response.SignResponse)
 def sign(user_input: syntax.SignPlay, session: Session = Depends(get_db)):
     user_input = user_input.dict()
     data = LogicValidation(ValidatePlaySign).validate(db_session=session, **user_input)
     user = data.get("user")
-    return JSONResponse(content={"user": user.uid})
+    return {"user": user.uid}

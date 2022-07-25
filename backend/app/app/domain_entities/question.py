@@ -58,4 +58,5 @@ class Question(TableMixin, Base):
             "boolean": self.boolean,
             "time": self.time,
             "answers": self.answers_list,
+            "game": self.game,
         }

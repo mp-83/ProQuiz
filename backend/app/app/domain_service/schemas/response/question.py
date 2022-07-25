@@ -2,7 +2,8 @@ from typing import List
 
 from pydantic import BaseModel, NonNegativeInt
 
-from app.domain_service.schemas.syntax_validation import Answer, Game
+from app.domain_service.schemas.response.answer import Answer
+from app.domain_service.schemas.response.game import Game
 
 
 class Question(BaseModel):

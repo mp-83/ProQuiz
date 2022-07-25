@@ -130,8 +130,8 @@ class TestCasePlayStart:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["match_uid"] == match.uid
-        assert response.json()["question"] == question.json
-        assert response.json()["question"]["answers"] == []
+        assert response.json()["question"]["uid"] == question.uid
+        assert response.json()["question"]["answers_list"] == []
         # the user.uid value can't be known ahead, but it will be > 0
         assert response.json()["user_uid"] > 0
 
@@ -176,7 +176,9 @@ class TestCasePlayStart:
             headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["question"] == question.json
+        assert response.json()["question"]["text"] == question.text
+        assert response.json()["question"]["game"]["uid"] == game.uid
+        assert response.json()["question"]["game"]["order"] == game.order
 
 
 class TestCasePlayNext:
@@ -250,7 +252,7 @@ class TestCasePlayNext:
             headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["question"] == match.questions[0][1].json
+        assert response.json()["question"]["text"] == match.questions[0][1].text
         assert response.json()["user_uid"] == user.uid
 
     def t_notAnsweringQuestion(
@@ -271,7 +273,7 @@ class TestCasePlayNext:
             headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["question"] == match.questions[0][1].json
+        assert response.json()["question"]["text"] == match.questions[0][1].text
         assert response.json()["user_uid"] == user.uid
 
     def t_completeMatch(
@@ -305,4 +307,6 @@ class TestCasePlayNext:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
+        assert response.json()["match_uid"] is None
+        assert response.json()["score"] > 0
         assert len(RankingDTO(session=db_session).of_match(match.uid)) == 1
