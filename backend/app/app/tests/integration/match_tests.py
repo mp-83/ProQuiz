@@ -242,8 +242,18 @@ class TestCaseMatchEndpoints:
             headers=superuser_token_headers,
         )
 
-        assert response.json()["questions_list"][0]["text"] == "What is your name?"
-        assert response.json()["questions_list"][0]["answers_list"][2]["is_correct"]
+        assert response.json()["questions_list"][0]["text"] == "Where is Paris?"
+        assert response.json()["questions_list"][0]["answers_list"][0]["is_correct"]
+        assert (
+            response.json()["questions_list"][0]["answers_list"][0]["text"] == "France"
+        )
+        assert response.json()["questions_list"][0]["time"] == 10
+
+        assert response.json()["questions_list"][1]["text"] == "Where is Oslo?"
+        assert (
+            response.json()["questions_list"][1]["answers_list"][2]["text"] == "Sweden"
+        )
+        assert response.json()["questions_list"][1]["time"] == 4
 
     def t_importTemplateQuestions(
         self, client: TestClient, superuser_token_headers: dict, question_dto

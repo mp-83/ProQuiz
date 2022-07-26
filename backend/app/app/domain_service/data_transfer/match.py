@@ -201,6 +201,7 @@ class MatchDTO:
                 text=data.get("text"),
                 position=len(match_game.questions),
                 boolean=boolean_question,
+                time=data.get("time"),
             )
             question_dto.create_with_answers(new_q_instance, data["answers"])
             result.append(new_q_instance)

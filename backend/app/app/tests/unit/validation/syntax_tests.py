@@ -195,12 +195,14 @@ class TestCaseYamlSchema:
     def valid_encoded_yaml_content(self):
         document = """
           questions:
-            - Where is Adelaide?
+            - text: Where is Adelaide?
+            - time: 5
             - answers:
               - Australia
               - Japan
               - Kenya
-            - Where is Paris
+            - text: Where is Paris?
+            - time:
             - answers:
                - France
                - Argentina
@@ -215,92 +217,21 @@ class TestCaseYamlSchema:
             **{"uid": 1, "data": valid_encoded_yaml_content}
         )
         assert schema
-        assert schema.dict() == {
-            "uid": 1,
-            "game_uid": None,
-            "data": {
-                "questions": [
-                    {
-                        "text": "Where is Adelaide?",
-                        "position": None,
-                        "time": None,
-                        "content_url": None,
-                        "game": None,
-                        "answers": [
-                            {
-                                "text": "Australia",
-                                "uid": None,
-                                "question_uid": None,
-                                "position": None,
-                                "level": None,
-                                "is_correct": None,
-                                "content_url": None,
-                            },
-                            {
-                                "text": "Japan",
-                                "uid": None,
-                                "question_uid": None,
-                                "position": None,
-                                "level": None,
-                                "is_correct": None,
-                                "content_url": None,
-                            },
-                            {
-                                "text": "Kenya",
-                                "uid": None,
-                                "question_uid": None,
-                                "position": None,
-                                "level": None,
-                                "is_correct": None,
-                                "content_url": None,
-                            },
-                        ],
-                    },
-                    {
-                        "text": "Where is Paris",
-                        "position": None,
-                        "time": None,
-                        "content_url": None,
-                        "game": None,
-                        "answers": [
-                            {
-                                "text": "France",
-                                "uid": None,
-                                "question_uid": None,
-                                "position": None,
-                                "level": None,
-                                "is_correct": None,
-                                "content_url": None,
-                            },
-                            {
-                                "text": "Argentina",
-                                "uid": None,
-                                "question_uid": None,
-                                "position": None,
-                                "level": None,
-                                "is_correct": None,
-                                "content_url": None,
-                            },
-                            {
-                                "text": "Iceland",
-                                "uid": None,
-                                "question_uid": None,
-                                "position": None,
-                                "level": None,
-                                "is_correct": None,
-                                "content_url": None,
-                            },
-                        ],
-                    },
-                ]
-            },
+        data = schema.dict()["data"]
+        assert len(data["questions"]) == 2
+        assert data["questions"][0]["text"] == "Where is Adelaide?"
+        assert data["questions"][0]["time"] == 5
+        assert {e["text"] for e in data["questions"][0]["answers"]} == {
+            "Australia",
+            "Japan",
+            "Kenya",
         }
 
     def t_invalidYamlContent(self):
         # missing dash char before answers key
         document = """
           questions:
-            - Where is Belfast?
+            - text: Where is Belfast?
             answers:
               - Sweden
               - England
@@ -325,7 +256,8 @@ class TestCaseYamlSchema:
     def t_questionEmptyTextIsParseAsNull(self):
         document = """
           questions:
-            -
+            - text:
+            - time: 10
             - answers:
               - Sweden
               - England
@@ -359,9 +291,11 @@ class TestCaseYamlSchema:
         # test meant to document input => output transformation
         value = {
             "questions": [
-                None,
+                {"text": None},
+                {"time": None},
                 {"answers": ["Australia", "Japan", "Kenya"]},
-                "Where is Paris",
+                {"text": "Where is Paris"},
+                {"time": 10},
                 {"answers": ["France", "Argentina", "Iceland"]},
             ]
         }
@@ -370,15 +304,8 @@ class TestCaseYamlSchema:
         assert result == {
             "questions": [
                 {
-                    "text": None,
-                    "answers": [
-                        {"text": "Australia"},
-                        {"text": "Japan"},
-                        {"text": "Kenya"},
-                    ],
-                },
-                {
                     "text": "Where is Paris",
+                    "time": 10,
                     "answers": [
                         {"text": "France"},
                         {"text": "Argentina"},

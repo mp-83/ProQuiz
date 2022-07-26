@@ -1,6 +1,13 @@
 questions:
-  - What is your name?
+  - text: Where is Paris?
+  - time: 10
   - answers:
-    - Marco
-    - Leo
-    - Bjoern
+      - France
+      - Germany
+      - Spain
+  - text: Where is Oslo?
+  - time: 4
+  - answers:
+      - Norway
+      - Sweden
+      - Denmark
