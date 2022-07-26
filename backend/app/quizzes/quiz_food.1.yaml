@@ -1,26 +1,30 @@
 questions:
-    - Which one of these puddings is not sweet?
+    - text: Which one of these puddings is not sweet?
+    - time:
     - answers:
         - Yorkshire Pudding
         - Sticky Toffee Pudding
         - Christmas pudding
         - Bread and butter pudding
 
-    - What is the main ingredient in Falafels?
+    - text: What is the main ingredient in Falafels?
+    - time:
     - answers:
         - Aubergine
         - Potato
         - Carrot
         - Chickpea
 
-    - Which one of these dishes does not contain rice?
+    - text: Which one of these dishes does not contain rice?
+    - time:
     - answers:
         - Arancini
         - Paella
         - Dolmades
         - Cassoulet
 
-    - What is Foie gras made of?
+    - text: What is Foie gras made of?
+    - time:
     - answers:
         - Breast
         - Leg

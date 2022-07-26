@@ -1,53 +1,61 @@
 questions:
-    - Which four presidents are on Mount Rushmore?
+    - text: Which four presidents are on Mount Rushmore?
+    - time:
     - answers:
         - George Washington, Abraham Lincoln, Thomas Jefferson, and Theodore Roosevelt
         - George Washington, Abraham Lincoln, Thomas Jefferson, and Richard Nixon
         - Abraham Lincoln, Thomas Jefferson, and Richard Nixon and George F. Kenney
 
-    - Who was the first woman to make a million dollars in the United States?
+    - text: Who was the first woman to make a million dollars in the United States?
+    - time:
     - answers:
         - Madam C.J. Walker
         - Rosamary Dussell
         - Marghareth Tacher
         - Elenoir Friss
 
-    - Which year was George H.W. Bush elected president?
+    - text: Which year was George H.W. Bush elected president?
+    - time:
     - answers:
         - 1988
         - 1987
         - 2001
         - 1990
 
-    - What do the stripes on the American flag represent?
+    - text: What do the stripes on the American flag represent?
+    - time:
     - answers:
         - The 13 original colonies
         - The 12 original countries
         - The 10 founders
         - The 11 origina tribes
 
-    - Where was Martin Luther King, Jr. born?
+    - text: Where was Martin Luther King, Jr. born?
+    - time:
     - answers:
         - Atlanta, Georgia
         - Dallas, Texas
         - Memphis, Tennessee
         - Washington, District of Columbia
 
-    - "Finish the line President Franklin D. Roosevelt said during his speech addressing the attack on Pearl Harbor: Yesterday, December 7, 1941…"
+    - text: "Finish the line President Franklin D. Roosevelt said during his speech addressing the attack on Pearl Harbor: Yesterday, December 7, 1941…"
+    - time:
     - answers:
         - “A date which will live in infamy”
         - “The day America changed the world”
         - “A day to remember forever”
         - “The day we will never forget”
 
-    - What year was the Vietnam Veterans Memorial dedicated in Washington, D.C.?
+    - text: What year was the Vietnam Veterans Memorial dedicated in Washington, D.C.?
+    - time:
     - answers:
         - 1982
         - 1981
         - 1985
         - 1987
 
-    - What was the first state to legalize same-sex marriage?
+    - text: What was the first state to legalize same-sex marriage?
+    - time:
     - answers:
         - Massachusetts
         - Missisipi
@@ -56,7 +64,8 @@ questions:
         - Illinois
         - Colorado
 
-    - Who was the first Black Supreme Court justice in the United States?
+    - text: Who was the first Black Supreme Court justice in the United States?
+    - time:
     - answers:
         - Thurgood Marshall
         - Joe Ronnan

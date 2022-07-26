@@ -1,24 +1,28 @@
 questions:
-    - What is the oldest recorded town in the UK?
+    - text: What is the oldest recorded town in the UK?
+    - time:
     - answers:
         - Colchester
         - Rochester
         - Leicester
         - Nottingham
 
-    - If you travelled to the city of Volgograd, which country would be in?
+    - text: If you travelled to the city of Volgograd, which country would be in?
+    - time:
     - answers:
         - Russia
         - Mongolia
         - Kazakistan
         - Romania
 
-    - What is the name of the largest river to flow through Paris?
+    - text: What is the name of the largest river to flow through Paris?
+    - time:
     - answers:
         - The Seine
         - The Moise
 
-    - What did Ceylon change its name to in 1972?
+    - text: What did Ceylon change its name to in 1972?
+    - time:
     - answers:
         - Sri Lanka
         - Somalia

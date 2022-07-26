@@ -1,24 +1,28 @@
 questions:
-    - What is the most populous city in the US state of Illinois?
+    - text: What is the most populous city in the US state of Illinois?
+    - time:
     - answers:
         - Chicago
         - Rockford
         - Rocester
         - Denver
 
-    - What is the highest mountain in Britain?
+    - text: What is the highest mountain in Britain?
+    - time:
     - answers:
         - Ben Nevis
         - Tourme
 
-    - The world's first national park was established in 1872 in which country?
+    - text: The world's first national park was established in 1872 in which country?
+    - time:
     - answers:
         - USA, Yellowstone
         - USA, National Park
         - USA, Niagara valley
         - Canada
 
-    - What is the capital of Peru?
+    - text: What is the capital of Peru?
+    - time:
     - answers:
         - Lima
         - Caracas

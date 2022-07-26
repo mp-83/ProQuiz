@@ -1,64 +1,74 @@
 questions:
-    - Which English Sir has had No. l’s in the 50’s, 60’s, 70’s, 80’s and 90’s?
+    - text: Which English Sir has had No. l’s in the 50’s, 60’s, 70’s, 80’s and 90’s?
+    - time:
     - answers:
         - Sir Cliff Richard
         - Sir William Nelson
         - Sir Thomas Scott
         - Sir Herbert Nox
 
-    - Which rock band was founded by Trent Reznor in 1988?
+    - text: Which rock band was founded by Trent Reznor in 1988?
+    - time:
     - answers:
         - Nine Inch Nails
         - Seven steps
         - Heavy thunders
 
-    - What is the name of the duet recorded by Robbie Williams and Gary Barlow in 2010?
+    - text: What is the name of the duet recorded by Robbie Williams and Gary Barlow in 2010?
+    - time:
     - answers:
         - Shame
         - Glorious
         - Melody
         - Famous
 
-    - "Jimmy, Robert, John and John: can you identify this rock band from the first names of their original line-up?"
+    - text: "Jimmy, Robert, John and John: can you identify this rock band from the first names of their original line-up?"
+    - time:
     - answers:
         - Led Zeppelin
         - Iron Maiden
         - Coldplay
         - Metallica
 
-    - In what year did The Clash release their iconic album London Calling?
+    - text: In what year did The Clash release their iconic album London Calling?
+    - time:
     - answers:
         - 1979
         - 1974
         - 1980
         - 1999
 
-    - How many members are there in pop group Little Mix?
+    - text: How many members are there in pop group Little Mix?
+    - time:
     - answers:
         - 3
         - 5
         - 4
 
-    - Which singer-songwriter had studio albums titled Hejira, Ladies of the Canyon and Blue?
+    - text: Which singer-songwriter had studio albums titled Hejira, Ladies of the Canyon and Blue?
+    - time:
     - answers:
         - Joni Mitchell
         - Roxette
         - Allison Masy
         - Jeffrey Nixon
 
-    - Including streaming figures, what was the best-selling UK single of the 2010s?
+    - text: Including streaming figures, what was the best-selling UK single of the 2010s?
+    - time:
     - answers:
         - The Shape of You by Ed Sheeran
         - Thunder by Robbie Wiliams
 
-    - In what year did Elvis Presley die? (A bonus point for the month.)
+    - text: In what year did Elvis Presley die? (A bonus point for the month.)
+    - time:
     - answers:
         - 1977
         - 1975
         - 1981
         - 1980
 
-    - In which year did the Spice Girls release Wannabe?
+    - text: In which year did the Spice Girls release Wannabe?
+    - time:
     - answers:
         - 1996
         - 1995

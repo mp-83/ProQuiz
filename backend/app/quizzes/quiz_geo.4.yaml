@@ -1,24 +1,28 @@
 questions:
-    - Mount Vesuvius casts a shadow over which modern Italian city?
+    - text: Mount Vesuvius casts a shadow over which modern Italian city?
+    - time:
     - answers:
         - Naples
         - Turin
         - Salerno
         - Ancona
 
-    - What is the currency of Sweden?
+    - text: What is the currency of Sweden?
+    - time:
     - answers:
         - Swedish Krona
         - Euro
 
-    - To what country to the Canary Islands belong?
+    - text: To what country to the Canary Islands belong?
+    - time:
     - answers:
         - Spain
         - Portugal
         - Morocco
         - France
 
-    - What is the capital of Canada?
+    - text: What is the capital of Canada?
+    - time:
     - answers:
         - Ottawa
         - Montreal

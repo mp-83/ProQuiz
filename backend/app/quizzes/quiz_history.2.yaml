@@ -1,23 +1,27 @@
 questions:
-    - When was the Declaration of Independence signed?
+    - text: When was the Declaration of Independence signed?
+    - time:
     - answers:
         - August 2, 1776
         - November 3, 1800
         - April 23, 1760
 
-    - The United States bought Alaska from which country?
+    - text: The United States bought Alaska from which country?
+    - time:
     - answers:
         - Russia
         - China
         - Canada
 
-    - Who was the fourth president of the United States?
+    - text: Who was the fourth president of the United States?
+    - time:
     - answers:
         - James Madison
         - Robert Ford
         - Theodor Tixon
 
-    - What was the name of the series of programs and projects President Franklin D. Roosevelt enacted during The Great Depression?
+    - text: What was the name of the series of programs and projects President Franklin D. Roosevelt enacted during The Great Depression?
+    - time:
     - answers:
         - The New Deal
         - The Labour Contract
@@ -25,14 +29,16 @@ questions:
         - The New Pact
         - The Big Change
 
-    - Fill in the blank The 19th Amendment guarantees ____ the right to vote
+    - text: Fill in the blank The 19th Amendment guarantees ____ the right to vote
+    - time:
     - answers:
         - Women
         - Man
         - Black
         - Hispanic
 
-    - In what year did child labor laws start in the United States?
+    - text: In what year did child labor laws start in the United States?
+    - time:
     - answers:
         - 1938
         - 1940

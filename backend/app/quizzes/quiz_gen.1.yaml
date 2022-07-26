@@ -1,89 +1,102 @@
 questions:
-    - Which country invented ice cream?
+    - text: Which country invented ice cream?
+    - time:
     - answers:
         - China
         - Italy
         - Sweden
         - USA
 
-    - "'Hendrick’s' 'Larios,' and 'Seagram’s' are some of the best selling brands of which spirit?"
+    - text: "'Hendrick’s' 'Larios,' and 'Seagram’s' are some of the best selling brands of which spirit?"
+    - time:
     - answers:
         - Gin
         - Tequila
         - Whisky
         - Rum
 
-    - From which country does Gouda cheese originate?
+    - text: From which country does Gouda cheese originate?
+    - time:
     - answers:
         - Netherlands
         - Austria
         - Germany
         - France
 
-    - In which one of these breakfast can you find tattie scones?
+    - text: In which one of these breakfast can you find tattie scones?
+    - time:
     - answers:
         - Full English Breakfast
         - Full Irish Breakfast
         - Full Welsh Breakfast
         - Full Scottish Breakfast
 
-    - Which American cook is known for bringing French cuisine to the American public?
+    - text: Which American cook is known for bringing French cuisine to the American public?
+    - time:
     - answers:
         - Julia Child
         - Thomas Keller
         - Anthony Bourdain
         - Bobby Flay
 
-    - Which one of these French dishes was not a peasant dish?
+    - text: Which one of these French dishes was not a peasant dish?
+    - time:
     - answers:
         - Boeuf Bourguignon
         - Pot-au-Feu
         - Ratatouille
         - Hare à la royale
 
-    - Which one of these sauces is made with mushrooms?
+    - text: Which one of these sauces is made with mushrooms?
+    - time:
     - answers:
         - Duxelles
         - Pesto
         - Guacamole
         - Mayonnaise
 
-    - Which ingredient is not in a Greek Salad?
+    - text: Which ingredient is not in a Greek Salad?
+    - time:
     - answers:
         - Aubergines
         - Cucumbers
         - Feta cheese
         - Tomatoes
 
-    - What type of bread would you eat with an Indian curry?
+    - text: What type of bread would you eat with an Indian curry?
+    - time:
     - answers:
         - Tortilla
         - Focaccia
         - Pita
         - Naan
 
-    - Which one of these puddings is not sweet?
+    - text: Which one of these puddings is not sweet?
+    - time:
     - answers:
         - Yorkshire Pudding
         - Sticky Toffee Pudding
         - Christmas pudding
         - Bread and butter pudding
 
-    - What is the main ingredient in Falafels?
+    - text: What is the main ingredient in Falafels?
+    - time:
     - answers:
         - Aubergine
         - Potato
         - Carrot
         - Chickpea
 
-    - Which one of these dishes does not contain rice?
+    - text: Which one of these dishes does not contain rice?
+    - time:
     - answers:
         - Arancini
         - Paella
         - Dolmades
         - Cassoulet
 
-    - What is Foie gras made of?
+    - text: What is Foie gras made of?
+    - time:
     - answers:
         - Breast
         - Leg

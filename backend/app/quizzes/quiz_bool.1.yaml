@@ -1,24 +1,29 @@
 questions:
-    - There is no cream in the traditional Carbonara?
+    - text: There is no cream in the traditional Carbonara?
+    - time:
     - answers:
         - True
         - False
 
-    - Biscuits are the same in the US and in the UK?
+    - text: Biscuits are the same in the US and in the UK?
+    - time:
     - answers:
         - True
         - False
 
-    - Marie Rose Sauce was invented in France?
+    - text: Marie Rose Sauce was invented in France?
+    - time:
     - answers:
         - True
         - False
-    - Crumpets are griddle cakes?
+    - text: Crumpets are griddle cakes?
+    - time:
     - answers:
         - True
         - False
 
-    - English muffins are sweet?
+    - text: English muffins are sweet?
+    - time:
     - answers:
         - True
         - False

@@ -1,26 +1,30 @@
 questions:
-    - How many states are there in Australia?
+    - text: How many states are there in Australia?
+    - time:
     - answers:
         - Six
         - Seven
         - Five
         - Nine
 
-    - What African country has the largest population?
+    - text: What African country has the largest population?
+    - time:
     - answers:
         - Nigeria
         - Congo
         - South Africa
         - Libia
 
-    - Constantinople and Byzantium are former names of which major city?
+    - text: Constantinople and Byzantium are former names of which major city?
+    - time:
     - answers:
         - Istanbul
         - Izmir
         - Urma
         - Bandirma
 
-    - What is the longest river in the UK?
+    - text: What is the longest river in the UK?
+    - time:
     - answers:
         - River Severn
         - River Green

@@ -1,12 +1,14 @@
 questions:
-    - How many boroughs are there in New York City?
+    - text: How many boroughs are there in New York City?
+    - time:
     - answers:
         - Five
         - Six
         - Seven
         - Ten
 
-    - In which city would you find La Sagrada Familia?
+    - text: In which city would you find La Sagrada Familia?
+    - time:
     - answers:
         - Barcelona
         - Madrid

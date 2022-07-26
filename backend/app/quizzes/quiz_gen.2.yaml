@@ -1,33 +1,38 @@
 questions:
-    - What is the rarest M\&M color?
+    - text: What is the rarest M\&M color?
+    - time:
     - answers:
         - Brown
         - Yellow
         - Green
         - Gray
 
-    - Which country consumes the most chocolate per capita?
+    - text: Which country consumes the most chocolate per capita?
+    - time:
     - answers:
         - Switzerland
         - Austria
         - Brazil
         - Venezuela
 
-    - What was the first soft drink in space?
+    - text: What was the first soft drink in space?
+    - time:
     - answers:
         - Coca Cola
         - Pepsi
         - Dr. Pepper
         - Fanta
 
-    - What is the most consumed manufactured drink in the world?
+    - text: What is the most consumed manufactured drink in the world?
+    - time:
     - answers:
         - Tea
         - Milo
         - Beer
         - Mead
 
-    - Which is the only edible food that never goes bad?
+    - text: Which is the only edible food that never goes bad?
+    - time:
     - answers:
         - Honey
         - Pasta
