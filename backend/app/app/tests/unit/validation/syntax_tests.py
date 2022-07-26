@@ -317,13 +317,28 @@ class TestCaseYamlSchema:
 
 
 class TestCaseUserSchema:
-    def t_emptyUserNameAndPassword(self):
-        # arguments are too short
-        # is_valid = syntax_validation({"email": "", "password": "pass"})
-        # assert not is_valid
-        pass
+    def t_emptyEmail(self):
+        try:
+            syntax.SignedUserCreate(**{"email": "", "token": "02031980"})
+        except ValidationError as err:
+            assert err.errors()[0]["msg"] == "value is not a valid email address"
 
     def t_invalidEmail(self):
-        # is_valid = v.validate({"email": "e@a.c", "password": "password"})
-        # assert not is_valid
-        pass
+        try:
+            syntax.SignedUserCreate(**{"email": "e@a.cc", "token": "02031980"})
+        except ValidationError as err:
+            assert err.errors()[0]["msg"] == "value is not a valid email address"
+
+    def t_invalidTokenLength(self):
+        try:
+            syntax.SignedUserCreate(**{"email": "test@proquiz.com", "token": "0203197"})
+        except ValidationError as err:
+            assert err.errors()[0]["msg"] == "Invalid token length"
+
+    def t_invalidTokenFormat(self):
+        try:
+            syntax.SignedUserCreate(
+                **{"email": "test@proquiz.com", "token": "02231970"}
+            )
+        except ValidationError as err:
+            assert err.errors()[0]["msg"] == "Invalid token format"

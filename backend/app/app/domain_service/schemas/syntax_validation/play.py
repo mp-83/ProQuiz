@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 
-from pydantic import BaseModel, PositiveInt, ValidationError, validator
+from pydantic import BaseModel, EmailStr, PositiveInt, validator
 
 from app.constants import (
     CODE_POPULATION,
@@ -63,26 +63,19 @@ class NextPlay(BaseModel):
 
 
 class SignPlay(BaseModel):
-    email: str
+    email: EmailStr
     token: str
 
     @validator("email")
     def check_email(cls, v):
         if len(v) > 30:
-            raise ValidationError()
-        return v
-
-    @validator("email")
-    def valid_email(cls, v):
-        rex = r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]{2,}\.[a-zA-Z]{2,}"
-        if not re.match(rex, v):
-            raise ValidationError()
+            raise ValueError()
         return v
 
     @validator("token")
     def check_token(cls, v):
         if len(v) != 8:
-            raise ValidationError()
+            raise ValueError("Invalid token length")
         return v
 
     @validator("token")
@@ -93,5 +86,5 @@ class SignPlay(BaseModel):
         try:
             datetime.strptime(v, "%d%m%Y")
         except ValueError as err:
-            raise ValidationError("Invalid data format") from err
+            raise ValueError("Invalid token format") from err
         return v
