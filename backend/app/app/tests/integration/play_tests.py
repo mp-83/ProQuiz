@@ -10,6 +10,7 @@ from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.ranking import RankingDTO
+from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.domain_service.data_transfer.user import UserDTO, WordDigest
 
 
@@ -309,4 +310,88 @@ class TestCasePlayNext:
         assert response.json()["question"] is None
         assert response.json()["match_uid"] is None
         assert response.json()["score"] > 0
+        assert len(RankingDTO(session=db_session).of_match(match.uid)) == 1
+
+    def t_continueStartedMatchWithMultipleGames(
+        self, client: TestClient, superuser_token_headers: dict, db_session
+    ):
+        # first and only question of the first game is answered
+        # first question of the second game is answered
+        match_dto = MatchDTO(session=db_session)
+        match = match_dto.new(with_code=True)
+        match_dto.save(match)
+
+        reaction_dto = ReactionDTO(session=db_session)
+
+        first_game = self.game_dto.new(match_uid=match.uid, index=1, order=False)
+        self.game_dto.save(first_game)
+        first_question = self.question_dto.new(
+            text="Where is London?",
+            game_uid=first_game.uid,
+            position=0,
+        )
+        self.question_dto.save(first_question)
+        first_answer = self.answer_dto.new(
+            question=first_question, text="UK", position=1
+        )
+        self.answer_dto.save(first_answer)
+
+        second_game = self.game_dto.new(match_uid=match.uid, index=2, order=False)
+        self.game_dto.save(second_game)
+
+        second_question = self.question_dto.new(
+            text="Where is Paris?",
+            game_uid=second_game.uid,
+            position=1,
+        )
+        self.question_dto.save(second_question)
+
+        third_question = self.question_dto.new(
+            text="Where is Dublin?",
+            game_uid=second_game.uid,
+            position=2,
+        )
+        self.question_dto.save(third_question)
+        third_answer = self.answer_dto.new(
+            question=third_question, text="Ireland", position=1
+        )
+        self.answer_dto.save(third_answer)
+
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
+
+        reaction_dto.save(
+            reaction_dto.new(
+                match=match,
+                question=first_question,
+                user=user,
+                game_uid=first_game.uid,
+                answer_uid=first_answer.uid,
+                score=1,
+            )
+        )
+
+        reaction_dto.save(
+            reaction_dto.new(
+                match=match,
+                question=second_question,
+                user=user,
+                game_uid=second_game.uid,
+                score=None,
+            )
+        )
+
+        response = client.post(
+            f"{settings.API_V1_STR}/play/next",
+            json={
+                "match_uid": match.uid,
+                "question_uid": third_question.uid,
+                "answer_uid": third_answer.uid,
+                "user_uid": user.uid,
+            },
+            headers=superuser_token_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["question"] is None
+        assert response.json()["match_uid"] is None
         assert len(RankingDTO(session=db_session).of_match(match.uid)) == 1

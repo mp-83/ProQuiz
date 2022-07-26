@@ -6,7 +6,7 @@ questions:
       - Germany
       - Spain
   - text: Where is Oslo?
-  - time: 4
+  - time:
   - answers:
       - Norway
       - Sweden

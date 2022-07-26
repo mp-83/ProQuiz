@@ -20,7 +20,7 @@ class NextResponse(BaseModel):
     match_uid: PositiveInt = None
     question: Question = None
     user_uid: PositiveInt = None
-    score: PositiveInt = None
+    score: int = None
 
 
 class SignResponse(BaseModel):

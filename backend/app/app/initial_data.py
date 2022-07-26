@@ -25,18 +25,24 @@ class EmptyDB:
         self.user_dto = UserDTO(session=db_session)
 
     def parse_yaml_content(self, fname):
+        # DO REMEMBER that changes to MatchYamlImport.to_expected_mapping
+        # must be manually ported here
         with open(fname, "r") as fp:
             file_content = yaml.load(fp.read(), yaml.Loader)
             result = {"questions": []}
             question = {}
-            for i, elem in enumerate(file_content.get("questions")):
-                if i % 2 == 0:
-                    question["text"] = elem
-                else:
+            for i, elem in enumerate(file_content.get("questions"), start=1):
+                if i % 3 == 1 and elem and "text" in elem:
+                    question["text"] = elem["text"]
+                elif i % 3 == 2 and elem and "time" in elem:
+                    question["time"] = elem["time"]
+                elif i % 3 == 0:
                     question["answers"] = [{"text": text} for text in elem["answers"]]
+                    if question.get("text") is None:
+                        question = {}
+                        continue
                     result["questions"].append(question)
                     question = {}
-
             return result
 
     def create_food_match(self):

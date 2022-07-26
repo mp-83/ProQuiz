@@ -253,7 +253,7 @@ class TestCaseMatchEndpoints:
         assert (
             response.json()["questions_list"][1]["answers_list"][2]["text"] == "Sweden"
         )
-        assert response.json()["questions_list"][1]["time"] == 4
+        assert response.json()["questions_list"][1]["time"] is None
 
     def t_importTemplateQuestions(
         self, client: TestClient, superuser_token_headers: dict, question_dto

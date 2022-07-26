@@ -67,24 +67,19 @@ def list_matches(client):
     result = client.get(f"{BASE_URL}/matches/")
     typer.echo("\nMATCHES \n\n")
     for match in result.json()["matches"]:
+        mm_substr = (
+            "[MM]"
+            if len(match["games_list"]) > 1 and "[multi-game]" not in match["name"]
+            else ""
+        )
         if match["uhash"]:
             substr = (
                 f"Password {match['password']}"
                 if match["is_restricted"]
                 else "W/Out password"
             )
-            mm_substr = (
-                "[MM]"
-                if len(match["games_list"]) > 1 and "[multi-game]" not in match["name"]
-                else ""
-            )
             msg = f"{match['name']} {mm_substr}:: ID {match['uid']} :: {len(match['questions_list'])} Questions :: Hash {match['uhash']} :: {substr}"
         else:
-            mm_substr = (
-                "[MM]"
-                if len(match["games_list"]) > 1 and "[multi-game]" not in match["name"]
-                else ""
-            )
             msg = f"{match['name']} {mm_substr}:: ID {match['uid']} :: {len(match['questions_list'])} Questions :: Code {match['code']}"
         typer.echo(f"{msg}")
 
@@ -364,7 +359,14 @@ def play(client):
         return
 
     response_data = response.json()
+    current_game_id = response_data["question"]["game"]["uid"]
     while response_data["question"] is not None:
+        if response_data["question"]["game"]["uid"] != current_game_id:
+            current_game_id = response_data["question"]["game"]["uid"]
+            index = response_data["question"]["game"]["index"]
+            typer.echo(f"Starting {index} Game")
+            sleep(1)
+
         answer_map = print_question_and_answers(response_data["question"])
 
         question_time = response_data["question"]["time"]
@@ -403,7 +405,7 @@ def play(client):
 def print_question_and_answers(question):
     answer_map = {}
     typer.echo(f"{question['text']}\n")
-    for i, answer in enumerate(question["answers"]):
+    for i, answer in enumerate(question["answers_list"]):
         typer.echo(f"{i}:\t{answer['text']}")
         answer_map[i] = answer["uid"]
 

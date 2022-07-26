@@ -76,7 +76,7 @@ def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
 
     return {
         "match_uid": match.uid,
-        "question": current_question.json,
+        "question": current_question,
         "user_uid": user.uid,
     }
 
@@ -106,7 +106,7 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
         ).save_to_ranking()
         return {"question": None, "score": score.score}
 
-    return {"question": next_q.json, "user_uid": user.uid, "match_uid": match.uid}
+    return {"question": next_q, "user_uid": user.uid, "match_uid": match.uid}
 
 
 @router.post("/sign", response_model=response.SignResponse)
