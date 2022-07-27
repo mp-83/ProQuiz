@@ -173,7 +173,7 @@ docker-compose exec backend sh gui.sh
 
 ### Contributing
 
-This project was developed during my freetime ([Snapshots](https://photos.app.goo.gl/2nQmgMT5WSuZwSrF6) of the development phase, using the old *pen and paper*). It is currently a library not a fully fledged application. It totally misses the GUI so there is no way to display anything but using the `gui.sh` script.
+This project was developed during my freetime (snapshots of the design & development phase, using the old *pen and paper* approach, are available [here](https://photos.app.goo.gl/2nQmgMT5WSuZwSrF6)). It is currently a library not a fully fledged application. It totally misses the GUI so there is no way to display anything but using the `gui.sh` script.
 
 Once you set up the project locally, as explained above, you can contribute either reporting bugs (which I expect to be many at this stage) or proposing improvements. I am the only maintainer of this project therefore contributions are welcome.
 
