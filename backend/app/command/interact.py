@@ -312,7 +312,7 @@ def play(client):
     typer.echo("\n\n")
     match_number = input("Enter match number or q(quit): ")
     if match_number == "q":
-        return
+        exit_command()
 
     name = all_matches[int(match_number)]["name"]
     typer.echo(f"Playing...at {name}")
@@ -405,7 +405,7 @@ def play(client):
 def print_question_and_answers(question):
     answer_map = {}
     typer.echo(f"{question['text']}\n")
-    for i, answer in enumerate(question["answers_list"]):
+    for i, answer in enumerate(question["answers_to_display"]):
         typer.echo(f"{i}:\t{answer['text']}")
         answer_map[i] = answer["uid"]
 

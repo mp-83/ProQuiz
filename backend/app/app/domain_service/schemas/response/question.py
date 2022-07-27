@@ -1,13 +1,13 @@
 from typing import List
 
-from pydantic import BaseModel, NonNegativeInt
+from pydantic import BaseModel, NonNegativeInt, PositiveInt
 
 from app.domain_service.schemas.response.answer import Answer
 from app.domain_service.schemas.response.game import Game
 
 
 class Question(BaseModel):
-    uid: NonNegativeInt
+    uid: PositiveInt
     position: NonNegativeInt
     text: str
     time: int = None

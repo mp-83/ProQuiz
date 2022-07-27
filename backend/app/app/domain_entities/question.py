@@ -1,3 +1,5 @@
+from random import shuffle
+
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
@@ -36,6 +38,12 @@ class Question(TableMixin, Base):
     @property
     def answers_list(self):
         return [a.json for a in self.answers]
+
+    @property
+    def answers_to_display(self):
+        _answers = self.answers
+        shuffle(_answers)
+        return [a.json for a in _answers]
 
     @property
     def is_template(self):

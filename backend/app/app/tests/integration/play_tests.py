@@ -132,7 +132,7 @@ class TestCasePlayStart:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["match_uid"] == match.uid
         assert response.json()["question"]["uid"] == question.uid
-        assert response.json()["question"]["answers_list"] == []
+        assert response.json()["question"]["answers_to_display"] == []
         # the user.uid value can't be known ahead, but it will be > 0
         assert response.json()["user_uid"] > 0
 
