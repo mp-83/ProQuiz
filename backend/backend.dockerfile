@@ -9,8 +9,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
 
 WORKDIR /app
 
-COPY ./requirements.txt ./app /app
-# COPY app/ /app
+COPY ./requirements.txt ./app /app/
 
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 

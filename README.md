@@ -106,7 +106,7 @@ Matches, questions, as well answers can be edited but nothing can be deleted yet
 
 ### Compose
 
-This project requires [Docker](https://www.docker.com/) to be already installed in the system.
+This project requires [Docker](https://www.docker.com/) to be already installed in the system. It was tested on Mac.
 
 To start the application is enough to
 ```

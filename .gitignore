@@ -6,3 +6,4 @@ docker-stack.yml
 *.pyc
 *egg-info
 .idea
+dev.notes
