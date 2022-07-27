@@ -51,7 +51,8 @@ Currently the *play* interface consists of three methods:
 - `start`: start the match
 - `next`: move to the next question
 - `react`: answer the current question
-- there is also the `previous` which is not used at the moment
+
+there is also the `previous` method, which is not used at the moment.
 
 #### Hash or Code
 
