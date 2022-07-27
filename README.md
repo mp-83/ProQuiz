@@ -46,6 +46,13 @@ the user starts a match and plays against the system. At each question the user 
 
 A match can be stopped and resumed.
 
+Currently the *play* interface consists of three methods:
+
+- `start`: start the match
+- `next`: move to the next question
+- `react`: answer the current question
+- there is also the `previous` which is not used at the moment
+
 #### Hash or Code
 
 A match can be alternatively identified by its `hash` or its numeric `code`. The two options where thought to offer different ways to identify a match. These logs clearly show that the difference is merely the starting url.
@@ -78,14 +85,23 @@ The reason behind this mechanism stems from a friend of mine, very privacy addic
 
 #### Games and Questions
 
-A match can contain N games each one having M questions. No upper limit is set.
+A match can contain N games each one having M questions. Each question can have X answers. No upper limit is set.
 
-Currently the *play* interface consists of three methods:
+Questions can be created one by one, or imported via .yaml file. The file must be structured as follows:
+```
+questions:
+  - text:
+  - time:
+  - answers:
+      -
+      -
+      -
+```
+Questions can be timed or not.
 
-- `start`: start the match
-- `next`: move to the next question
-- `react`: answer the current question
-- there is also the `previous` which is not used at the moment
+#### Editable but no deletion yet
+
+Matches, questions, as well answers can be edited but nothing can be deleted yet. Being still at a very early stage, I focused more on the play logic than offering a fully capable match/question management interface.
 
 ### Compose
 
