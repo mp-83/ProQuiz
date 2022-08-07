@@ -2,21 +2,13 @@
 
 ProQuiz is a trivia game, pretty much like _Who wants to be a millionaire_.
 
-### Glimpse of history
-
-I started this project with the idea to create a multistage simple interview quiz. Nothing new on the horizon. Something I would develop in my free time and I wanted to propose to my company. I quickly realised that this idea would not be suitable for the context so I decided to make a U turn and develop something a bit different.
-
 There are plenty of similar solutions out there. Absolutely doesn't want to be something innovative. I just wanted to implement it and learn while doing something funny.
 
-### Technologies
-
-When I started working on the quiz I opted for [Pyramid](https://docs.pylonsproject.org/projects/pyramid/en/latest/) because I wanted to learn this framework. So I completed [v.0.1](https://github.com/mp-83/proquiz-v0.1) using Pyramid (plus many other libraries). Although it is more a Model-View-Template tool, I developed my solution using a standard REST CRUD approach. A set of endpoints mapped to a set of entities (aka `models`) with a simple validation mechanism in between, plus the _play_ logic.
-
-When the development of the first version, driven by tests (TDD), was completed, I started pursuing the idea to develop the Frontend too, or at least make it feasible for someone (most likely a friend) to jump in and code.
-
-![Diagram version 1](docs/pyramid-diagram.png "Diagram v.1")
+I started this project with the idea to create a multistage simple interview quiz. This project comes after the first [implementation](https://github.com/mp-83/proquiz.old).
 
 ### FastAPI
+
+When the development of the first version, driven by tests (TDD), was completed, I started pursuing the idea to develop the Frontend too, or at least make it feasible for someone (most likely a friend) to jump in and code.
 
 Moreover I thought: if I want to grow this project or keep working the way I have in mind, maybe it is suitable to switch to a more adopted framework. I decided to port the project to [FastAPI](https://fastapi.tiangolo.com/) as it seemed to fit better for a purely API based Backend.
 
