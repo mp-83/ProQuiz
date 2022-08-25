@@ -258,6 +258,10 @@ class TestCaseMatchEndpoints:
     def t_importTemplateQuestions(
         self, client: TestClient, superuser_token_headers: dict, question_dto
     ):
+        """
+        this test guarantees that question with open answers can be
+        created/imported
+        """
         match = self.match_dto.new()
         self.match_dto.save(match)
         new_game = self.game_dto.save(self.game_dto.new(match_uid=match.uid))
