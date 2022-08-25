@@ -112,14 +112,13 @@ class MatchDTO:
                     text=question_data.get("text"),
                     position=len(game.questions),
                 )
-            self.question_dto.save(question)
-            self.question_dto.create_or_update_answers(
-                question, question_data.get("answers", [])
-            )
+                self.question_dto.save(question)
+                self.question_dto.create_or_update_answers(
+                    question, question_data.get("answers", [])
+                )
+
             result.append(question)
 
-        if commit:
-            self._session.commit()
         return result
 
     def update_games(self, games: list, commit=False):
