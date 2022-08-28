@@ -1,6 +1,7 @@
 import logging
 from random import shuffle
 
+from app.domain_entities.question import Question
 from app.domain_service.data_transfer.ranking import RankingDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.exceptions import (
@@ -22,15 +23,16 @@ class QuestionFactory:
         self._question = None
 
     def next(self):
-        questions = self._game.questions.all()
+        questions = self._game.questions.filter(
+            Question.uid.notin_(self.displayed_ids)
+        ).all()
         if not self._game.order:
             shuffle(questions)
 
-        for q in questions:
-            if q.uid not in self.displayed_ids:
-                self._question = q
-                self.displayed_ids += (q.uid,)
-                return q
+        if questions:
+            self._question = questions[0]
+            self.displayed_ids += (questions[0].uid,)
+            return questions[0]
 
         raise GameOver(f"Game {self._game.uid} has no questions")
 
