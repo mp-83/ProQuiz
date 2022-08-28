@@ -1,11 +1,8 @@
 from datetime import datetime, timezone
 
-from fastapi import Depends
 from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import Query, Session, declarative_mixin
-
-from app.domain_entities.db.session import get_db
+from sqlalchemy.orm import Query, declarative_mixin
 
 
 def t_now():
@@ -44,9 +41,20 @@ class TableMixin:
     def __tablename__(self):
         return self.__name__.lower()
 
-    def save_to(self, value, session: Session = Depends(get_db)):
-        pass
-
 
 class QClass(Query):
     """"""
+
+    def __init__(self, *args, **kwargs):
+        self.data = None
+        super(QClass, self).__init__(*args, **kwargs)
+
+    def all(self):
+        if not self.data:
+            self.data = super().all()
+        return self.data
+
+    def exclude(self, values):
+        from app.domain_entities.question import Question
+
+        return self.filter(Question.uid.notin_(values))

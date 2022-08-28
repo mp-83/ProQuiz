@@ -33,9 +33,5 @@ class Game(TableMixin, Base):
         return self.questions.filter_by(position=0).one_or_none()
 
     @property
-    def ordered_questions(self):
-        return self.questions.all()
-
-    @property
     def json(self):
         return {"index": self.index}

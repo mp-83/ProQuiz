@@ -48,10 +48,11 @@ class TestCaseGameModel:
         self.question_dto.save(question_4)
 
         assert len(emitted_queries) == 9
-        assert game.ordered_questions[0] == question_1
-        assert game.ordered_questions[1] == question_2
-        assert game.ordered_questions[2] == question_3
-        assert game.ordered_questions[3] == question_4
+
+        assert game.questions.all()[0] == question_1
+        assert game.questions.all()[1] == question_2
+        assert game.questions.all()[2] == question_3
+        assert game.questions.all()[3] == question_4
 
         assert len(emitted_queries) == 10
 

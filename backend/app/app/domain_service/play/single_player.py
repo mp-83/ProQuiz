@@ -1,7 +1,6 @@
 import logging
 from random import shuffle
 
-from app.domain_entities.question import Question
 from app.domain_service.data_transfer.ranking import RankingDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.exceptions import (
@@ -23,9 +22,7 @@ class QuestionFactory:
         self._question = None
 
     def next(self):
-        questions = self._game.questions.filter(
-            Question.uid.notin_(self.displayed_ids)
-        ).all()
+        questions = self._game.questions.exclude(self.displayed_ids).all()
         if not self._game.order:
             shuffle(questions)
 
@@ -38,16 +35,10 @@ class QuestionFactory:
 
     def previous(self):
         # remember that the reaction is not deleted
-        questions = (
-            self._game.ordered_questions if self._game.order else self._game.questions
-        )
-        for q in questions:
-            if not self._question or len(self.displayed_ids) == 1:
-                continue
-
-            if q.uid == self.displayed_ids[-2]:
-                self._question = q
-                return q
+        if len(self.displayed_ids) > 1:
+            return self._game.questions.filter_by(
+                uid=self.displayed_ids[-2]
+            ).one_or_none()
 
         msg = (
             "No questions were displayed"
@@ -62,10 +53,7 @@ class QuestionFactory:
 
     @property
     def is_last_question(self):
-        questions = (
-            self._game.ordered_questions if self._game.order else self._game.questions
-        )
-        return len(self.displayed_ids) == len(questions)
+        return len(self.displayed_ids) == self._game.questions.count()
 
 
 class GameFactory:

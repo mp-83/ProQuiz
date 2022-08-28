@@ -37,11 +37,14 @@ class Match(TableMixin, Base):
 
     @property
     def questions(self):
-        return [g.ordered_questions for g in self.games]
+        return [g.questions.all() for g in self.games]
 
     @property
     def questions_list(self):
-        return [q for g in self.games for q in g.ordered_questions]
+        """
+        Return all questions of the match
+        """
+        return [q for g in self.games for q in g.questions.all()]
 
     @property
     def games_list(self):
@@ -90,5 +93,5 @@ class Match(TableMixin, Base):
             "times": self.times,
             "code": self.code,
             "uhash": self.uhash,
-            "questions": [[q.json for q in g.ordered_questions] for g in self.games],
+            "questions": [[q.json for q in g.questions] for g in self.games],
         }

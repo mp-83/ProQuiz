@@ -201,7 +201,7 @@ class TestCaseMatchEndpoints:
         assert first_game_questions[1].answers_by_position[0].is_correct
         assert not first_game_questions[1].answers_by_position[1].is_correct
         assert not first_game_questions[1].answers_by_position[2].is_correct
-        assert len(game.ordered_questions) == 2
+        assert game.questions.count() == 2
         self.match_dto.refresh(match)
         assert match.times == 10
 
