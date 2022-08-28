@@ -42,6 +42,10 @@ class TestCaseBase:
 
 class TestCaseQuestionFactory(TestCaseBase):
     def t_questionsAreShuffledWhenNotOrdered(self):
+        """Questions are inversely created
+        to make the ordering meaningful.
+        """
+
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1, order=False)
         self.game_dto.save(game)
@@ -64,21 +68,18 @@ class TestCaseQuestionFactory(TestCaseBase):
         assert question_factory.current == q_zurich
         assert question_factory.next().text == q_paris.text
 
-    def t_nextQuestionWhenOrdered(self):
-        """Questions are inversely created
-        to make the ordering meaningful.
-        """
+    def t_nextQuestion(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
-        second = self.question_dto.new(
-            text="Where is London?", game_uid=game.uid, position=1
-        )
-        self.question_dto.save(second)
         first = self.question_dto.new(
             text="Where is Paris?", game_uid=game.uid, position=0
         )
         self.question_dto.save(first)
+        second = self.question_dto.new(
+            text="Where is London?", game_uid=game.uid, position=1
+        )
+        self.question_dto.save(second)
 
         question_factory = QuestionFactory(game, *())
         assert question_factory.next() == first

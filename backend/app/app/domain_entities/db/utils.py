@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from fastapi import Depends
 from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import Session, declarative_mixin
+from sqlalchemy.orm import Query, Session, declarative_mixin
 
 from app.domain_entities.db.session import get_db
 
@@ -48,12 +48,5 @@ class TableMixin:
         pass
 
 
-class classproperty(property):
-    def __get__(self, obj, objtype=None):
-        return super(classproperty, self).__get__(objtype)
-
-    def __set__(self, obj, value):
-        super(classproperty, self).__set__(type(obj), value)
-
-    def __delete__(self, obj):
-        super(classproperty, self).__delete__(type(obj))
+class QClass(Query):
+    """"""

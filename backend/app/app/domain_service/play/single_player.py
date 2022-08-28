@@ -22,11 +22,9 @@ class QuestionFactory:
         self._question = None
 
     def next(self):
+        questions = self._game.questions.all()
         if not self._game.order:
-            questions = self._game.questions
             shuffle(questions)
-        else:
-            questions = self._game.ordered_questions
 
         for q in questions:
             if q.uid not in self.displayed_ids:
@@ -146,8 +144,8 @@ class PlayerStatus:
         result = {}
         for game in self._current_match.games:
             if (
-                len(game.questions) > 0
-                and len(game.questions)
+                game.questions.count() > 0
+                and game.questions.count()
                 == self._all_reactions_query.filter_by(game_uid=game.uid).count()
             ):
                 result[game.uid] = game

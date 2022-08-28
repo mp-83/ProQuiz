@@ -110,7 +110,7 @@ class MatchDTO:
                 question = self.question_dto.new(
                     game_uid=game.uid,
                     text=question_data.get("text"),
-                    position=len(game.questions),
+                    position=game.questions.count(),
                 )
                 self.question_dto.save(question)
                 self.question_dto.create_or_update_answers(
@@ -198,7 +198,7 @@ class MatchDTO:
             new_q_instance = question_dto.new(
                 game_uid=match_game.uid,
                 text=data.get("text"),
-                position=len(match_game.questions),
+                position=match_game.questions.count(),
                 boolean=boolean_question,
                 time=data.get("time"),
             )

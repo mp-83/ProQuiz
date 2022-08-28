@@ -49,7 +49,7 @@ class Match(TableMixin, Base):
 
     @property
     def questions_count(self):
-        return sum(len(g.questions) for g in self.games)
+        return sum(g.questions.count() for g in self.games)
 
     @property
     def expires(self):
