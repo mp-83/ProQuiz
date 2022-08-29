@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
 
 from app.domain_entities.db.base import Base
-from app.domain_entities.db.utils import QClass, TableMixin
+from app.domain_entities.db.utils import QuestionRClass, TableMixin
 
 
 class Game(TableMixin, Base):
@@ -12,13 +12,13 @@ class Game(TableMixin, Base):
     match_uid = Column(
         Integer, ForeignKey("matches.uid", ondelete="CASCADE"), nullable=False
     )
-    match = relationship("Match", backref="games")
+    match = relationship("Match")
     questions = relationship(
         "Question",
         viewonly=True,
         order_by="Question.uid",
         lazy="dynamic",
-        query_class=QClass,
+        query_class=QuestionRClass,
     )
     index = Column(Integer, default=0)
     # when True question should be returned in order

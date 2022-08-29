@@ -54,7 +54,20 @@ class QClass(Query):
             self.data = super().all()
         return self.data
 
+
+class QuestionRClass(QClass):
     def exclude(self, values):
         from app.domain_entities.question import Question
 
         return self.filter(Question.uid.notin_(values))
+
+
+class MatchRClass(QClass):
+    """"""
+
+
+class GameRClass(QClass):
+    def exclude(self, values):
+        from app.domain_entities.game import Game
+
+        return self.filter(Game.uid.notin_(values))

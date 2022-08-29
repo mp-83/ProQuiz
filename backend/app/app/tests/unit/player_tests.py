@@ -191,15 +191,19 @@ class TestCaseQuestionFactory(TestCaseBase):
 
 class TestCaseGameFactory(TestCaseBase):
     def t_nextGameWhenOrdered(self):
+        """ """
         match = self.match_dto.save(self.match_dto.new(order=True))
         second = self.game_dto.new(match_uid=match.uid, index=2)
         self.game_dto.save(second)
         first = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(first)
+        third = self.game_dto.new(match_uid=match.uid, index=3)
+        self.game_dto.save(third)
 
         game_factory = GameFactory(match, *())
-        assert game_factory.next() == first
         assert game_factory.next() == second
+        assert game_factory.next() == first
+        assert game_factory.next() == third
 
     def t_matchWithoutGamesThrowsError(self, db_session):
         match = self.match_dto.save(self.match_dto.new())

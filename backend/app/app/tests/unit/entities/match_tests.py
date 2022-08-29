@@ -231,7 +231,7 @@ class TestCaseMatchModel:
             },
         ]
         self.match_dto.insert_questions(match, questions)
-        assert match.questions[1][0].game_uid == first_game.uid
+        assert match.questions[0][1].game_uid == first_game.uid
 
 
 class TestCaseMatchHash:

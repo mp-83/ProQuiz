@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
+from sqlalchemy.orm import relationship
 
 from app.constants import (
     MATCH_CODE_LEN,
@@ -9,14 +10,21 @@ from app.constants import (
     MATCH_PASSWORD_LEN,
 )
 from app.domain_entities.db.base import Base
-from app.domain_entities.db.utils import TableMixin
+from app.domain_entities.db.utils import GameRClass, TableMixin
 
 
 class Match(TableMixin, Base):
     __tablename__ = "matches"
 
     # implicit backward relations
-    # games: rankings: reactions:
+    # rankings: reactions:
+    games = relationship(
+        "Game",
+        viewonly=True,
+        order_by="Game.uid",
+        lazy="dynamic",
+        query_class=GameRClass,
+    )
 
     name = Column(String(MATCH_NAME_MAX_LENGTH), nullable=False, unique=True)
     # unique hash identifying this match
@@ -48,7 +56,7 @@ class Match(TableMixin, Base):
 
     @property
     def games_list(self):
-        return self.games
+        return self.games.all()
 
     @property
     def questions_count(self):
@@ -64,12 +72,6 @@ class Match(TableMixin, Base):
             now = datetime.now() if self.expires.tzinfo else datetime.now()
             return (self.expires - now).total_seconds() > 0
         return True
-
-    @property
-    def ordered_games(self):
-        games = {g.index: g for g in self.games}
-        _sorted = sorted(games)
-        return [games[i] for i in _sorted]
 
     @property
     def is_started(self):

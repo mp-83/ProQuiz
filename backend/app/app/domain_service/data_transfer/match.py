@@ -137,7 +137,7 @@ class MatchDTO:
 
         questions = self.question_dto.questions_with_ids(*ids).all()
         new_game = self.game_dto.get(uid=game_uid) or self.game_dto.save(
-            self.game_dto.new(match_uid=instance.uid, index=len(instance.games))
+            self.game_dto.new(match_uid=instance.uid, index=instance.games.count())
         )
         for question in questions:
             if question.game_uid:
@@ -187,8 +187,11 @@ class MatchDTO:
     def insert_questions(self, instance, questions: list, game_uid=None):
         result = []
         game_dto = GameDTO(session=self._session)
-        match_game = game_dto.get(uid=game_uid) if game_uid else None
-        if not match_game:
+        if game_uid:
+            match_game = game_dto.get(uid=game_uid)
+        elif instance.games.count():
+            match_game = instance.games.first()
+        else:
             match_game = game_dto.new(match_uid=instance.uid)
             game_dto.save(match_game)
 

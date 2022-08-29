@@ -63,17 +63,19 @@ class GameFactory:
         self._game = None
 
     def next(self):
-        games = self._match.ordered_games if self._match.order else self._match.games
-        for g in games:
-            if g.uid not in self.played_ids:
-                self.played_ids += (g.uid,)
-                self._game = g
-                return g
+        games = self._match.games.exclude(self.played_ids).all()
+        if not self._match.order:
+            shuffle(games)
+
+        if games:
+            self.played_ids += (games[0].uid,)
+            self._game = games[0]
+            return games[0]
 
         raise MatchOver(f"Match {self._match.name}")
 
     def previous(self):
-        games = self._match.ordered_games if self._match.order else self._match.games
+        games = self._match.games if self._match.order else self._match.games
         for g in games:
             if not self._game or len(self.played_ids) == 1:
                 continue
@@ -97,8 +99,7 @@ class GameFactory:
 
     @property
     def is_last_game(self):
-        games = self._match.ordered_games if self._match.order else self._match.games
-        return len(self.played_ids) == len(games)
+        return len(self.played_ids) == self._match.games.count()
 
 
 class PlayerStatus:
