@@ -119,6 +119,9 @@ class PlayerStatus:
         return self._all_reactions_query.all()
 
     def questions_displayed(self):
+        if self.start_fresh_one():
+            return {}
+
         return {r.question.uid: r.question for r in self._all_reactions_query.all()}
 
     def questions_displayed_by_game(self, game):
@@ -128,11 +131,31 @@ class PlayerStatus:
             if r.game.uid == game.uid
         }
 
+    def match_completed(self):
+        return (
+            self._current_match.reactions.count()
+            - len(self._current_match.questions_list)
+            == 0
+        )
+
+    def _no_attempts(self):
+        return self.match.reactions.filter_by(user_uid=self._user.uid).count() == 0
+
+    def start_fresh_one(self):
+        return (
+            self._no_attempts()
+            or self.match_completed()
+            and self._current_match.left_attempts(self._user) > 0
+        )
+
     def all_games_played(self):
         """
         Return games that were completed
         """
         result = {}
+        if self.start_fresh_one():
+            return result
+
         for game in self._current_match.games:
             if (
                 game.questions.count() > 0
@@ -212,6 +235,15 @@ class SinglePlayer:
     def match_score(self):
         return self._status.total_score()
 
+    def _new_reaction(self, question):
+        new_reaction = self.reaction_dto.new(
+            match_uid=self._match.uid,
+            question_uid=question.uid,
+            game_uid=question.game.uid,
+            user_uid=self._user.uid,
+        )
+        return self.reaction_dto.save(new_reaction)
+
     def last_reaction(self, question):
         reactions = self.reaction_dto.all_reactions_of_user_to_match(
             self._user, self._match, question
@@ -220,13 +252,7 @@ class SinglePlayer:
         if reactions.count() > 0:
             return reactions.first()
 
-        new_reaction = self.reaction_dto.new(
-            match_uid=self._match.uid,
-            question_uid=question.uid,
-            game_uid=question.game.uid,
-            user_uid=self._user.uid,
-        )
-        return self.reaction_dto.save(new_reaction)
+        return self._new_reaction(question)
 
     @property
     def match_can_be_resumed(self):
@@ -253,6 +279,8 @@ class SinglePlayer:
             self._question_factory = QuestionFactory(
                 self._current_reaction.game, *self._status.questions_displayed()
             )
+        elif self._current_reaction.question != question:
+            self._current_reaction = self._new_reaction(question)
 
         self.reaction_dto.record_answer(self._current_reaction, answer)
         return self.forward()

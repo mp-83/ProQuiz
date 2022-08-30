@@ -323,7 +323,7 @@ class TestCasePlayNext:
 
         reaction_dto = ReactionDTO(session=db_session)
 
-        first_game = self.game_dto.new(match_uid=match.uid, index=1, order=False)
+        first_game = self.game_dto.new(match_uid=match.uid, index=0, order=False)
         self.game_dto.save(first_game)
         first_question = self.question_dto.new(
             text="Where is London?",
@@ -336,7 +336,7 @@ class TestCasePlayNext:
         )
         self.answer_dto.save(first_answer)
 
-        second_game = self.game_dto.new(match_uid=match.uid, index=2, order=False)
+        second_game = self.game_dto.new(match_uid=match.uid, index=1, order=False)
         self.game_dto.save(second_game)
 
         second_question = self.question_dto.new(

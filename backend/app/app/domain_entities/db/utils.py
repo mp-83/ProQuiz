@@ -71,3 +71,18 @@ class GameRClass(QClass):
         from app.domain_entities.game import Game
 
         return self.filter(Game.uid.notin_(values))
+
+
+class ReactionRClass(QClass):
+    def filter_join(self, position):
+        from app.domain_entities.game import Game
+        from app.domain_entities.question import Question
+
+        return self.join(Question, Game).filter(
+            Question.position == position, Game.index == 0
+        )
+
+    def exclude(self, values):
+        from app.domain_entities.reaction import Reaction
+
+        return self.filter(Reaction.uid.notin_(values))

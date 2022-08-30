@@ -157,7 +157,7 @@ class TestCaseMatchModel:
 
     def t_matchCannotBePlayedIfAreNoLeftAttempts(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=2)
+        game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)

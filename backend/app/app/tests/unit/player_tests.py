@@ -314,7 +314,7 @@ class TestCaseStatus(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         before = len(emitted_queries)
         assert status.questions_displayed() == {q2.uid: q2, q1.uid: q1}
-        assert len(emitted_queries) == before + 1
+        assert len(emitted_queries) == before + 5
 
     def t_questionDisplayedByGame(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
@@ -358,7 +358,7 @@ class TestCaseStatus(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         assert status.questions_displayed_by_game(game) == {q2.uid: q2, q1.uid: q1}
 
-    def t_allGamesPlayed(self, db_session):
+    def t_allGamesPlayed_1(self, db_session):
         """
         there is no reaction for q3, that implies was not displayed
         therefore g2 should not be considered
@@ -395,6 +395,59 @@ class TestCaseStatus(TestCaseBase):
 
         status = PlayerStatus(user, match, db_session=db_session)
         assert status.all_games_played() == {g1.uid: g1}
+
+    def t_matchPlayedOnceOutOfTwo(self, db_session):
+        """
+        the player played one, but the match can be played
+        2 times, so the games played should be empty the second time
+        """
+        match = self.match_dto.save(self.match_dto.new())
+        g1 = self.game_dto.new(match_uid=match.uid, index=0)
+        self.game_dto.save(g1)
+        g2 = self.game_dto.new(match_uid=match.uid, index=1)
+        self.game_dto.save(g2)
+        q1 = self.question_dto.new(text="Where is Miami", position=0, game=g1)
+        self.question_dto.save(q1)
+        q2 = self.question_dto.new(text="Where is London", position=0, game=g2)
+        self.question_dto.save(q2)
+        q3 = self.question_dto.new(text="Where is Montreal", position=1, game=g2)
+        self.question_dto.save(q3)
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
+        status = PlayerStatus(user, match, db_session=db_session)
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=match,
+                question=q1,
+                user=user,
+                game_uid=g1.uid,
+            )
+        )
+        assert status.questions_displayed() == {q1.uid: q1}
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=match,
+                question=q2,
+                user=user,
+                game_uid=g2.uid,
+            )
+        )
+
+        assert not status.match_completed()
+        assert not status.start_fresh_one()
+        assert status.questions_displayed() == {q1.uid: q1, q2.uid: q2}
+
+    def t_startFreshMatch(self, db_session):
+        """
+        verify several context related properties
+        """
+        match = self.match_dto.save(self.match_dto.new())
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
+        status = PlayerStatus(user, match, db_session=db_session)
+        assert status.start_fresh_one()
+        assert status.questions_displayed() == {}
+        assert status.all_games_played() == {}
 
     def t_matchTotalScore(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
@@ -543,25 +596,64 @@ class TestCaseSinglePlayer(TestCaseBase):
 
         assert e.value.message == "Expired match"
 
-    def t_matchCannotBePlayedMoreThanMatchTimes(self, db_session):
-        match = self.match_dto.save(self.match_dto.new())
+    def t_matchCanBePlayedAnotherTime(self, db_session):
+        match = self.match_dto.save(self.match_dto.new(times=2))
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
-        game = self.game_dto.new(match_uid=match.uid, index=1)
+        game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
-        question = self.question_dto.new(
-            text="Where is London?", game_uid=game.uid, position=0
+        first_question = self.question_dto.new(
+            text="Where is Graz?", game_uid=game.uid, position=0
         )
-        self.question_dto.save(question)
+        self.question_dto.save(first_question)
+        first_answer = self.answer_dto.new(
+            question=first_question, text="Austria", position=1, level=2
+        )
 
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
-        assert player.start() == question
+        assert player.start() == first_question
+        try:
+            player.react(first_answer, first_question)
+        except MatchOver:
+            pass
 
+        status = PlayerStatus(user, match, db_session=db_session)
+        player = SinglePlayer(status, user, match, db_session=db_session)
+        assert status.start_fresh_one()
+        player.start()
+
+        db_session.rollback()
+
+    def t_matchCannotBePlayedMoreThanMatchTimes(self, db_session):
+        match = self.match_dto.save(self.match_dto.new(times=2))
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
+        game = self.game_dto.new(match_uid=match.uid, index=0)
+        self.game_dto.save(game)
+        first_question = self.question_dto.new(
+            text="Where is Graz?", game_uid=game.uid, position=0
+        )
+        self.question_dto.save(first_question)
+        first_answer = self.answer_dto.new(
+            question=first_question, text="Austria", position=1, level=2
+        )
+
+        for _ in range(2):
+            status = PlayerStatus(user, match, db_session=db_session)
+            player = SinglePlayer(status, user, match, db_session=db_session)
+            assert status.start_fresh_one()
+            assert player.start() == first_question
+            try:
+                player.react(first_answer, first_question)
+            except MatchOver:
+                pass
+
+        status = PlayerStatus(user, match, db_session=db_session)
+        player = SinglePlayer(status, user, match, db_session=db_session)
         with pytest.raises(MatchNotPlayableError):
             player.start()
 
-        assert match.reactions
         db_session.rollback()
 
     def t_matchOver(self, db_session):
@@ -589,7 +681,7 @@ class TestCaseSinglePlayer(TestCaseBase):
     def t_playMatchOverMultipleHttpRequests(self, db_session):
         # the SinglePlayer is instanced multiple times
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=1, order=False)
+        game = self.game_dto.new(match_uid=match.uid, index=0, order=False)
         self.game_dto.save(game)
         first_question = self.question_dto.new(
             text="Where is London?",
@@ -647,27 +739,27 @@ class TestCaseResumeMatch(TestCaseBase):
         match = self.match_dto.save(self.match_dto.new(is_restricted=True))
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
-        question = self.question_dto.new(
+        first_question = self.question_dto.new(
             text="Where is London?",
             game_uid=game.uid,
             position=0,
         )
-        self.question_dto.save(question)
-        answer = self.answer_dto.new(question=question, text="UK", position=1)
+        self.question_dto.save(first_question)
+        answer = self.answer_dto.new(question=first_question, text="UK", position=1)
         self.answer_dto.save(answer)
-        question = self.question_dto.new(
+        second_question = self.question_dto.new(
             text="Where is Moscow?",
             game_uid=game.uid,
             position=1,
         )
-        self.question_dto.save(question)
+        self.question_dto.save(second_question)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
 
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
         player.start()
-        player.react(answer, question)
+        player.react(answer, first_question)
         assert player.match_can_be_resumed
 
     def t_matchCanNotBeResumedBecausePublic(self, db_session):

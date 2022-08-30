@@ -10,20 +10,27 @@ from app.constants import (
     MATCH_PASSWORD_LEN,
 )
 from app.domain_entities.db.base import Base
-from app.domain_entities.db.utils import GameRClass, TableMixin
+from app.domain_entities.db.utils import GameRClass, ReactionRClass, TableMixin
 
 
 class Match(TableMixin, Base):
     __tablename__ = "matches"
 
     # implicit backward relations
-    # rankings: reactions:
+    # rankings:
     games = relationship(
         "Game",
         viewonly=True,
         order_by="Game.uid",
         lazy="dynamic",
         query_class=GameRClass,
+    )
+    reactions = relationship(
+        "Reaction",
+        viewonly=True,
+        order_by="Reaction.uid",
+        lazy="dynamic",
+        query_class=ReactionRClass,
     )
 
     name = Column(String(MATCH_NAME_MAX_LENGTH), nullable=False, unique=True)
@@ -75,10 +82,15 @@ class Match(TableMixin, Base):
 
     @property
     def is_started(self):
-        return len(self.reactions)
+        return self.reactions.count()
 
     def left_attempts(self, user):
-        return len([r for r in self.reactions if r.user.uid == user.uid]) - self.times
+        return (
+            self.times
+            - self.reactions.filter_by(user_uid=user.uid)
+            .filter_join(position=0)
+            .count()
+        )
 
     @property
     def json(self):
