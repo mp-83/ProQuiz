@@ -1,8 +1,12 @@
 from datetime import datetime, timezone
+from typing import Union
 
-from sqlalchemy import Column, DateTime, Integer
+from sqlalchemy import Column, DateTime, Integer, Table
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import Query, declarative_mixin
+from sqlalchemy.sql.expression import ColumnOperators
+
+from app.domain_entities.db.base import Base
 
 
 def t_now():
@@ -42,6 +46,18 @@ class TableMixin:
         return self.__name__.lower()
 
 
+class TableMap:
+    @property
+    def db_tables(self):
+        return Base.metadata.tables
+
+    def get(self, table_name: str) -> Union[Table, None]:
+        try:
+            return self.db_tables[table_name]
+        except IndexError:
+            return
+
+
 class QAppenderClass(Query):
     """"""
 
@@ -55,6 +71,7 @@ class QAppenderClass(Query):
 
     def __init__(self, *args, **kwargs):
         self.data = None
+        self.table_map = TableMap()
         super(QAppenderClass, self).__init__(*args, **kwargs)
 
     def all(self):
@@ -73,9 +90,6 @@ class QAppenderClass(Query):
             return
 
     def join_clauses_with_op(self, **clauses):
-        # if self.get_entity().__name__ == "Reaction":
-        #     import pdb;pdb.set_trace()
-
         result = []
         for col_name, op_value_tuple in clauses.items():
             cmp_op, value = op_value_tuple
@@ -105,10 +119,12 @@ class QAppenderClass(Query):
         return f_clause.filter(*op_clause)
 
     def filter_join(self, position):
-        # TEMPORARY METHOD
-        from app.domain_entities.game import Game
-        from app.domain_entities.question import Question
+        game_table = self.table_map.get("games")
+        question_table = self.table_map.get("questions")
 
-        return self.join(Question, Game).filter(
-            Question.position == position, Game.index == 0
+        index_col = game_table.columns.get("index")
+        position_col = question_table.columns.get("position")
+        return self.join(question_table, game_table).filter(
+            position_col.operate(ColumnOperators.__eq__, position),
+            index_col.operate(ColumnOperators.__eq__, 0),
         )
