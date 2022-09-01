@@ -22,7 +22,7 @@ class QuestionFactory:
         self._question = None
 
     def next(self):
-        questions = self._game.questions.exclude(self.displayed_ids).all()
+        questions = self._game.questions.filter_by(uid__notin=self.displayed_ids).all()
         if not self._game.order:
             shuffle(questions)
 
@@ -63,7 +63,7 @@ class GameFactory:
         self._game = None
 
     def next(self):
-        games = self._match.games.exclude(self.played_ids).all()
+        games = self._match.games.filter_by(uid__notin=self.played_ids).all()
         if not self._match.order:
             shuffle(games)
 

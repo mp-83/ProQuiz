@@ -42,47 +42,73 @@ class TableMixin:
         return self.__name__.lower()
 
 
-class QClass(Query):
+class QAppenderClass(Query):
     """"""
+
+    separator = "__"
+    str_operator_map = {
+        "gt": "__gt__",
+        "in": "in_",
+        "notin": "notin_",
+        "lt": "__lt__",
+    }
 
     def __init__(self, *args, **kwargs):
         self.data = None
-        super(QClass, self).__init__(*args, **kwargs)
+        super(QAppenderClass, self).__init__(*args, **kwargs)
 
     def all(self):
         if not self.data:
             self.data = super().all()
         return self.data
 
+    def get_entity(self):
+        return self._entity_from_pre_ent_zero().entity
 
-class QuestionRClass(QClass):
-    def exclude(self, values):
-        from app.domain_entities.question import Question
+    def _entity_descriptor(self, key):
+        entity = self.get_entity()
+        try:
+            return getattr(entity, key)
+        except AttributeError:
+            return
 
-        return self.filter(Question.uid.notin_(values))
+    def join_clauses_with_op(self, **clauses):
+        # if self.get_entity().__name__ == "Reaction":
+        #     import pdb;pdb.set_trace()
 
+        result = []
+        for col_name, op_value_tuple in clauses.items():
+            cmp_op, value = op_value_tuple
+            col = self._entity_descriptor(col_name)
+            result.append(getattr(col, cmp_op)(value))
+        return result
 
-class MatchRClass(QClass):
-    """"""
+    def split_clauses(self, **filters_kws):
+        simple = {}
+        with_op = {}
+        for key, value in filters_kws.items():
+            if self.separator in key:
+                col_name, op = key.split(self.separator)
+                op = self.str_operator_map.get(op)
+                if not op:
+                    continue
+                with_op[col_name] = (op, value)
+            else:
+                simple[key] = value
 
+        return simple, with_op
 
-class GameRClass(QClass):
-    def exclude(self, values):
-        from app.domain_entities.game import Game
+    def filter_by(self, **kwargs):
+        simple, with_op = self.split_clauses(**kwargs)
+        f_clause = super(QAppenderClass, self).filter_by(**simple)
+        op_clause = self.join_clauses_with_op(**with_op)
+        return f_clause.filter(*op_clause)
 
-        return self.filter(Game.uid.notin_(values))
-
-
-class ReactionRClass(QClass):
     def filter_join(self, position):
+        # TEMPORARY METHOD
         from app.domain_entities.game import Game
         from app.domain_entities.question import Question
 
         return self.join(Question, Game).filter(
             Question.position == position, Game.index == 0
         )
-
-    def exclude(self, values):
-        from app.domain_entities.reaction import Reaction
-
-        return self.filter(Reaction.uid.notin_(values))

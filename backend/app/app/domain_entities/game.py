@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
 
 from app.domain_entities.db.base import Base
-from app.domain_entities.db.utils import QuestionRClass, TableMixin
+from app.domain_entities.db.utils import QAppenderClass, TableMixin
 
 
 class Game(TableMixin, Base):
@@ -18,7 +18,7 @@ class Game(TableMixin, Base):
         viewonly=True,
         order_by="Question.uid",
         lazy="dynamic",
-        query_class=QuestionRClass,
+        query_class=QAppenderClass,
     )
     index = Column(Integer, default=0)
     # when True question should be returned in order

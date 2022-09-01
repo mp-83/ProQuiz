@@ -10,7 +10,7 @@ from app.constants import (
     MATCH_PASSWORD_LEN,
 )
 from app.domain_entities.db.base import Base
-from app.domain_entities.db.utils import GameRClass, ReactionRClass, TableMixin
+from app.domain_entities.db.utils import QAppenderClass, TableMixin
 
 
 class Match(TableMixin, Base):
@@ -23,14 +23,14 @@ class Match(TableMixin, Base):
         viewonly=True,
         order_by="Game.uid",
         lazy="dynamic",
-        query_class=GameRClass,
+        query_class=QAppenderClass,
     )
     reactions = relationship(
         "Reaction",
         viewonly=True,
         order_by="Reaction.uid",
         lazy="dynamic",
-        query_class=ReactionRClass,
+        query_class=QAppenderClass,
     )
 
     name = Column(String(MATCH_NAME_MAX_LENGTH), nullable=False, unique=True)
