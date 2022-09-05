@@ -16,23 +16,6 @@ from app.domain_entities.db.utils import QAppenderClass, TableMixin
 class Match(TableMixin, Base):
     __tablename__ = "matches"
 
-    # implicit backward relations
-    # rankings:
-    games = relationship(
-        "Game",
-        viewonly=True,
-        order_by="Game.uid",
-        lazy="dynamic",
-        query_class=QAppenderClass,
-    )
-    reactions = relationship(
-        "Reaction",
-        viewonly=True,
-        order_by="Reaction.uid",
-        lazy="dynamic",
-        query_class=QAppenderClass,
-    )
-
     name = Column(String(MATCH_NAME_MAX_LENGTH), nullable=False, unique=True)
     # unique hash identifying this match
     uhash = Column(String(MATCH_HASH_LEN))
@@ -49,6 +32,28 @@ class Match(TableMixin, Base):
     times = Column(Integer, default=1)
     # indicates if games should be played in order
     order = Column(Boolean, default=True)
+
+    games = relationship(
+        "Game",
+        viewonly=True,
+        order_by="Game.uid",
+        lazy="dynamic",
+        query_class=QAppenderClass,
+    )
+    reactions = relationship(
+        "Reaction",
+        viewonly=True,
+        order_by="Reaction.uid",
+        lazy="dynamic",
+        query_class=QAppenderClass,
+    )
+    rankings = relationship(
+        "Ranking",
+        viewonly=True,
+        order_by="Ranking.uid",
+        lazy="dynamic",
+        query_class=QAppenderClass,
+    )
 
     @property
     def questions(self):
