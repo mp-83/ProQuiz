@@ -6,21 +6,26 @@ from sqlalchemy.schema import UniqueConstraint
 
 from app.constants import QUESTION_TEXT_MAX_LENGTH, URL_LENGTH
 from app.domain_entities.db.base import Base
-from app.domain_entities.db.utils import TableMixin
+from app.domain_entities.db.utils import QAppenderClass, TableMixin
 
 
 class Question(TableMixin, Base):
     __tablename__ = "questions"
 
     game_uid = Column(Integer, ForeignKey("games.uid", ondelete="SET NULL"))
-    game = relationship("Game")
-    # reactions: implicit backward relation
-
     text = Column(String(QUESTION_TEXT_MAX_LENGTH), nullable=False)
     position = Column(Integer, nullable=False)
     time = Column(Integer)  # in seconds
     boolean = Column(Boolean, server_default="0")
     content_url = Column(String(URL_LENGTH))
+    game = relationship("Game")
+    reactions = relationship(
+        "Reaction",
+        viewonly=True,
+        order_by="Reaction.uid",
+        lazy="dynamic",
+        query_class=QAppenderClass,
+    )
 
     __table_args__ = (
         UniqueConstraint("game_uid", "position", name="ck_question_game_uid_position"),
