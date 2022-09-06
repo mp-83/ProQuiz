@@ -1,7 +1,7 @@
 import bcrypt
 from sqlalchemy import Boolean, Column, String
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, relationship
 
 from app.constants import (
     DIGEST_LENGTH,
@@ -11,7 +11,7 @@ from app.constants import (
     USER_NAME_MAX_LENGTH,
 )
 from app.domain_entities.db.base import Base
-from app.domain_entities.db.utils import TableMixin
+from app.domain_entities.db.utils import QAppenderClass, TableMixin
 
 
 class User(TableMixin, Base):
@@ -22,10 +22,16 @@ class User(TableMixin, Base):
     token_digest = Column(String(DIGEST_LENGTH))
     name = Column(String(USER_NAME_MAX_LENGTH))
     password_hash = Column(String(PASSWORD_HASH_LENGTH))
-    # reactions: implicit backward relation
     # user_rankings: implicit backward relation
     key = Column(String(KEY_LENGTH))
     is_admin = Column(Boolean, default=False)
+    reactions = relationship(
+        "Reaction",
+        viewonly=True,
+        order_by="Reaction.uid",
+        lazy="dynamic",
+        query_class=QAppenderClass,
+    )
 
     def __init__(self, db_session: Session = None, **kwargs):
         self._session = db_session

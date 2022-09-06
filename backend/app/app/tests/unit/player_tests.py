@@ -544,7 +544,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         player.start()
         next_q = player.react(answer, first_question)
 
-        assert len(user.reactions)
+        assert user.reactions.count() > 0
         assert next_q == second_question
 
     def t_startMatchAlreadyExpired(self, db_session):

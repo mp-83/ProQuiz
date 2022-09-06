@@ -12,6 +12,9 @@ class Game(TableMixin, Base):
     match_uid = Column(
         Integer, ForeignKey("matches.uid", ondelete="CASCADE"), nullable=False
     )
+    index = Column(Integer, default=0)
+    # when True question should be returned in order
+    order = Column(Boolean, default=True)
     match = relationship("Match")
     questions = relationship(
         "Question",
@@ -20,9 +23,13 @@ class Game(TableMixin, Base):
         lazy="dynamic",
         query_class=QAppenderClass,
     )
-    index = Column(Integer, default=0)
-    # when True question should be returned in order
-    order = Column(Boolean, default=True)
+    reactions = relationship(
+        "Reaction",
+        viewonly=True,
+        order_by="Reaction.uid",
+        lazy="dynamic",
+        query_class=QAppenderClass,
+    )
 
     __table_args__ = (
         UniqueConstraint("match_uid", "index", name="ck_game_match_uid_question"),

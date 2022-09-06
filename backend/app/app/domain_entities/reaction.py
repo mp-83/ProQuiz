@@ -28,11 +28,11 @@ class Reaction(TableMixin, Base):
     user_uid = Column(
         Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False
     )
-    user = relationship("User", backref="reactions")
+    user = relationship("User")
     game_uid = Column(
         Integer, ForeignKey("games.uid", ondelete="CASCADE"), nullable=False
     )
-    game = relationship("Game", backref="reactions")
+    game = relationship("Game")
 
     # used to mark reactions of a user when drops out of a match
     dirty = Column(Boolean, default=False)
