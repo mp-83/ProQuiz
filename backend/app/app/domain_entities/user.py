@@ -22,7 +22,6 @@ class User(TableMixin, Base):
     token_digest = Column(String(DIGEST_LENGTH))
     name = Column(String(USER_NAME_MAX_LENGTH))
     password_hash = Column(String(PASSWORD_HASH_LENGTH))
-    # user_rankings: implicit backward relation
     key = Column(String(KEY_LENGTH))
     is_admin = Column(Boolean, default=False)
     reactions = relationship(

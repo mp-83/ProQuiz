@@ -111,9 +111,7 @@ class PlayerStatus:
 
     @property
     def _all_reactions_query(self):
-        return self.reaction_dto.all_reactions_of_user_to_match(
-            self._user, self._current_match
-        )
+        return self._user.reactions.filter_by(match_uid=self._current_match.uid)
 
     def all_reactions(self):
         return self._all_reactions_query.all()
@@ -127,8 +125,7 @@ class PlayerStatus:
     def questions_displayed_by_game(self, game):
         return {
             r.question.uid: r.question
-            for r in self._all_reactions_query.all()
-            if r.game.uid == game.uid
+            for r in self._all_reactions_query.filter_by(game_uid=game.uid).all()
         }
 
     def match_completed(self):
@@ -245,8 +242,8 @@ class SinglePlayer:
         return self.reaction_dto.save(new_reaction)
 
     def last_reaction(self, question):
-        reactions = self.reaction_dto.all_reactions_of_user_to_match(
-            self._user, self._match, question
+        reactions = self._user.reactions.filter_by(
+            match_uid=self._match.uid, question_uid=question.uid
         ).filter_by(_answer=None)
 
         if reactions.count() > 0:

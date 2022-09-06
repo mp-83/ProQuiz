@@ -21,17 +21,6 @@ class ReactionDTO:
         self._session.commit()
         return instance
 
-    def count(self):
-        return self._session.query(self.klass).count()
-
-    def all_reactions_of_user_to_match(self, user, match, question=None, asc=False):
-        filters = {"user": user, "match": match}
-        if question:
-            filters.update(question=question)
-        qs = self._session.query(self.klass).filter_by(**filters)
-        field = Reaction.uid.asc if asc else Reaction.uid.desc
-        return qs.order_by(field())
-
     def record_answer(self, instance, answer):
         """Save the answer given by the user
 
@@ -70,13 +59,6 @@ class ReactionDTO:
                 instance.answer_uid = answer.uid
 
         return self.save(instance)
-
-    def reaction_of_user_to_question(self, user, question):
-        return (
-            self._session.query(Reaction)
-            .filter_by(user=user, question=question)
-            .one_or_none()
-        )
 
 
 class ReactionScore:

@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
-from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.domain_service.data_transfer.user import UserDTO, WordDigest
 from app.domain_service.schemas.logical_validation import RetrieveObject
 from app.exceptions import NotFoundObjectError, ValidateError
@@ -129,9 +128,7 @@ class ValidatePlayNext:
             question = QuestionDTO(session=self._session).get(uid=self.question_uid)
             self._data["question"] = question
 
-        reaction = ReactionDTO(session=self._session).reaction_of_user_to_question(
-            user, question
-        )
+        reaction = user.reactions.filter_by(question_uid=question.uid).one_or_none()
         if reaction and reaction.answer:
             raise ValidateError("Duplicate Reactions")
 

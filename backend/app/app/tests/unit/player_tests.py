@@ -516,7 +516,7 @@ class TestCaseSinglePlayer(TestCaseBase):
 
         assert question_displayed == question
         assert player.current == question_displayed
-        assert self.reaction_dto.count() == 1
+        assert user.reactions.count() == 1
 
     def t_reactToFirstQuestion(self, db_session):
         match = self.match_dto.save(self.match_dto.new())

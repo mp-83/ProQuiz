@@ -184,12 +184,10 @@ class TestCaseReactionModel:
         )
         self.reaction_dto.save(r2)
 
-        reactions = self.reaction_dto.all_reactions_of_user_to_match(
-            user, match, asc=False
-        ).all()
+        reactions = user.reactions.filter_by(match_uid=match.uid).all()
         assert len(reactions) == 2
-        assert reactions[0] == r2
-        assert reactions[1] == r1
+        assert reactions[0] == r1
+        assert reactions[1] == r2
 
 
 class TestCaseReactionScore:
