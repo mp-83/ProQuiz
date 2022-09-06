@@ -9,7 +9,6 @@ from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.question import QuestionDTO
-from app.domain_service.data_transfer.ranking import RankingDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.domain_service.data_transfer.user import UserDTO, WordDigest
 
@@ -310,7 +309,7 @@ class TestCasePlayNext:
         assert response.json()["question"] is None
         assert response.json()["match_uid"] is None
         assert response.json()["score"] > 0
-        assert len(RankingDTO(session=db_session).of_match(match.uid)) == 1
+        assert match.rankings.count() == 1
 
     def t_continueStartedMatchWithMultipleGames(
         self, client: TestClient, superuser_token_headers: dict, db_session
@@ -394,4 +393,4 @@ class TestCasePlayNext:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
         assert response.json()["match_uid"] is None
-        assert len(RankingDTO(session=db_session).of_match(match.uid)) == 1
+        assert match.rankings.count() == 1
