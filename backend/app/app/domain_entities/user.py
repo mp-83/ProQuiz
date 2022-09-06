@@ -32,6 +32,13 @@ class User(TableMixin, Base):
         lazy="dynamic",
         query_class=QAppenderClass,
     )
+    user_rankings = relationship(
+        "Ranking",
+        viewonly=True,
+        order_by="Ranking.uid",
+        lazy="dynamic",
+        query_class=QAppenderClass,
+    )
 
     def __init__(self, db_session: Session = None, **kwargs):
         self._session = db_session

@@ -11,12 +11,10 @@ class Ranking(TableMixin, Base):
     user_uid = Column(
         Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False
     )
-    user = relationship("User", backref="user_rankings")
-
     match_uid = Column(Integer, ForeignKey("matches.uid"))
-    match = relationship("Match")
-
     score = Column(Integer, nullable=False)
+    match = relationship("Match")
+    user = relationship("User")
 
     @property
     def json(self):
