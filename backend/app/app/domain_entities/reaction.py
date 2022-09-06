@@ -20,11 +20,11 @@ class Reaction(TableMixin, Base):
     answer_uid = Column(
         Integer, ForeignKey("answers.uid", ondelete="SET NULL"), nullable=True
     )
-    _answer = relationship("Answer", backref="reactions")
+    _answer = relationship("Answer")
     open_answer_uid = Column(
         Integer, ForeignKey("open_answers.uid", ondelete="SET NULL"), nullable=True
     )
-    _open_answer = relationship("OpenAnswer", backref="reactions")
+    _open_answer = relationship("OpenAnswer")
     user_uid = Column(
         Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False
     )

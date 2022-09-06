@@ -4,7 +4,7 @@ from sqlalchemy.schema import CheckConstraint, UniqueConstraint
 
 from app.constants import ANSWER_TEXT_MAX_LENGTH, URL_LENGTH
 from app.domain_entities.db.base import Base
-from app.domain_entities.db.utils import TableMixin
+from app.domain_entities.db.utils import QAppenderClass, TableMixin
 
 
 class Answer(TableMixin, Base):
@@ -14,7 +14,13 @@ class Answer(TableMixin, Base):
         Integer, ForeignKey("questions.uid", ondelete="CASCADE"), nullable=False
     )
     question = relationship("Question")
-    # reactions: implicit backward relation
+    reactions = relationship(
+        "Reaction",
+        viewonly=True,
+        order_by="Reaction.uid",
+        lazy="dynamic",
+        query_class=QAppenderClass,
+    )
 
     position = Column(Integer, nullable=False)
     text = Column(String(ANSWER_TEXT_MAX_LENGTH), nullable=False)
