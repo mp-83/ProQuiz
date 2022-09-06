@@ -251,7 +251,7 @@ class TestCaseMatchEndpoints:
 
         assert response.json()["questions_list"][1]["text"] == "Where is Oslo?"
         assert (
-            response.json()["questions_list"][1]["answers_list"][2]["text"] == "Sweden"
+            response.json()["questions_list"][1]["answers_list"][1]["text"] == "Sweden"
         )
         assert response.json()["questions_list"][1]["time"] is None
 

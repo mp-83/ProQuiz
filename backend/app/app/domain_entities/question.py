@@ -26,6 +26,13 @@ class Question(TableMixin, Base):
         lazy="dynamic",
         query_class=QAppenderClass,
     )
+    answers = relationship(
+        "Answer",
+        viewonly=True,
+        order_by="Answer.uid",
+        lazy="dynamic",
+        query_class=QAppenderClass,
+    )
 
     __table_args__ = (
         UniqueConstraint("game_uid", "position", name="ck_question_game_uid_position"),
@@ -38,7 +45,7 @@ class Question(TableMixin, Base):
 
     @property
     def is_open(self):
-        return len(self.answers) == 0
+        return self.answers.count() == 0
 
     @property
     def answers_list(self):
@@ -46,7 +53,7 @@ class Question(TableMixin, Base):
 
     @property
     def answers_to_display(self):
-        _answers = self.answers
+        _answers = self.answers.all()
         shuffle(_answers)
         return [a.json for a in _answers]
 

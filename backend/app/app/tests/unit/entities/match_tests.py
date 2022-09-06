@@ -193,8 +193,9 @@ class TestCaseMatchModel:
         assert match.questions[0][0].game_uid == first_game.uid
 
         assert match.questions[0][0].answers_list[0]["boolean"]
-        assert match.questions[0][0].answers_list[0]["text"] == "False"
-        assert not match.questions[0][0].answers_list[0]["is_correct"]
+        assert match.questions[0][0].answers_list[0]["text"] == "True"
+        assert match.questions[0][0].answers_list[0]["is_correct"]
+        assert not match.questions[0][0].answers_list[1]["is_correct"]
 
         second_game = self.game_dto.save(
             self.game_dto.new(match_uid=match.uid, index=2)
@@ -209,7 +210,7 @@ class TestCaseMatchModel:
 
         assert match.questions[1][0].game_uid == second_game.uid
         assert match.questions[1][0].answers_list[1]["boolean"]
-        assert match.questions[1][0].answers_list[1]["text"] == "True"
+        assert match.questions[1][0].answers_list[0]["text"] == "False"
         assert match.questions[1][0].answers_list[0]["is_correct"]
 
     def t_secondGameIsTheSameOfPreviousQuestionsUnlessSpecified(self):

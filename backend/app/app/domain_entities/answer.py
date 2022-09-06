@@ -13,7 +13,7 @@ class Answer(TableMixin, Base):
     question_uid = Column(
         Integer, ForeignKey("questions.uid", ondelete="CASCADE"), nullable=False
     )
-    question = relationship("Question", backref="answers")
+    question = relationship("Question")
     # reactions: implicit backward relation
 
     position = Column(Integer, nullable=False)

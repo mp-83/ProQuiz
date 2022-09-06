@@ -63,14 +63,15 @@ class TestCaseQuestion:
 
     def t_allAnswersOfAQuestionMustDiffer(self, samples, db_session):
         question = self.question_dto.get(position=1)
+        answer = self.answer_dto.new(
+            text="question2.answer1", position=1, question_uid=question.uid
+        )
+        self.answer_dto.save(answer)
         with pytest.raises((IntegrityError, InvalidRequestError)):
-            question.answers.extend(
-                [
-                    self.answer_dto.new(text="question2.answer1", position=1),
-                    self.answer_dto.new(text="question2.answer1", position=2),
-                ]
+            answer = self.answer_dto.new(
+                text="question2.answer1", position=2, question_uid=question.uid
             )
-            self.question_dto.save(question)
+            self.answer_dto.save(answer)
 
         db_session.rollback()
 

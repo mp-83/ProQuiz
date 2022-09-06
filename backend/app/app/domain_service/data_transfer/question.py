@@ -73,7 +73,7 @@ class QuestionDTO:
         return self._session.query(Question).filter(Question.uid.in_(ids))
 
     def create_or_update_answers(self, instance: Question, answers: list):
-        for n, answer_data in enumerate(answers, start=len(instance.answers)):
+        for n, answer_data in enumerate(answers, start=instance.answers.count()):
             answer = instance.answers_by_uid.get(answer_data.get("uid"))
             answer_data.update(question_uid=instance.uid, position=n)
             if answer:
@@ -87,15 +87,17 @@ class QuestionDTO:
         if not answers:
             return
 
+        _answers_by_uid = instance.answers_by_uid.copy()
         for data in answers:
-            answer = instance.answers_by_uid[data["uid"]]
+            answer = _answers_by_uid[data["uid"]]
             self.answer_dto.update(answer, **data)
 
         self._session.commit()
 
     def reorder_answers(self, instance: Question, answers_ids: list):
+        _answers = instance.answers_by_uid.copy()
         for p, uid in enumerate(answers_ids):
-            answer = instance.answers_by_uid[uid]
+            answer = _answers[uid]
             answer.position = p
 
         self._session.commit()
