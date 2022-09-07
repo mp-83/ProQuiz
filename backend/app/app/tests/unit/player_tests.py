@@ -735,7 +735,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         with pytest.raises(MatchOver):
             player.react(third_answer, third_question)
 
-    def t_restoreMatchWithOpenQuestions(self, db_session):
+    def t_restoreOpenQuestionsMatchFromSecondQuestion(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -746,15 +746,15 @@ class TestCaseSinglePlayer(TestCaseBase):
         )
         self.question_dto.save(first_question)
         second_question = self.question_dto.new(
-            text="Where is Dublin?",
+            text="Where is Istanbul?",
             game_uid=game.uid,
-            position=2,
+            position=1,
         )
         self.question_dto.save(second_question)
 
         open_answer_dto = OpenAnswerDTO(session=db_session)
-        open_answer = open_answer_dto.new(text="Austria")
-        open_answer_dto.save(open_answer)
+        open_answer_1 = open_answer_dto.new(text="Austria")
+        open_answer_dto.save(open_answer_1)
 
         self.reaction_dto.save(
             self.reaction_dto.new(
@@ -762,25 +762,18 @@ class TestCaseSinglePlayer(TestCaseBase):
                 question=first_question,
                 user=user,
                 game_uid=game.uid,
-                open_answer_uid=open_answer.uid,
+                open_answer_uid=open_answer_1.uid,
                 score=None,
             )
         )
 
-        self.reaction_dto.save(
-            self.reaction_dto.new(
-                match=match,
-                question=second_question,
-                user=user,
-                game_uid=game.uid,
-                score=None,
-            )
-        )
+        open_answer_2 = open_answer_dto.new(text="Turkey")
+        open_answer_dto.save(open_answer_2)
 
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
         try:
-            player.react(open_answer, second_question)
+            player.react(open_answer_2, second_question)
         except MatchOver:
             pass
 
