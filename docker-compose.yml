@@ -32,6 +32,23 @@ services:
     volumes:
       - "./backend/app:/app"
 
+  locust-master:
+    image: locustio/locust
+    ports:
+     - "8089:8089"
+    depends_on:
+      - backend
+    volumes:
+      - ./locust/src:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --master -H http://master:8089
+
+  locust-worker:
+    image: locustio/locust
+    depends_on:
+      - locust-master
+    volumes:
+      - ./locust/src:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --worker --master-host master
 
 volumes:
   app-db-data:
