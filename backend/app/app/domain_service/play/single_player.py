@@ -244,7 +244,7 @@ class SinglePlayer:
     def last_reaction(self, question):
         reactions = self._user.reactions.filter_by(
             match_uid=self._match.uid, question_uid=question.uid
-        ).filter_by(_answer=None)
+        ).filter_by(answer_uid=None, open_answer_uid=None)
 
         if reactions.count() > 0:
             return reactions.first()

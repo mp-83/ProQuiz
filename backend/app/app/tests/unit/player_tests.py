@@ -5,6 +5,7 @@ import pytest
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
+from app.domain_service.data_transfer.open_answer import OpenAnswerDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.ranking import RankingDTO
 from app.domain_service.data_transfer.reaction import ReactionDTO
@@ -626,7 +627,8 @@ class TestCaseSinglePlayer(TestCaseBase):
         db_session.rollback()
 
     def t_matchCannotBePlayedMoreThanMatchTimes(self, db_session):
-        match = self.match_dto.save(self.match_dto.new(times=2))
+        max_times = 2
+        match = self.match_dto.save(self.match_dto.new(times=max_times))
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
         game = self.game_dto.new(match_uid=match.uid, index=0)
@@ -639,7 +641,7 @@ class TestCaseSinglePlayer(TestCaseBase):
             question=first_question, text="Austria", position=1, level=2
         )
 
-        for _ in range(2):
+        for _ in range(max_times):
             status = PlayerStatus(user, match, db_session=db_session)
             player = SinglePlayer(status, user, match, db_session=db_session)
             assert status.start_fresh_one()
@@ -732,6 +734,57 @@ class TestCaseSinglePlayer(TestCaseBase):
         player = SinglePlayer(status, user, match, db_session=db_session)
         with pytest.raises(MatchOver):
             player.react(third_answer, third_question)
+
+    def t_restoreMatchWithOpenQuestions(self, db_session):
+        match = self.match_dto.save(self.match_dto.new())
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
+        game = self.game_dto.new(match_uid=match.uid, index=0)
+        self.game_dto.save(game)
+        first_question = self.question_dto.new(
+            text="Where is Graz?", game_uid=game.uid, position=0
+        )
+        self.question_dto.save(first_question)
+        second_question = self.question_dto.new(
+            text="Where is Dublin?",
+            game_uid=game.uid,
+            position=2,
+        )
+        self.question_dto.save(second_question)
+
+        open_answer_dto = OpenAnswerDTO(session=db_session)
+        open_answer = open_answer_dto.new(text="Austria")
+        open_answer_dto.save(open_answer)
+
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=match,
+                question=first_question,
+                user=user,
+                game_uid=game.uid,
+                open_answer_uid=open_answer.uid,
+                score=None,
+            )
+        )
+
+        self.reaction_dto.save(
+            self.reaction_dto.new(
+                match=match,
+                question=second_question,
+                user=user,
+                game_uid=game.uid,
+                score=None,
+            )
+        )
+
+        status = PlayerStatus(user, match, db_session=db_session)
+        player = SinglePlayer(status, user, match, db_session=db_session)
+        try:
+            player.react(open_answer, second_question)
+        except MatchOver:
+            pass
+
+        assert user.reactions.count() == 2
 
 
 class TestCaseResumeMatch(TestCaseBase):
