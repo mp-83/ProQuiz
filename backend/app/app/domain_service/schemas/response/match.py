@@ -7,6 +7,31 @@ from app.domain_service.schemas.syntax_validation.game import Game
 from app.domain_service.schemas.syntax_validation.question import Question
 
 
+class User(BaseModel):
+    name: Optional[str]
+    uid: int
+
+    class Config:
+        orm_mode = True
+
+
+class Ranking(BaseModel):
+    uid: int
+    user: User
+    score: Optional[float]
+
+    class Config:
+        orm_mode = True
+
+
+class MatchRanking(BaseModel):
+    name: str
+    rankings: List[Ranking]
+
+    class Config:
+        orm_mode = True
+
+
 class Match(BaseModel):
     uid: Optional[int]
     name: Optional[str]

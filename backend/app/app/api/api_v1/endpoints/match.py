@@ -114,3 +114,13 @@ def import_questions(
         match, user_input["questions"], game_uid=user_input["game_uid"]
     )
     return match
+
+
+@router.get("/rankings/{uid}", response_model=response.MatchRanking)
+def match_rankings(uid: int, session: Session = Depends(get_db)):
+    try:
+        match = RetrieveObject(uid=uid, otype="match", db_session=session).get()
+    except NotFoundObjectError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+
+    return {"name": match.name, "rankings": match.rankings.all()}
