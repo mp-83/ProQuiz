@@ -26,7 +26,7 @@ class TestCaseMatchModel:
         self.game_dto = GameDTO(session=db_session)
         self.user_dto = UserDTO(session=db_session)
 
-    def t_questionsPropertyReturnsTheExpectedResults(self):
+    def test_questionsPropertyReturnsTheExpectedResults(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -50,17 +50,17 @@ class TestCaseMatchModel:
         assert match.questions[1][0].text == "Where is Vienna?"
         assert match.questions[1][0].game == second_game
 
-    def t_createMatchWithHash(self):
+    def test_createMatchWithHash(self):
         match = self.match_dto.save(self.match_dto.new(with_code=False))
         assert match.uhash is not None
         assert len(match.uhash) == MATCH_HASH_LEN
 
-    def t_createRestrictedMatch(self):
+    def test_createRestrictedMatch(self):
         match = self.match_dto.save(self.match_dto.new(is_restricted=True))
         assert match.uhash
         assert len(match.password) == MATCH_PASSWORD_LEN
 
-    def t_updateTextExistingQuestion(self):
+    def test_updateTextExistingQuestion(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -85,7 +85,7 @@ class TestCaseMatchModel:
         assert no_new_questions
         assert question.text == "What is the capital of Norway?"
 
-    def t_createMatchUsingTemplateQuestions(self):
+    def test_createMatchUsingTemplateQuestions(self):
         question_1 = self.question_dto.new(text="Where is London?", position=0)
         question_2 = self.question_dto.new(text="Where is Vienna?", position=1)
         self.question_dto.add_many([question_1, question_2])
@@ -107,7 +107,7 @@ class TestCaseMatchModel:
         assert self.question_dto.count() == questions_cnt + 2
         assert self.answer_dto.count() == answers_cnt + 0
 
-    def t_cannotUseIdsOfQuestionAlreadyAssociateToAGame(self):
+    def test_cannotUseIdsOfQuestionAlreadyAssociateToAGame(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=2)
         self.game_dto.save(game)
@@ -120,7 +120,7 @@ class TestCaseMatchModel:
         with pytest.raises(NotUsableQuestionError):
             self.match_dto.import_template_questions(match, [question.uid])
 
-    def t_moveFirstQuestionToSecondGame(self):
+    def test_moveFirstQuestionToSecondGame(self):
         match = self.match_dto.save(self.match_dto.new())
         first_game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(first_game)
@@ -148,14 +148,14 @@ class TestCaseMatchModel:
         self.match_dto.update(match, **data)
         assert question_1.game == second_game
 
-    def t_updateGameProperty(self):
+    def test_updateGameProperty(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         data = {"games": [{"uid": game.uid, "order": False}]}
         self.match_dto.update(match, **data)
         assert not game.order
 
-    def t_matchCannotBePlayedIfAreNoLeftAttempts(self, db_session):
+    def test_matchCannotBePlayedIfAreNoLeftAttempts(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -178,7 +178,7 @@ class TestCaseMatchModel:
         assert match.reactions[0].user == user
         assert match.left_attempts(user) == 0
 
-    def t_insertBooleanQuestionsIntoTwoDifferentGames(self):
+    def test_insertBooleanQuestionsIntoTwoDifferentGames(self):
         questions = [
             {
                 "answers": [{"text": True}, {"text": False}],
@@ -213,7 +213,7 @@ class TestCaseMatchModel:
         assert match.questions[1][0].answers_list[0]["text"] == "False"
         assert match.questions[1][0].answers_list[0]["is_correct"]
 
-    def t_secondGameIsTheSameOfPreviousQuestionsUnlessSpecified(self):
+    def test_secondGameIsTheSameOfPreviousQuestionsUnlessSpecified(self):
         match = self.match_dto.save(self.match_dto.new())
         first_game = self.game_dto.save(self.game_dto.new(match_uid=match.uid, index=1))
         questions = [
@@ -236,7 +236,7 @@ class TestCaseMatchModel:
 
 
 class TestCaseMatchHash:
-    def t_hashMustBeUniqueForEachMatch(self, db_session, mocker, match_dto):
+    def test_hashMustBeUniqueForEachMatch(self, db_session, mocker, match_dto):
         # the first call return a value already used
         random_method = mocker.patch(
             "app.domain_service.data_transfer.match.choices",
@@ -249,7 +249,7 @@ class TestCaseMatchHash:
 
 
 class TestCaseMatchPassword:
-    def t_passwordUniqueForEachMatch(self, db_session, mocker, match_dto):
+    def test_passwordUniqueForEachMatch(self, db_session, mocker, match_dto):
         # the first call return a value already used
         random_method = mocker.patch(
             "app.domain_service.data_transfer.match.choices",
@@ -262,7 +262,7 @@ class TestCaseMatchPassword:
 
 
 class TestCaseMatchCode:
-    def t_codeUniqueForEachMatchAtThatTime(self, db_session, mocker, match_dto):
+    def test_codeUniqueForEachMatchAtThatTime(self, db_session, mocker, match_dto):
         tomorrow = datetime.now() + timedelta(days=1)
         random_method = mocker.patch(
             "app.domain_service.data_transfer.match.choices",

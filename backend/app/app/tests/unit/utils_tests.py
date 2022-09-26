@@ -66,7 +66,7 @@ class TestCaseBaseQueryAppender:
         )
         yield match, q1, q2
 
-    def t_split_clauses(self):
+    def test_split_clauses(self):
         clauses = {
             "user_id": 2,
             "answer_time__gt": "2022-01-01",
@@ -79,7 +79,7 @@ class TestCaseBaseQueryAppender:
             "game_uid": ("notin_", [1, 4]),
         }
 
-    def t_1(self, test_data, db_session):
+    def test_1(self, test_data, db_session):
         match, _, _ = test_data
         tomorrow = datetime.now() + timedelta(days=1)
         expected = (
@@ -88,7 +88,7 @@ class TestCaseBaseQueryAppender:
         result = match.reactions.filter_by(answer_time__lt=tomorrow).all()
         assert result == expected
 
-    def t_2(self, test_data, db_session):
+    def test_2(self, test_data, db_session):
         match, _, _ = test_data
         expected = db_session.query(Game).filter(Game.uid.notin_([0])).all()
         result = match.games.filter_by(uid__notin=[0]).all()

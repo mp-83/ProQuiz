@@ -16,7 +16,7 @@ class TestCaseUser:
         self.game_dto = GameDTO(session=db_session)
         self.user_dto = UserDTO(session=db_session)
 
-    def t_listAllPlayersOf(self, client: TestClient):
+    def test_listAllPlayersOf(self, client: TestClient):
         user_1 = self.user_dto.fetch(signed=True)
         user_2 = self.user_dto.fetch()
         user_3 = self.user_dto.fetch()
@@ -33,7 +33,7 @@ class TestCaseUser:
         assert returned_players[2]["uid"] == user_3.uid
         assert not returned_players[2]["signed"]
 
-    def t_listOnlySignedPlayers(self, client: TestClient):
+    def test_listOnlySignedPlayers(self, client: TestClient):
         user_1 = self.user_dto.fetch(signed=True)
         self.user_dto.fetch()
         response = client.get(f"{settings.API_V1_STR}/players", params={"signed": True})
@@ -41,7 +41,7 @@ class TestCaseUser:
         assert response.json()["players"][0]["uid"] == user_1.uid
         assert response.json()["players"][0]["signed"]
 
-    def t_listOnlyUnSignedPlayers(self, client: TestClient):
+    def test_listOnlyUnSignedPlayers(self, client: TestClient):
         self.user_dto.fetch(signed=True)
         user_2 = self.user_dto.fetch()
         response = client.get(
@@ -51,7 +51,7 @@ class TestCaseUser:
         assert response.json()["players"][0]["uid"] == user_2.uid
         assert not response.json()["players"][0]["signed"]
 
-    def t_listAllPlayersOfMatch(self, client: TestClient, match_dto):
+    def test_listAllPlayersOfMatch(self, client: TestClient, match_dto):
         first_match = match_dto.save(match_dto.new())
         first_game = self.game_dto.new(match_uid=first_match.uid, index=0)
         self.game_dto.save(first_game)
@@ -128,7 +128,7 @@ class TestCaseUser:
         assert response.json()["players"][1]["uid"] == user_2.uid
         assert not response.json()["players"][1]["signed"]
 
-    def t_registerSignedUser(self, client: TestClient):
+    def test_registerSignedUser(self, client: TestClient):
         response = client.post(
             f"{settings.API_V1_STR}/players/sign",
             json={"email": "user@domain.com", "token": "01012022"},

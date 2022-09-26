@@ -35,18 +35,18 @@ class TestCaseBase:
 
 
 class TestCaseRetrieveObject:
-    def t_objectNotFound(self, db_session):
+    def test_objectNotFound(self, db_session):
         with pytest.raises(NotFoundObjectError):
             RetrieveObject(uid=1, otype="match", db_session=db_session).get()
 
-    def t_objectIsOfCorrectType(self, db_session):
+    def test_objectIsOfCorrectType(self, db_session):
         user = UserDTO(session=db_session).fetch()
         obj = RetrieveObject(uid=user.uid, otype="user", db_session=db_session).get()
         assert obj == user
 
 
 class TestCaseLandEndPoint:
-    def t_matchDoesNotExists(self, db_session):
+    def test_matchDoesNotExists(self, db_session):
         with pytest.raises(NotFoundObjectError):
             ValidatePlayLand(
                 match_uhash="wrong-hash", db_session=db_session
@@ -54,11 +54,11 @@ class TestCaseLandEndPoint:
 
 
 class TestCaseCodeEndPoint(TestCaseBase):
-    def t_wrongCode(self, db_session):
+    def test_wrongCode(self, db_session):
         with pytest.raises(NotFoundObjectError):
             ValidatePlayCode(match_code="2222", db_session=db_session).valid_match()
 
-    def t_matchActiveness(self, db_session):
+    def test_matchActiveness(self, db_session):
         ten_hours_ago = datetime.now() - timedelta(hours=40)
         two_hours_ago = datetime.now() - timedelta(hours=3600)
         match = self.match_dto.save(
@@ -75,7 +75,7 @@ class TestCaseCodeEndPoint(TestCaseBase):
 
 
 class TestCaseSignEndPoint:
-    def t_wrongToken(self, db_session):
+    def test_wrongToken(self, db_session):
         original_email = "user@test.io"
 
         email_digest = WordDigest(original_email).value()
@@ -96,7 +96,7 @@ class TestCaseSignEndPoint:
 
 
 class TestCaseStartEndPoint(TestCaseBase):
-    def t_publicUserRestrictedMatch(self, db_session):
+    def test_publicUserRestrictedMatch(self, db_session):
         match = self.match_dto.new(is_restricted=True)
         self.match_dto.save(match)
         user = self.user_dto.new(email="user@test.project")
@@ -111,7 +111,7 @@ class TestCaseStartEndPoint(TestCaseBase):
 
         assert err.value.message == "User cannot access this match"
 
-    def t_privateMatchRequiresPassword(self, db_session):
+    def test_privateMatchRequiresPassword(self, db_session):
         match = self.match_dto.new(is_restricted=True)
         self.match_dto.save(match)
         user = self.user_dto.fetch(signed=True)
@@ -125,11 +125,11 @@ class TestCaseStartEndPoint(TestCaseBase):
 
         assert err.value.message == "Password is required for private matches"
 
-    def t_userDoesNotExists(self, db_session):
+    def test_userDoesNotExists(self, db_session):
         with pytest.raises(NotFoundObjectError):
             ValidatePlayStart(user_uid=1, db_session=db_session).valid_user()
 
-    def t_invalidPassword(self, db_session):
+    def test_invalidPassword(self, db_session):
         match = self.match_dto.new(is_restricted=True)
         self.match_dto.save(match)
         self.user_dto.fetch(signed=True)
@@ -142,7 +142,7 @@ class TestCaseStartEndPoint(TestCaseBase):
 
 
 class TestCaseNextEndPoint(TestCaseBase):
-    def t_cannotAcceptSameReactionAgain(self, db_session):
+    def test_cannotAcceptSameReactionAgain(self, db_session):
         # despite the delay between the two (which respects the DB constraint)
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
@@ -169,7 +169,7 @@ class TestCaseNextEndPoint(TestCaseBase):
                 user_uid=user.uid, question_uid=question.uid, db_session=db_session
             ).valid_reaction()
 
-    def t_answerDoesNotBelongToQuestion(self, db_session):
+    def test_answerDoesNotBelongToQuestion(self, db_session):
         # simulate a more realistic case
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
@@ -185,15 +185,15 @@ class TestCaseNextEndPoint(TestCaseBase):
                 answer_uid=answer.uid, question_uid=10, db_session=db_session
             ).valid_answer()
 
-    def t_answerDoesNotExists(self, db_session):
+    def test_answerDoesNotExists(self, db_session):
         with pytest.raises(NotFoundObjectError):
             ValidatePlayNext(answer_uid=10000, db_session=db_session).valid_answer()
 
-    def t_userDoesNotExists(self, db_session):
+    def test_userDoesNotExists(self, db_session):
         with pytest.raises(NotFoundObjectError):
             ValidatePlayNext(user_uid=1, db_session=db_session).valid_user()
 
-    def t_matchDoesNotExists(self, db_session):
+    def test_matchDoesNotExists(self, db_session):
         with pytest.raises(NotFoundObjectError):
             ValidatePlayNext(match_uid=1, db_session=db_session).valid_match()
 
@@ -201,7 +201,7 @@ class TestCaseNextEndPoint(TestCaseBase):
 class TestCaseCreateMatch:
     now = datetime.now(tz=timezone.utc)
 
-    def t_fromTimeGreaterThanToTime(self, db_session):
+    def test_fromTimeGreaterThanToTime(self, db_session):
         # to avoid from_time to be < datetime.now() when
         # the check is performed, the value is increased
         # by two seconds (or we mock datetime.now)
@@ -216,7 +216,7 @@ class TestCaseCreateMatch:
 
         assert e.value.message == "to-time must be greater than from-time"
 
-    def t_fromTimeIsExpired(self, db_session):
+    def test_fromTimeIsExpired(self, db_session):
         with pytest.raises(ValidateError) as e:
             ValidateNewMatch(
                 {
@@ -228,7 +228,7 @@ class TestCaseCreateMatch:
 
         assert e.value.message == "from-time must be greater than now"
 
-    def t_matchWithSameNameAlreadyExists(self, db_session):
+    def test_matchWithSameNameAlreadyExists(self, db_session):
         name = "New match"
         dto = MatchDTO(session=db_session)
         new_match = dto.new(name=name)
@@ -240,7 +240,7 @@ class TestCaseCreateMatch:
 
 
 class TestCaseMatchEdit:
-    def t_matchCannotBeChangedIfStarted(self, db_session):
+    def test_matchCannotBeChangedIfStarted(self, db_session):
         match_name = "New Match"
         match_dto = MatchDTO(session=db_session)
         match = match_dto.new(name=match_name)
@@ -272,7 +272,7 @@ class TestCaseMatchEdit:
 
         assert e.value.message == "Match started. Cannot be edited"
 
-    def t_moveQuestionToNotExistingGame(self, db_session):
+    def test_moveQuestionToNotExistingGame(self, db_session):
         match_name = "New Match"
         match_dto = MatchDTO(session=db_session)
         match = match_dto.new(name=match_name)
@@ -304,11 +304,11 @@ class TestCaseMatchEdit:
 
 
 class TestCaseImportFromYaml:
-    def t_matchDoesNotExists(self, db_session):
+    def test_matchDoesNotExists(self, db_session):
         with pytest.raises(NotFoundObjectError):
             ValidateMatchImport(match_uid=1, db_session=db_session).is_valid()
 
-    def t_gameDoesNotExists(self, db_session):
+    def test_gameDoesNotExists(self, db_session):
         erroneous_uid = 2
         match_dto = MatchDTO(session=db_session)
         match = match_dto.save(match_dto.new())
@@ -321,7 +321,7 @@ class TestCaseImportFromYaml:
 
 
 class TestCaseQuestionCreate:
-    def t_eitherTextOrContentUrl(self):
+    def test_eitherTextOrContentUrl(self):
         with pytest.raises(ValidateError):
             ValidateNewQuestion(question_in={"text": ""}).is_valid()
 

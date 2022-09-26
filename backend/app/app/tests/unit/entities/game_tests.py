@@ -13,7 +13,7 @@ class TestCaseGameModel:
         self.match_dto = MatchDTO(session=db_session)
         self.game_dto = GameDTO(session=db_session)
 
-    def t_raiseErrorWhenTwoGamesOfMatchHaveSamePosition(self, db_session):
+    def test_raiseErrorWhenTwoGamesOfMatchHaveSamePosition(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -23,7 +23,7 @@ class TestCaseGameModel:
 
         db_session.rollback()
 
-    def t_orderedQuestionsMethod(self, emitted_queries):
+    def test_orderedQuestionsMethod(self, emitted_queries):
         # Questions are intentionally created unordered
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)

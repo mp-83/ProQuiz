@@ -13,11 +13,11 @@ class TestCaseQuestionEP:
         self.question_dto = QuestionDTO(session=db_session)
         self.answer_dto = AnswerDTO(session=db_session)
 
-    def t_unexistentQuestion(self, client: TestClient):
+    def test_unexistentQuestion(self, client: TestClient):
         response = client.get(f"{settings.API_V1_STR}/questions/30")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def t_fetchingSingleQuestion(self, client: TestClient):
+    def test_fetchingSingleQuestion(self, client: TestClient):
         question = self.question_dto.new(text="Text", position=0)
         self.question_dto.save(question)
         response = client.get(f"{settings.API_V1_STR}/questions/{question.uid}")
@@ -25,7 +25,7 @@ class TestCaseQuestionEP:
         assert response.json()["text"] == "Text"
         assert response.json()["answers_list"] == []
 
-    def t_createNewQuestion(self, client: TestClient, superuser_token_headers: dict):
+    def test_createNewQuestion(self, client: TestClient, superuser_token_headers: dict):
         # CSRF token is needed also in this case
         response = client.post(
             f"{settings.API_V1_STR}/questions/new",
@@ -40,7 +40,7 @@ class TestCaseQuestionEP:
         assert response.json()["text"] == "eleven pm"
         assert response.json()["position"] == 2
 
-    def t_createNewQuestionWithContentUrl(
+    def test_createNewQuestionWithContentUrl(
         self, client: TestClient, superuser_token_headers: dict
     ):
         # CSRF token is needed also in this case
@@ -58,7 +58,7 @@ class TestCaseQuestionEP:
         assert response.json()["content_url"] == "https://img.com"
         assert response.json()["position"] == 2
 
-    def t_changeTextAndPositionOfAQuestion(
+    def test_changeTextAndPositionOfAQuestion(
         self, client: TestClient, superuser_token_headers: dict
     ):
         question = self.question_dto.new(text="Text", position=0, time=10)
@@ -76,7 +76,7 @@ class TestCaseQuestionEP:
         assert response.json()["position"] == 2
         assert response.json()["time"] == 10
 
-    def t_positionCannotBeNegative(
+    def test_positionCannotBeNegative(
         self, client: TestClient, superuser_token_headers: dict
     ):
         question = self.question_dto.new(text="Text", position=0)
@@ -88,7 +88,7 @@ class TestCaseQuestionEP:
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def t_changingContentUrlWithText(
+    def test_changingContentUrlWithText(
         self, client: TestClient, superuser_token_headers: dict
     ):
         url = "https://img.org"
@@ -104,7 +104,7 @@ class TestCaseQuestionEP:
         assert response.json()["text"] == "ContentURL"
         assert response.json()["position"] == 0
 
-    def t_reorderAnswers(self, client: TestClient, superuser_token_headers: dict):
+    def test_reorderAnswers(self, client: TestClient, superuser_token_headers: dict):
         question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
         a1 = self.answer_dto.new(question_uid=question.uid, text="Answer1", position=0)
@@ -127,7 +127,7 @@ class TestCaseQuestionEP:
         assert question.answers_by_position[1].uid == a3.uid
         assert question.answers_by_position[2].uid == a1.uid
 
-    def t_partialUpdateAnswerTextAndLevel(
+    def test_partialUpdateAnswerTextAndLevel(
         self, client: TestClient, superuser_token_headers: dict
     ):
         question = self.question_dto.new(text="new-question", position=0)
@@ -150,7 +150,7 @@ class TestCaseQuestionEP:
         assert question.answers_by_position[0].text == "updated text"
         assert question.answers_by_position[0].level == 1
 
-    def t_listAllQuestions(
+    def test_listAllQuestions(
         self, client: TestClient, superuser_token_headers: dict, question_dto
     ):
         new_question = question_dto.new(text="First Question", position=1)

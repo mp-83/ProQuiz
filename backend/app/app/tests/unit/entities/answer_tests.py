@@ -7,7 +7,7 @@ class TestCaseAnswer:
         self.question_dto = question_dto
         self.answer_dto = answer_dto
 
-    def t_textIsCorrectlyParsed(self):
+    def test_textIsCorrectlyParsed(self):
         question = self.question_dto.new(text="US has 40 states?", position=0)
         self.question_dto.save(question)
         ans = self.answer_dto.new(

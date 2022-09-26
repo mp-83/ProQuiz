@@ -15,7 +15,7 @@ from app.tests.fixtures import TEST_1
 
 
 class TestCaseBadRequest:
-    def t_creation(self, client: TestClient, superuser_token_headers: dict) -> None:
+    def test_creation(self, client: TestClient, superuser_token_headers: dict) -> None:
         response = client.post(
             f"{settings.API_V1_STR}/matches/new",
             json={"questions": [None]},
@@ -23,7 +23,7 @@ class TestCaseBadRequest:
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def t_update(self, client: TestClient, superuser_token_headers: dict) -> None:
+    def test_update(self, client: TestClient, superuser_token_headers: dict) -> None:
         response = client.put(
             f"{settings.API_V1_STR}/matches/edit/1",
             json={"questions": [1]},
@@ -41,7 +41,7 @@ class TestCaseMatchEndpoints:
         self.game_dto = GameDTO(session=db_session)
         self.user_dto = UserDTO(session=db_session)
 
-    def t_successfulCreationOfAMatch(
+    def test_successfulCreationOfAMatch(
         self, client: TestClient, superuser_token_headers: dict
     ):
         match_name = "New Match"
@@ -56,7 +56,9 @@ class TestCaseMatchEndpoints:
         assert questions[0]["text"] == TEST_1[0]["text"]
         assert response.json()["is_restricted"]
 
-    def t_createMatchWithCode(self, client: TestClient, superuser_token_headers: dict):
+    def test_createMatchWithCode(
+        self, client: TestClient, superuser_token_headers: dict
+    ):
         match_name = "New Match"
         now = datetime.now(tz=timezone.utc) + timedelta(hours=1)
         tomorrow = now + timedelta(days=1)
@@ -74,11 +76,11 @@ class TestCaseMatchEndpoints:
         assert response.json()["code"]
         assert response.json()["expires"] == tomorrow.isoformat().replace("+00:00", "")
 
-    def t_requestUnexistentMatch(self, client: TestClient):
+    def test_requestUnexistentMatch(self, client: TestClient):
         response = client.get(f"{settings.API_V1_STR}/matches/30")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def t_retriveOneMatchWithAllData(self, client: TestClient):
+    def test_retriveOneMatchWithAllData(self, client: TestClient):
         match_name = "New Match"
         match = self.match_dto.new(name=match_name)
         self.match_dto.save(match)
@@ -125,7 +127,7 @@ class TestCaseMatchEndpoints:
             },
         ]
 
-    def t_updateFromTimeAndToTime(
+    def test_updateFromTimeAndToTime(
         self, client: TestClient, superuser_token_headers: dict
     ):
         match = self.match_dto.new(is_restricted=True)
@@ -146,7 +148,7 @@ class TestCaseMatchEndpoints:
         assert match.order
         assert match.is_restricted
 
-    def t_changeGamesOrder(self, client: TestClient, superuser_token_headers: dict):
+    def test_changeGamesOrder(self, client: TestClient, superuser_token_headers: dict):
         match = self.match_dto.new()
         self.match_dto.save(match)
         first_game = self.game_dto.new(match_uid=match.uid)
@@ -162,7 +164,7 @@ class TestCaseMatchEndpoints:
         self.game_dto.refresh(first_game)
         assert not first_game.order
 
-    def t_addQuestionToExistingMatchWithOneGameOnly(
+    def test_addQuestionToExistingMatchWithOneGameOnly(
         self, client: TestClient, superuser_token_headers: dict
     ):
         match = self.match_dto.new()
@@ -206,7 +208,7 @@ class TestCaseMatchEndpoints:
         self.match_dto.refresh(match)
         assert match.times == 10
 
-    def t_listAllMatches(self, client: TestClient):
+    def test_listAllMatches(self, client: TestClient):
         self.match_dto.save(self.match_dto.new())
         self.match_dto.save(self.match_dto.new())
         self.match_dto.save(self.match_dto.new())
@@ -229,7 +231,7 @@ class TestCaseMatchEndpoints:
             "uid",
         }
 
-    def t_importQuestionsFromYaml(
+    def test_importQuestionsFromYaml(
         self, client: TestClient, superuser_token_headers: dict, yaml_file_handler
     ):
         match = self.match_dto.new()
@@ -256,7 +258,7 @@ class TestCaseMatchEndpoints:
         )
         assert response.json()["questions_list"][1]["time"] is None
 
-    def t_importTemplateQuestions(
+    def test_importTemplateQuestions(
         self, client: TestClient, superuser_token_headers: dict, question_dto
     ):
         """
@@ -285,7 +287,7 @@ class TestCaseMatchEndpoints:
         assert response.ok
         assert len(match.questions_list) == 3
 
-    def t_matchRankings(self, client: TestClient, db_session, match_dto):
+    def test_matchRankings(self, client: TestClient, db_session, match_dto):
         match = match_dto.save(match_dto.new())
         user_1 = UserDTO(session=db_session).fetch()
         user_2 = UserDTO(session=db_session).fetch()

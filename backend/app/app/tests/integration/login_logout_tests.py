@@ -7,14 +7,14 @@ from app.domain_service.data_transfer.user import UserDTO
 
 
 class TestCaseLogin:
-    def t_failedLoginAttempt(self, client: TestClient, db_session):
+    def test_failedLoginAttempt(self, client: TestClient, db_session):
         response = client.post(
             f"{settings.API_V1_STR}/login/access-token",
             data={"username": "user@test.com", "password": "psser"},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def t_successfulLogin(
+    def test_successfulLogin(
         self, client: TestClient, superuser_token_headers: dict, db_session
     ):
         dto = UserDTO(session=db_session)
@@ -28,7 +28,9 @@ class TestCaseLogin:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["access_token"]
 
-    def t_tokenCorrectness(self, client: TestClient, access_token_expires, db_session):
+    def test_tokenCorrectness(
+        self, client: TestClient, access_token_expires, db_session
+    ):
         dto = UserDTO(session=db_session)
         new_user = dto.new(email="user@test.com", password="p@ssworth")
         dto.save(new_user)
@@ -44,7 +46,7 @@ class TestCaseLogin:
 
 
 # class TestCaseLogOut:
-#     def t_cookiesAfterLogoutCompletedSuccessfully(self, client: TestClient, superuser_token_headers: dict, db_session):
+#     def test_cookiesAfterLogoutCompletedSuccessfully(self, client: TestClient, superuser_token_headers: dict, db_session):
 #         response = client.post(
 #             f"{settings.API_V1_STR}/logout",
 #             headers=superuser_token_headers,

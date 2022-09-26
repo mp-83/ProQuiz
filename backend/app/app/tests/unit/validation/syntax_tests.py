@@ -8,7 +8,7 @@ from app.domain_service.schemas import syntax_validation as syntax
 
 
 class TestCaseNullable:
-    def t_nullableValues(self):
+    def test_nullableValues(self):
         for schema, field in [
             (syntax.LandPlay, "match_uhash"),
             (syntax.CodePlay, "match_code"),
@@ -20,62 +20,62 @@ class TestCaseNullable:
 
 
 class TestCasePlaySchemas:
-    def t_matchUHashDoesNotMatchRegex(self):
+    def test_matchUHashDoesNotMatchRegex(self):
         value = "IJD34KOP"
         try:
             syntax.LandPlay(**{"match_uhash": value})
         except ValidationError as err:
             assert err.errors()[0]["msg"] == f"uHash {value} does not match regex"
 
-    def t_matchWrongCode(self):
+    def test_matchWrongCode(self):
         value = "34569"
         try:
             syntax.CodePlay(**{"match_code": value})
         except ValidationError as err:
             assert err.errors()[0]["msg"] == f"Code {value} does not match regex"
 
-    def t_validStartPayloadWithoutUser(self):
+    def test_validStartPayloadWithoutUser(self):
         assert syntax.StartPlay(**{"match_uid": 1})
 
-    def t_validStartPayloadWithoutPassword(self):
+    def test_validStartPayloadWithoutPassword(self):
         assert syntax.StartPlay(**{"match_uid": 1, "user_uid": 1})
 
-    def t_startPayloadWithInvalidPassword(self):
+    def test_startPayloadWithInvalidPassword(self):
         password = "IJD34KOP"
         try:
             syntax.StartPlay(**{"match_uid": 1, "user_uid": 1, "password": password})
         except ValidationError as err:
             assert err.errors()[0]["msg"] == f"Password {password} does not match regex"
 
-    def t_validStartPayloadWithValidPassword(self):
+    def test_validStartPayloadWithValidPassword(self):
         schema = syntax.StartPlay(
             **{"match_uid": 1, "user_uid": 1, "password": "04542"}
         )
         assert schema.dict()["password"] == "04542"
 
-    def t_validNextPayload(self):
+    def test_validNextPayload(self):
         assert syntax.NextPlay(
             **{"match_uid": 1, "user_uid": 2, "answer_uid": 3, "question_uid": 4}
         )
 
-    def t_allRequiredByDefault(self):
+    def test_allRequiredByDefault(self):
         try:
             syntax.NextPlay(**{"match_uid": 1, "user_uid": 2, "answer_uid": 3})
         except ValidationError as err:
             assert err.errors()[0]["loc"] == ("question_uid",)
             assert err.errors()[0]["msg"] == "field required"
 
-    def t_emailAndBirthDate(self):
+    def test_emailAndBirthDate(self):
         assert syntax.SignPlay(**{"email": "user@pp.com", "token": "12022021"})
 
-    def t_invalidBirthDateNull(self):
+    def test_invalidBirthDateNull(self):
         try:
             syntax.SignPlay(**{"email": "user@pp.com", "token": None})
         except ValidationError as err:
             assert err.errors()[0]["loc"] == ("token",)
             assert err.errors()[0]["msg"] == "none is not an allowed value"
 
-    def t_invalidEmailNull(self):
+    def test_invalidEmailNull(self):
         try:
             syntax.SignPlay(**{"email": None, "token": "11012014"})
         except ValidationError as err:
@@ -84,30 +84,30 @@ class TestCasePlaySchemas:
 
 
 class TestCaseQuestionSchema:
-    def t_textMaxLength(self):
+    def test_textMaxLength(self):
         pytest.raises(
             ValidationError,
             syntax.QuestionCreate,
             **{"text": "".join("a" for _ in range(501)), "position": 1},
         )
 
-    def t_textMinLength(self):
+    def test_textMinLength(self):
         pytest.raises(ValidationError, syntax.QuestionCreate, text="aa", position=1)
 
-    def t_nullTextIsValid(self):
+    def test_nullTextIsValid(self):
         assert syntax.QuestionCreate(text=None, position=1)
 
-    def t_nullContentUrlIsValid(self):
+    def test_nullContentUrlIsValid(self):
         assert syntax.QuestionCreate(content_url=None)
 
-    def t_urlMinLength(self):
+    def test_urlMinLength(self):
         pytest.raises(
             ValidationError, syntax.QuestionCreate, content_url="aa", position=1
         )
 
 
 class TestCaseMatchSchema:
-    def t_createPayloadWithQuestions(self):
+    def test_createPayloadWithQuestions(self):
         schema = syntax.MatchCreate(
             **{
                 "name": "new match",
@@ -130,7 +130,7 @@ class TestCaseMatchSchema:
         assert answers[0]["text"] == "False"
         assert answers[1]["text"] == "True"
 
-    def t_expirationValuesCannotBeNone(self):
+    def test_expirationValuesCannotBeNone(self):
         try:
             syntax.MatchCreate(
                 **{
@@ -147,7 +147,7 @@ class TestCaseMatchSchema:
             assert err.errors()[1]["loc"] == ("to_time",)
             assert err.errors()[1]["msg"] == "none is not an allowed value"
 
-    def t_expirationValuesMustBeDatetimeIsoFormatted(self):
+    def test_expirationValuesMustBeDatetimeIsoFormatted(self):
         schema = syntax.MatchCreate(
             **{
                 "name": "new match",
@@ -161,7 +161,7 @@ class TestCaseMatchSchema:
         assert schema
         assert isinstance(schema.dict()["to_time"], datetime)
 
-    def t_multipleEdgeValues(self):
+    def test_multipleEdgeValues(self):
         document = {
             "name": "new match",
             "times": "2",
@@ -176,7 +176,7 @@ class TestCaseMatchSchema:
             assert schema
             assert schema.dict()["with_code"]
 
-    def t_partialPayloadValidation(self):
+    def test_partialPayloadValidation(self):
         schema = syntax.MatchEdit(
             **{
                 "from_time": "2022-01-01T00:00:01+00:00",
@@ -212,7 +212,7 @@ class TestCaseYamlSchema:
         b64string = f"data:application/x-yaml;base64,{b64content}"
         yield b64string
 
-    def t_validYamlContent(self, valid_encoded_yaml_content):
+    def test_validYamlContent(self, valid_encoded_yaml_content):
         schema = syntax.MatchYamlImport(
             **{"uid": 1, "data": valid_encoded_yaml_content}
         )
@@ -227,7 +227,7 @@ class TestCaseYamlSchema:
             "Kenya",
         }
 
-    def t_invalidYamlContent(self):
+    def test_invalidYamlContent(self):
         # missing dash char before answers key
         document = """
           questions:
@@ -245,7 +245,7 @@ class TestCaseYamlSchema:
         except ValidationError as err:
             assert err.errors()[0]["msg"] == "Content cannot be coerced"
 
-    def t_invalidContentPadding(self, valid_encoded_yaml_content):
+    def test_invalidContentPadding(self, valid_encoded_yaml_content):
         try:
             syntax.MatchYamlImport(
                 **{"uid": 1, "data": valid_encoded_yaml_content[:-1]}
@@ -253,7 +253,7 @@ class TestCaseYamlSchema:
         except ValidationError as err:
             assert err.errors()[0]["msg"] == "Incorrect padding"
 
-    def t_questionEmptyTextIsParseAsNull(self):
+    def test_questionEmptyTextIsParseAsNull(self):
         document = """
           questions:
             - text:
@@ -272,7 +272,7 @@ class TestCaseYamlSchema:
             assert err.errors()[0]["loc"] == ("data", "questions", 0, "text")
             assert err.errors()[0]["msg"] == "none is not an allowed value"
 
-    def t_questionIsMissingAnswersAreNotParsed(self):
+    def test_questionIsMissingAnswersAreNotParsed(self):
         document = """
           questions:
             - answers:
@@ -287,7 +287,7 @@ class TestCaseYamlSchema:
         assert schema
         assert schema.dict() == {"uid": 1, "data": {"questions": []}, "game_uid": 3}
 
-    def t_expectedMappingMethod(self):
+    def test_expectedMappingMethod(self):
         # test meant to document input => output transformation
         value = {
             "questions": [
@@ -317,25 +317,25 @@ class TestCaseYamlSchema:
 
 
 class TestCaseUserSchema:
-    def t_emptyEmail(self):
+    def test_emptyEmail(self):
         try:
             syntax.SignedUserCreate(**{"email": "", "token": "02031980"})
         except ValidationError as err:
             assert err.errors()[0]["msg"] == "value is not a valid email address"
 
-    def t_invalidEmail(self):
+    def test_invalidEmail(self):
         try:
             syntax.SignedUserCreate(**{"email": "e@a.cc", "token": "02031980"})
         except ValidationError as err:
             assert err.errors()[0]["msg"] == "value is not a valid email address"
 
-    def t_invalidTokenLength(self):
+    def test_invalidTokenLength(self):
         try:
             syntax.SignedUserCreate(**{"email": "test@proquiz.com", "token": "0203197"})
         except ValidationError as err:
             assert err.errors()[0]["msg"] == "Invalid token length"
 
-    def t_invalidTokenFormat(self):
+    def test_invalidTokenFormat(self):
         try:
             syntax.SignedUserCreate(
                 **{"email": "test@proquiz.com", "token": "02231970"}

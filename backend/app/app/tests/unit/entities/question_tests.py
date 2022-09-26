@@ -21,12 +21,12 @@ class TestCaseQuestion:
         )
         yield
 
-    def t_theQuestionAtPosition(self, samples):
+    def test_theQuestionAtPosition(self, samples):
         question = self.question_dto.at_position(0)
         assert question.text == "q1.text"
         assert question.create_timestamp is not None
 
-    def t_newCreatedAnswersShouldBeAvailableFromTheQuestion(self, samples):
+    def test_newCreatedAnswersShouldBeAvailableFromTheQuestion(self, samples):
         question = self.question_dto.get(position=0)
         answer = self.answer_dto.new(
             question=question,
@@ -43,13 +43,13 @@ class TestCaseQuestion:
         assert self.answer_dto.count() == 2
         assert question.answers[0].question_uid == question.uid
 
-    def t_createQuestionWithoutGame(self, samples):
+    def test_createQuestionWithoutGame(self, samples):
         new_question = self.question_dto.new(text="new-question", position=1)
         self.question_dto.save(new_question)
         assert new_question.is_open
         assert new_question.is_template
 
-    def t_updateQuestionGameAndSetItToNone(self, samples):
+    def test_updateQuestionGameAndSetItToNone(self, samples):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1, order=False)
         self.game_dto.save(game)
@@ -61,7 +61,7 @@ class TestCaseQuestion:
         self.question_dto.update(new_question, {"game": None})
         assert new_question.is_template
 
-    def t_allAnswersOfAQuestionMustDiffer(self, samples, db_session):
+    def test_allAnswersOfAQuestionMustDiffer(self, samples, db_session):
         question = self.question_dto.get(position=1)
         answer = self.answer_dto.new(
             text="question2.answer1", position=1, question_uid=question.uid
@@ -75,7 +75,7 @@ class TestCaseQuestion:
 
         db_session.rollback()
 
-    def t_createManyAnswersAtOnce(self):
+    def test_createManyAnswersAtOnce(self):
         data = {
             "text": "Following the machine’s debut, Kempelen was reluctant to display the Turk because",
             "answers": [
@@ -99,7 +99,7 @@ class TestCaseQuestion:
         assert self.answer_dto.get(text="The machine was undergoing repair").is_correct
         assert self.answer_dto.get(text="The machine was undergoing repair").level == 1
 
-    def t_cloningQuestion(self):
+    def test_cloningQuestion(self):
         new_question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(new_question)
         answer = self.answer_dto.new(
@@ -112,7 +112,7 @@ class TestCaseQuestion:
         assert new_question.uid != cloned.uid
         assert new_question.answers[0] != cloned.answers[0]
 
-    def t_questionsAnswersAreOrderedByDefault(self):
+    def test_questionsAnswersAreOrderedByDefault(self):
         # the reverse relation fields .answers is ordered by default
         question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
@@ -129,7 +129,7 @@ class TestCaseQuestion:
         assert question.answers[0].level == 1
         assert question.answers[1].text == "Answer2"
 
-    def t_updateLevelOfOneAnswerAndTextOfAnother(self):
+    def test_updateLevelOfOneAnswerAndTextOfAnother(self):
         question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
         a1 = self.answer_dto.new(

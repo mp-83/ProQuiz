@@ -42,7 +42,7 @@ class TestCaseBase:
 
 
 class TestCaseQuestionFactory(TestCaseBase):
-    def t_questionsAreShuffledWhenNotOrdered(self):
+    def test_questionsAreShuffledWhenNotOrdered(self):
         """Questions are inversely created
         to make the ordering meaningful.
         """
@@ -69,7 +69,7 @@ class TestCaseQuestionFactory(TestCaseBase):
         assert question_factory.current == q_zurich
         assert question_factory.next().text == q_paris.text
 
-    def t_nextQuestion(self):
+    def test_nextQuestion(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -86,7 +86,7 @@ class TestCaseQuestionFactory(TestCaseBase):
         assert question_factory.next() == first
         assert question_factory.next() == second
 
-    def t_gameOverWhenThereAreNoQuestions(self):
+    def test_gameOverWhenThereAreNoQuestions(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -95,7 +95,7 @@ class TestCaseQuestionFactory(TestCaseBase):
         with pytest.raises(GameOver):
             question_factory.next()
 
-    def t_gameIsOverAfterLastQuestion(self):
+    def test_gameIsOverAfterLastQuestion(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -109,7 +109,7 @@ class TestCaseQuestionFactory(TestCaseBase):
         with pytest.raises(GameOver):
             question_factory.next()
 
-    def t_isLastQuestion(self):
+    def test_isLastQuestion(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -130,7 +130,7 @@ class TestCaseQuestionFactory(TestCaseBase):
         question_factory.next()
         assert question_factory.is_last_question
 
-    def t_previousQuestion(self):
+    def test_previousQuestion(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -150,7 +150,7 @@ class TestCaseQuestionFactory(TestCaseBase):
         question_factory.next()
         assert question_factory.previous() == first
 
-    def t_callingPreviousWithoutNext(self):
+    def test_callingPreviousWithoutNext(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -169,7 +169,7 @@ class TestCaseQuestionFactory(TestCaseBase):
         with pytest.raises(GameError):
             question_factory.previous()
 
-    def t_callingPreviousAfterFirstNext(self):
+    def test_callingPreviousAfterFirstNext(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -191,7 +191,7 @@ class TestCaseQuestionFactory(TestCaseBase):
 
 
 class TestCaseGameFactory(TestCaseBase):
-    def t_nextGameWhenOrdered(self):
+    def test_nextGameWhenOrdered(self):
         """ """
         match = self.match_dto.save(self.match_dto.new(order=True))
         second = self.game_dto.new(match_uid=match.uid, index=2)
@@ -206,7 +206,7 @@ class TestCaseGameFactory(TestCaseBase):
         assert game_factory.next() == first
         assert game_factory.next() == third
 
-    def t_matchWithoutGamesThrowsError(self, db_session):
+    def test_matchWithoutGamesThrowsError(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         game_factory = GameFactory(match, *())
 
@@ -215,7 +215,7 @@ class TestCaseGameFactory(TestCaseBase):
 
         db_session.rollback()
 
-    def t_matchStarted(self):
+    def test_matchStarted(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -223,7 +223,7 @@ class TestCaseGameFactory(TestCaseBase):
 
         assert not game_factory.match_started
 
-    def t_isLastGame(self):
+    def test_isLastGame(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -236,7 +236,7 @@ class TestCaseGameFactory(TestCaseBase):
         game_factory.next()
         assert game_factory.is_last_game
 
-    def t_nextOverTwoSessions(self):
+    def test_nextOverTwoSessions(self):
         match = self.match_dto.save(self.match_dto.new())
         g1 = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(g1)
@@ -247,7 +247,7 @@ class TestCaseGameFactory(TestCaseBase):
         game_factory.next()
         assert game_factory.is_last_game
 
-    def t_callingPreviousRightAfterFirstNext(self):
+    def test_callingPreviousRightAfterFirstNext(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -259,7 +259,7 @@ class TestCaseGameFactory(TestCaseBase):
         with pytest.raises(MatchError):
             game_factory.previous()
 
-    def t_callingPreviousWithoutNext(self):
+    def test_callingPreviousWithoutNext(self):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -272,7 +272,7 @@ class TestCaseGameFactory(TestCaseBase):
 
 
 class TestCaseStatus(TestCaseBase):
-    def t_questionsDisplayed(self, db_session, emitted_queries):
+    def test_questionsDisplayed(self, db_session, emitted_queries):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -317,7 +317,7 @@ class TestCaseStatus(TestCaseBase):
         assert status.questions_displayed() == {q2.uid: q2, q1.uid: q1}
         assert len(emitted_queries) == before + 5
 
-    def t_questionDisplayedByGame(self, db_session):
+    def test_questionDisplayedByGame(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -359,7 +359,7 @@ class TestCaseStatus(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         assert status.questions_displayed_by_game(game) == {q2.uid: q2, q1.uid: q1}
 
-    def t_allGamesPlayed_1(self, db_session):
+    def test_allGamesPlayed_1(self, db_session):
         """
         there is no reaction for q3, that implies was not displayed
         therefore g2 should not be considered
@@ -397,7 +397,7 @@ class TestCaseStatus(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         assert status.all_games_played() == {g1.uid: g1}
 
-    def t_matchPlayedOnceOutOfTwo(self, db_session):
+    def test_matchPlayedOnceOutOfTwo(self, db_session):
         """
         the player played one, but the match can be played
         2 times, so the games played should be empty the second time
@@ -438,7 +438,7 @@ class TestCaseStatus(TestCaseBase):
         assert not status.start_fresh_one()
         assert status.questions_displayed() == {q1.uid: q1, q2.uid: q2}
 
-    def t_startFreshMatch(self, db_session):
+    def test_startFreshMatch(self, db_session):
         """
         verify several context related properties
         """
@@ -450,7 +450,7 @@ class TestCaseStatus(TestCaseBase):
         assert status.questions_displayed() == {}
         assert status.all_games_played() == {}
 
-    def t_matchTotalScore(self, db_session):
+    def test_matchTotalScore(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         g1 = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(g1)
@@ -498,7 +498,7 @@ class TestCaseStatus(TestCaseBase):
 
 
 class TestCaseSinglePlayer(TestCaseBase):
-    def t_reactionIsCreatedAsSoonAsQuestionIsReturned(self, db_session):
+    def test_reactionIsCreatedAsSoonAsQuestionIsReturned(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -519,7 +519,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         assert player.current == question_displayed
         assert user.reactions.count() == 1
 
-    def t_reactToFirstQuestion(self, db_session):
+    def test_reactToFirstQuestion(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(game)
@@ -548,7 +548,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         assert user.reactions.count() > 0
         assert next_q == second_question
 
-    def t_startMatchAlreadyExpired(self, db_session):
+    def test_startMatchAlreadyExpired(self, db_session):
         match = self.match_dto.new(to_time=datetime.now() - timedelta(microseconds=10))
         self.match_dto.save(match)
         game = self.game_dto.new(match_uid=match.uid, index=1)
@@ -569,7 +569,7 @@ class TestCaseSinglePlayer(TestCaseBase):
 
         assert e.value.message == "Expired match"
 
-    def t_matchExpiresAfterStartButBeforeReaction(self, db_session):
+    def test_matchExpiresAfterStartButBeforeReaction(self, db_session):
         # the to_time attribute is set right before the player initialisation
         # to bypass the is_active check inside start() and fail at reaction
         # time (where is expected)
@@ -597,7 +597,7 @@ class TestCaseSinglePlayer(TestCaseBase):
 
         assert e.value.message == "Expired match"
 
-    def t_matchCanBePlayedAnotherTime(self, db_session):
+    def test_matchCanBePlayedAnotherTime(self, db_session):
         match = self.match_dto.save(self.match_dto.new(times=2))
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -626,7 +626,7 @@ class TestCaseSinglePlayer(TestCaseBase):
 
         db_session.rollback()
 
-    def t_matchCannotBePlayedMoreThanMatchTimes(self, db_session):
+    def test_matchCannotBePlayedMoreThanMatchTimes(self, db_session):
         max_times = 2
         match = self.match_dto.save(self.match_dto.new(times=max_times))
         user = self.user_dto.new(email="user@test.project")
@@ -658,7 +658,7 @@ class TestCaseSinglePlayer(TestCaseBase):
 
         db_session.rollback()
 
-    def t_matchOver(self, db_session):
+    def test_matchOver(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -680,7 +680,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         with pytest.raises(MatchOver):
             player.react(answer, question)
 
-    def t_playMatchOverMultipleHttpRequests(self, db_session):
+    def test_playMatchOverMultipleHttpRequests(self, db_session):
         # the SinglePlayer is instanced multiple times
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0, order=False)
@@ -735,7 +735,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         with pytest.raises(MatchOver):
             player.react(third_answer, third_question)
 
-    def t_restoreOpenQuestionsMatchFromSecondQuestion(self, db_session):
+    def test_restoreOpenQuestionsMatchFromSecondQuestion(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -781,7 +781,7 @@ class TestCaseSinglePlayer(TestCaseBase):
 
 
 class TestCaseResumeMatch(TestCaseBase):
-    def t_matchCanBeResumedWhenThereIsStillOneQuestionToDisplay(self, db_session):
+    def test_matchCanBeResumedWhenThereIsStillOneQuestionToDisplay(self, db_session):
         match = self.match_dto.save(self.match_dto.new(is_restricted=True))
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -808,7 +808,7 @@ class TestCaseResumeMatch(TestCaseBase):
         player.react(answer, first_question)
         assert player.match_can_be_resumed
 
-    def t_matchCanNotBeResumedBecausePublic(self, db_session):
+    def test_matchCanNotBeResumedBecausePublic(self, db_session):
         match = self.match_dto.save(self.match_dto.new(is_restricted=False))
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -819,7 +819,7 @@ class TestCaseResumeMatch(TestCaseBase):
 
 
 class TestCasePlayScore(TestCaseBase):
-    def t_compute_score(self, db_session):
+    def test_compute_score(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)

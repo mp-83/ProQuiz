@@ -8,7 +8,7 @@ class TestCaseUserFactory:
     def setUp(self, db_session):
         self.user_dto = UserDTO(session=db_session)
 
-    def t_fetchNewSignedUser(self, monkeypatch):
+    def test_fetchNewSignedUser(self, monkeypatch):
         monkeypatch.setenv(
             "SIGNED_KEY", "3ba57f9a004e42918eee6f73326aa89d", prepend=None
         )
@@ -16,7 +16,7 @@ class TestCaseUserFactory:
         assert signed_user.email == "916a55cf753a5c847b861df2bdbbd8de@progame.io"
         assert signed_user.email_digest == "916a55cf753a5c847b861df2bdbbd8de"
 
-    def t_fetchExistingSignedUser(self, monkeypatch):
+    def test_fetchExistingSignedUser(self, monkeypatch):
         monkeypatch.setenv(
             "SIGNED_KEY", "3ba57f9a004e42918eee6f73326aa89d", prepend=None
         )
@@ -31,7 +31,7 @@ class TestCaseUserFactory:
             == signed_user
         )
 
-    def t_fetchUnsignedUserShouldReturnNewUserEveryTime(self, mocker):
+    def test_fetchUnsignedUserShouldReturnNewUserEveryTime(self, mocker):
         # called twice to showcase the expected behaviour
         mocker.patch(
             "app.domain_service.data_transfer.user.uuid4",
@@ -48,7 +48,7 @@ class TestCaseUserFactory:
         assert unsigned_user.email == "uns-eee84145094cc69e4f816fd9f435e6b3@progame.io"
         assert not unsigned_user.token_digest
 
-    def t_fetchSignedUserWithoutOriginalEmailCreatesNewUser(self, monkeypatch):
+    def test_fetchSignedUserWithoutOriginalEmailCreatesNewUser(self, monkeypatch):
         monkeypatch.setenv(
             "SIGNED_KEY", "3ba57f9a004e42918eee6f73326aa89d", prepend=None
         )
@@ -56,7 +56,7 @@ class TestCaseUserFactory:
         another_user = self.user_dto.fetch(signed=True)
         assert signed_user.email != another_user.email
 
-    def t_createNewInternalUser(self):
+    def test_createNewInternalUser(self):
         internal_user = self.user_dto.fetch(
             email="user@test.project", password="password"
         )
@@ -64,7 +64,7 @@ class TestCaseUserFactory:
         assert internal_user.check_password("password")
         assert internal_user.create_timestamp is not None
 
-    def t_fetchExistingInternalUser(self):
+    def test_fetchExistingInternalUser(self):
         new_internal_user = self.user_dto.fetch(
             email="internal@progame.io", password="password"
         )

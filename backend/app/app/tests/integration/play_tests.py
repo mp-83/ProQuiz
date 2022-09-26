@@ -14,7 +14,7 @@ from app.domain_service.data_transfer.user import UserDTO, WordDigest
 
 
 class TestCaseBadRequest:
-    def t_endpoints(self, client: TestClient, superuser_token_headers: dict):
+    def test_endpoints(self, client: TestClient, superuser_token_headers: dict):
         endpoints = ["/play/h/BAD", "/play/start", "/play/next", "/play/sign"]
         for endpoint in endpoints:
             response = client.post(
@@ -27,7 +27,9 @@ class TestCaseBadRequest:
 
 class TestCasePlayLand:
     # the test scenario for land/404 is already tested above
-    def t_playLand(self, client: TestClient, superuser_token_headers: dict, db_session):
+    def test_playLand(
+        self, client: TestClient, superuser_token_headers: dict, db_session
+    ):
         match_dto = MatchDTO(session=db_session)
         match = match_dto.new(with_code=False)
         match_dto.save(match)
@@ -41,7 +43,9 @@ class TestCasePlayLand:
 
 
 class TestCasePlayCode:
-    def t_playCode(self, client: TestClient, superuser_token_headers: dict, db_session):
+    def test_playCode(
+        self, client: TestClient, superuser_token_headers: dict, db_session
+    ):
         in_one_hour = datetime.now(tz=timezone.utc) + timedelta(hours=1)
         match_dto = MatchDTO(session=db_session)
         match = match_dto.new(with_code=True, expires=in_one_hour)
@@ -58,7 +62,7 @@ class TestCasePlayCode:
 
 
 class TestCasePlaySign:
-    def t_successfulSignReturnsExisting(
+    def test_successfulSignReturnsExisting(
         self, client: TestClient, superuser_token_headers: dict, match_dto, user_dto
     ):
         match = match_dto.new(with_code=True)
@@ -89,7 +93,7 @@ class TestCasePlayStart:
         self.game_dto = GameDTO(session=db_session)
         self.user_dto = UserDTO(session=db_session)
 
-    def t_unexistentMatch(self, client: TestClient, superuser_token_headers: dict):
+    def test_unexistentMatch(self, client: TestClient, superuser_token_headers: dict):
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": 100, "user_uid": 1},
@@ -97,7 +101,7 @@ class TestCasePlayStart:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def t_startExpiredMatch(self, client: TestClient, superuser_token_headers: dict):
+    def test_startExpiredMatch(self, client: TestClient, superuser_token_headers: dict):
         one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
         match = self.match_dto.new(expires=one_hour_ago)
         self.match_dto.save(match)
@@ -110,7 +114,7 @@ class TestCasePlayStart:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def t_startMatchAndUserIsImplicitlyCreated(
+    def test_startMatchAndUserIsImplicitlyCreated(
         self, client: TestClient, superuser_token_headers: dict
     ):
         match = self.match_dto.new(is_restricted=False)
@@ -135,7 +139,7 @@ class TestCasePlayStart:
         # the user.uid value can't be known ahead, but it will be > 0
         assert response.json()["user_uid"] > 0
 
-    def t_startMatchWithoutQuestion(
+    def test_startMatchWithoutQuestion(
         self, client: TestClient, superuser_token_headers: dict
     ):
         match = self.match_dto.new(is_restricted=False)
@@ -153,7 +157,7 @@ class TestCasePlayStart:
         assert response.json()["detail"] == f"Game {game.uid} has no questions"
 
     # the password feature is tested more thoroughly in the logical_validation tests
-    def t_startRestrictedMatchUsingPassword(
+    def test_startRestrictedMatchUsingPassword(
         self, client: TestClient, superuser_token_headers: dict
     ):
         match = self.match_dto.new(is_restricted=True)
@@ -189,7 +193,7 @@ class TestCasePlayNext:
         self.game_dto = GameDTO(session=db_session)
         self.user_dto = UserDTO(session=db_session)
 
-    def t_duplicateSameReaction(
+    def test_duplicateSameReaction(
         self, client: TestClient, superuser_token_headers: dict, trivia_match
     ):
         match = trivia_match
@@ -220,7 +224,9 @@ class TestCasePlayNext:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def t_unexistentQuestion(self, client: TestClient, superuser_token_headers: dict):
+    def test_unexistentQuestion(
+        self, client: TestClient, superuser_token_headers: dict
+    ):
         response = client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
@@ -233,7 +239,7 @@ class TestCasePlayNext:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def t_answerQuestion(
+    def test_answerQuestion(
         self, client: TestClient, superuser_token_headers: dict, trivia_match
     ):
         match = trivia_match
@@ -255,7 +261,7 @@ class TestCasePlayNext:
         assert response.json()["question"]["text"] == match.questions[0][1].text
         assert response.json()["user_uid"] == user.uid
 
-    def t_notAnsweringQuestion(
+    def test_notAnsweringQuestion(
         self, client: TestClient, superuser_token_headers: dict, trivia_match
     ):
         match = trivia_match
@@ -276,7 +282,7 @@ class TestCasePlayNext:
         assert response.json()["question"]["text"] == match.questions[0][1].text
         assert response.json()["user_uid"] == user.uid
 
-    def t_completeMatch(
+    def test_completeMatch(
         self, client: TestClient, superuser_token_headers: dict, db_session
     ):
         match_dto = MatchDTO(session=db_session)
@@ -311,7 +317,7 @@ class TestCasePlayNext:
         assert response.json()["score"] > 0
         assert match.rankings.count() == 1
 
-    def t_continueStartedMatchWithMultipleGames(
+    def test_continueStartedMatchWithMultipleGames(
         self, client: TestClient, superuser_token_headers: dict, db_session
     ):
         # first and only question of the first game is answered
