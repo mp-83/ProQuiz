@@ -15,7 +15,7 @@ from app.domain_service.data_transfer.user import UserDTO
 
 class TestCaseReactionModel:
     @pytest.fixture(autouse=True)
-    def setUp(self, db_session):
+    def setup(self, db_session):
         self.question_dto = QuestionDTO(session=db_session)
         self.answer_dto = AnswerDTO(session=db_session)
         self.reaction_dto = ReactionDTO(session=db_session)
@@ -23,7 +23,14 @@ class TestCaseReactionModel:
         self.game_dto = GameDTO(session=db_session)
         self.user_dto = UserDTO(session=db_session)
 
-    def test_cannotExistsTwoReactionsOfTheSameUserAtSameTime(self, db_session):
+    def test_1(self, db_session):
+        """
+        GIVEN: a question of a match
+        WHEN: a reaction of the user is created
+        THEN: another reaction for the same
+                user and question cannot be created
+                at the same time
+        """
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -64,7 +71,12 @@ class TestCaseReactionModel:
             )
         db_session.rollback()
 
-    def test_ifQuestionChangesThenAlsoFKIsUpdatedAndAffectsReaction(self):
+    def test_2(self):
+        """
+        GIVEN: an existing reaction of a user to a question
+        WHEN: when question's text is updated
+        THEN: the reaction should reflect the change
+        """
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -87,7 +99,14 @@ class TestCaseReactionModel:
 
         assert reaction.question.text == "1+2 is = to"
 
-    def test_whenQuestionIsElapsedAnswerIsNotRecorded(self):
+    def test_3(self):
+        """
+        GIVEN: an existing reaction of a user created
+                when the question is displayed
+        WHEN: the question's time is elapsed and the
+                user answers
+        THEN: the answer should not be recorded
+        """
         # and the score remains Null
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
@@ -111,7 +130,14 @@ class TestCaseReactionModel:
         assert reaction.answer is None
         assert reaction.score is None
 
-    def test_recordAnswerInTime(self):
+    def test_4(self):
+        """
+        GIVEN: an existing reaction of a user created
+                when the question is displayed
+        WHEN: the user's answers before the question's
+                time is elapsed
+        THEN: the answer should be recorded
+        """
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -138,7 +164,14 @@ class TestCaseReactionModel:
         # isclose is used to avoid brittleness
         assert isclose(reaction.score, 0.999, rel_tol=0.05)
 
-    def test_reactionTimingIsRecordedAlsoForOpenQuestions(self, db_session):
+    def test_5(self, db_session):
+        """
+        GIVEN: an existing reaction of a user created
+                when the question is displayed
+        WHEN: the user's answers before the question's
+                time is elapsed
+        THEN: the answer should be recorded
+        """
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
@@ -165,40 +198,68 @@ class TestCaseReactionModel:
         # no score should be computed for open questions
         assert not reaction.score
 
-    def test_allReactionsOfUser(self):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=0)
-        self.game_dto.save(game)
+    def test_6(self):
+        """
+        GIVEN: two existing reactions of a user for two
+                distinct matches
+        WHEN: the reverse relationship is queried for the
+                user's reactions to the first match
+        THEN: only the correct reactions should be returned
+        """
+        match_1 = self.match_dto.save(self.match_dto.new())
+        game_1 = self.game_dto.new(match_uid=match_1.uid, index=0)
+        self.game_dto.save(game_1)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
         q1 = self.question_dto.new(text="t1", position=0)
         self.question_dto.save(q1)
-        q2 = self.question_dto.new(text="t2", position=1)
-        self.question_dto.save(q2)
         r1 = self.reaction_dto.new(
-            match=match, question=q1, user=user, game_uid=game.uid
+            match=match_1, question=q1, user=user, game_uid=game_1.uid
         )
         self.reaction_dto.save(r1)
+
+        match_2 = self.match_dto.save(self.match_dto.new())
+        game_2 = self.game_dto.new(match_uid=match_2.uid, index=0)
+        self.game_dto.save(game_2)
+        q2 = self.question_dto.new(text="t1", game_uid=game_2.uid, position=0)
+        self.question_dto.save(q2)
+
         r2 = self.reaction_dto.new(
-            match=match, question=q2, user=user, game_uid=game.uid
+            match=match_2, question=q2, user=user, game_uid=game_2.uid
         )
         self.reaction_dto.save(r2)
 
-        reactions = user.reactions.filter_by(match_uid=match.uid).all()
-        assert len(reactions) == 2
+        reactions = user.reactions.filter_by(match_uid=match_1.uid).all()
+        assert len(reactions) == 1
         assert reactions[0] == r1
-        assert reactions[1] == r2
 
 
 class TestCaseReactionScore:
-    def test_computeWithOnlyOnTiming(self):
+    def test_1(self):
+        """
+        GIVEN: a ReactionScore where only the question's time
+                is specified
+        WHEN: the value is computed
+        THEN: result should be the expected
+        """
         rs = ReactionScore(timing=0.2, question_time=3, answer_level=None)
         assert rs.value() == 0.933
 
-    def test_computeWithTimingAndLevel(self):
+    def test_2(self):
+        """
+        GIVEN: a ReactionScore where the question's time and
+                the answer's level are specified
+        WHEN: the value is computed
+        THEN: result should be the expected
+        """
         rs = ReactionScore(timing=0.2, question_time=3, answer_level=2)
         assert isclose(rs.value(), 0.93 * 2, rel_tol=0.05)
 
-    def test_computeScoreForOpenQuestion(self):
+    def test_3(self):
+        """
+        GIVEN: a ReactionScore associated to an open question
+        WHEN: the value is computed
+        THEN: result should be zero
+        """
         rs = ReactionScore(timing=0.2, question_time=None, answer_level=None)
         assert rs.value() == 0
