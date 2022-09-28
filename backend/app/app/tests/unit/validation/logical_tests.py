@@ -145,7 +145,7 @@ class TestCaseNextEndPoint(TestCaseBase):
     def test_cannotAcceptSameReactionAgain(self, db_session):
         # despite the delay between the two (which respects the DB constraint)
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=0)
+        game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         question = self.question_dto.new(
             text="Where is London?", game_uid=game.uid, position=0
@@ -172,7 +172,7 @@ class TestCaseNextEndPoint(TestCaseBase):
     def test_answerDoesNotBelongToQuestion(self, db_session):
         # simulate a more realistic case
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=0)
+        game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         question = self.question_dto.new(
             text="Where is London?", game_uid=game.uid, position=0

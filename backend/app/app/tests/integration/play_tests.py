@@ -288,7 +288,7 @@ class TestCasePlayNext:
         match_dto = MatchDTO(session=db_session)
         match = match_dto.new(with_code=True)
         match_dto.save(match)
-        game = self.game_dto.new(match_uid=match.uid, index=0)
+        game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         question = self.question_dto.new(
             text="Where is London?",

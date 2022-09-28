@@ -28,11 +28,11 @@ class TestCaseMatchModel:
 
     def test_questionsPropertyReturnsTheExpectedResults(self):
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=0)
-        self.game_dto.save(game)
+        first_game = self.game_dto.new(match_uid=match.uid, index=0)
+        self.game_dto.save(first_game)
         question = self.question_dto.new(
             text="Where is London?",
-            game_uid=game.uid,
+            game_uid=first_game.uid,
             position=0,
         )
         self.question_dto.save(question)
@@ -46,7 +46,7 @@ class TestCaseMatchModel:
         )
         self.question_dto.save(question)
         assert match.questions[0][0].text == "Where is London?"
-        assert match.questions[0][0].game == game
+        assert match.questions[0][0].game == first_game
         assert match.questions[1][0].text == "Where is Vienna?"
         assert match.questions[1][0].game == second_game
 
@@ -62,7 +62,7 @@ class TestCaseMatchModel:
 
     def test_updateTextExistingQuestion(self):
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=1)
+        game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         question = self.question_dto.new(
             text="Where is London?",
@@ -109,7 +109,7 @@ class TestCaseMatchModel:
 
     def test_cannotUseIdsOfQuestionAlreadyAssociateToAGame(self):
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=2)
+        game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         question = self.question_dto.new(
             text="Where is London?",
@@ -122,9 +122,9 @@ class TestCaseMatchModel:
 
     def test_moveFirstQuestionToSecondGame(self):
         match = self.match_dto.save(self.match_dto.new())
-        first_game = self.game_dto.new(match_uid=match.uid, index=1)
+        first_game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(first_game)
-        second_game = self.game_dto.new(match_uid=match.uid, index=2)
+        second_game = self.game_dto.new(match_uid=match.uid, index=1)
         self.game_dto.save(second_game)
         question_1 = self.question_dto.new(
             text="Where is London?",
@@ -150,14 +150,14 @@ class TestCaseMatchModel:
 
     def test_updateGameProperty(self):
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=1)
+        game = self.game_dto.new(match_uid=match.uid)
         data = {"games": [{"uid": game.uid, "order": False}]}
         self.match_dto.update(match, **data)
         assert not game.order
 
     def test_matchCannotBePlayedIfAreNoLeftAttempts(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=0)
+        game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -186,7 +186,7 @@ class TestCaseMatchModel:
             },
         ]
         match = self.match_dto.save(self.match_dto.new())
-        first_game = self.game_dto.save(self.game_dto.new(match_uid=match.uid, index=1))
+        first_game = self.game_dto.save(self.game_dto.new(match_uid=match.uid, index=0))
         self.match_dto.insert_questions(match, questions, game_uid=first_game.uid)
 
         assert match.questions[0][0].boolean
@@ -198,7 +198,7 @@ class TestCaseMatchModel:
         assert not match.questions[0][0].answers_list[1]["is_correct"]
 
         second_game = self.game_dto.save(
-            self.game_dto.new(match_uid=match.uid, index=2)
+            self.game_dto.new(match_uid=match.uid, index=1)
         )
         questions = [
             {
@@ -215,7 +215,7 @@ class TestCaseMatchModel:
 
     def test_secondGameIsTheSameOfPreviousQuestionsUnlessSpecified(self):
         match = self.match_dto.save(self.match_dto.new())
-        first_game = self.game_dto.save(self.game_dto.new(match_uid=match.uid, index=1))
+        first_game = self.game_dto.save(self.game_dto.new(match_uid=match.uid, index=0))
         questions = [
             {
                 "answers": [{"text": False}, {"text": True}],

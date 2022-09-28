@@ -32,7 +32,7 @@ class TestCaseReactionModel:
                 at the same time
         """
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=0)
+        game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -78,7 +78,7 @@ class TestCaseReactionModel:
         THEN: the reaction should reflect the change
         """
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=0)
+        game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -109,7 +109,7 @@ class TestCaseReactionModel:
         """
         # and the score remains Null
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=0)
+        game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -139,7 +139,7 @@ class TestCaseReactionModel:
         THEN: the answer should be recorded
         """
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=0)
+        game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -173,7 +173,7 @@ class TestCaseReactionModel:
         THEN: the answer should be recorded
         """
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=0)
+        game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
@@ -207,7 +207,7 @@ class TestCaseReactionModel:
         THEN: only the correct reactions should be returned
         """
         match_1 = self.match_dto.save(self.match_dto.new())
-        game_1 = self.game_dto.new(match_uid=match_1.uid, index=0)
+        game_1 = self.game_dto.new(match_uid=match_1.uid)
         self.game_dto.save(game_1)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)

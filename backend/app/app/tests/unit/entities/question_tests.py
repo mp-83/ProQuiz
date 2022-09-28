@@ -51,7 +51,7 @@ class TestCaseQuestion:
 
     def test_updateQuestionGameAndSetItToNone(self, samples):
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=1, order=False)
+        game = self.game_dto.new(match_uid=match.uid, order=False)
         self.game_dto.save(game)
         new_question = self.question_dto.new(
             text="new-question", position=1, game_uid=game.uid

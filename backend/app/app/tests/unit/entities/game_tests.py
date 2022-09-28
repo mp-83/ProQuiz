@@ -15,10 +15,10 @@ class TestCaseGameModel:
 
     def test_raiseErrorWhenTwoGamesOfMatchHaveSamePosition(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=1)
+        game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(game)
         with pytest.raises((IntegrityError, InvalidRequestError)):
-            another_game = self.game_dto.new(match_uid=match.uid, index=1)
+            another_game = self.game_dto.new(match_uid=match.uid, index=0)
             self.game_dto.save(another_game)
 
         db_session.rollback()
@@ -26,7 +26,7 @@ class TestCaseGameModel:
     def test_orderedQuestionsMethod(self, emitted_queries):
         # Questions are intentionally created unordered
         match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=1)
+        game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
         question_1 = self.question_dto.new(
             text="Where is Lisboa?", game_uid=game.uid, position=0
