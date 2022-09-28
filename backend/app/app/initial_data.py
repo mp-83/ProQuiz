@@ -73,7 +73,6 @@ class EmptyDB:
                     "quiz_geo.3.yaml",
                     "quiz_geo.6.yaml",
                 ],
-                start=1,
             ):
                 game = self.game_dto.save(
                     self.game_dto.new(match_uid=geo_match.uid, index=index)
@@ -102,9 +101,7 @@ class EmptyDB:
                 f"Creating multi-game match: {name} :: with-code {geo_match.code} :: not-restricted"
             )
             self.match_dto.save(geo_match)
-            for index, fname in enumerate(
-                ["quiz_geo.5.yaml", "quiz_geo.6.yaml"], start=1
-            ):
+            for index, fname in enumerate(["quiz_geo.5.yaml", "quiz_geo.6.yaml"]):
                 game = self.game_dto.save(
                     self.game_dto.new(match_uid=geo_match.uid, index=index)
                 )
@@ -147,9 +144,7 @@ class EmptyDB:
                 f"Creating multi-game match: {name} :: with-hash {match.code} :: restricted"
             )
             self.match_dto.save(match)
-            for index, fname in enumerate(
-                ["quiz_music.yaml", "quiz_geo.3.yaml"], start=1
-            ):
+            for index, fname in enumerate(["quiz_music.yaml", "quiz_geo.3.yaml"]):
                 game = self.game_dto.save(
                     self.game_dto.new(match_uid=match.uid, index=index)
                 )
@@ -165,7 +160,7 @@ class EmptyDB:
             )
             self.match_dto.save(match)
             for index, fname in enumerate(
-                ["quiz_bool.1.yaml", "quiz_geo.6.yaml", "quiz_food.1.yaml"], start=1
+                ["quiz_bool.1.yaml", "quiz_geo.6.yaml", "quiz_food.1.yaml"]
             ):
                 game = self.game_dto.save(
                     self.game_dto.new(match_uid=match.uid, index=index)
