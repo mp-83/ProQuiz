@@ -9,15 +9,26 @@ from app.domain_service.data_transfer.question import QuestionDTO
 
 class TestCaseQuestionEP:
     @pytest.fixture(autouse=True)
-    def setUp(self, db_session):
+    def setup(self, db_session):
         self.question_dto = QuestionDTO(session=db_session)
         self.answer_dto = AnswerDTO(session=db_session)
 
-    def test_unexistentQuestion(self, client: TestClient):
-        response = client.get(f"{settings.API_V1_STR}/questions/30")
+    def test_1(self, client: TestClient):
+        """
+        GIVEN: the id of a question
+        WHEN: the GET request is made
+        THEN: a NOT-FOUND is returned if
+        """
+        question_id = 30
+        response = client.get(f"{settings.API_V1_STR}/questions/{question_id}")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_fetchingSingleQuestion(self, client: TestClient):
+    def test_2(self, client: TestClient):
+        """
+        GIVEN: the id of an existing question
+        WHEN: the GET request is issued
+        THEN: the response should contain the question's data
+        """
         question = self.question_dto.new(text="Text", position=0)
         self.question_dto.save(question)
         response = client.get(f"{settings.API_V1_STR}/questions/{question.uid}")
@@ -25,7 +36,13 @@ class TestCaseQuestionEP:
         assert response.json()["text"] == "Text"
         assert response.json()["answers_list"] == []
 
-    def test_createNewQuestion(self, client: TestClient, superuser_token_headers: dict):
+    def test_3(self, client: TestClient, superuser_token_headers: dict):
+        """
+        GIVEN: a payload with text and position
+        WHEN: the POST request is made to the /new endpoint
+        THEN: the object is created and the response contains
+                the question's data
+        """
         # CSRF token is needed also in this case
         response = client.post(
             f"{settings.API_V1_STR}/questions/new",
@@ -40,9 +57,13 @@ class TestCaseQuestionEP:
         assert response.json()["text"] == "eleven pm"
         assert response.json()["position"] == 2
 
-    def test_createNewQuestionWithContentUrl(
-        self, client: TestClient, superuser_token_headers: dict
-    ):
+    def test_4(self, client: TestClient, superuser_token_headers: dict):
+        """
+        GIVEN: a payload with position and contentURL instead of text
+        WHEN: the POST request is made to the /new endpoint
+        THEN: the object is created and the response contains
+                the question's data
+        """
         # CSRF token is needed also in this case
         response = client.post(
             f"{settings.API_V1_STR}/questions/new",
@@ -58,9 +79,12 @@ class TestCaseQuestionEP:
         assert response.json()["content_url"] == "https://img.com"
         assert response.json()["position"] == 2
 
-    def test_changeTextAndPositionOfAQuestion(
-        self, client: TestClient, superuser_token_headers: dict
-    ):
+    def test_5(self, client: TestClient, superuser_token_headers: dict):
+        """
+        GIVEN: a payload with a changed text and position
+        WHEN: the PATCH request is made
+        THEN: the question is updated
+        """
         question = self.question_dto.new(text="Text", position=0, time=10)
         self.question_dto.save(question)
         response = client.put(
@@ -76,9 +100,12 @@ class TestCaseQuestionEP:
         assert response.json()["position"] == 2
         assert response.json()["time"] == 10
 
-    def test_positionCannotBeNegative(
-        self, client: TestClient, superuser_token_headers: dict
-    ):
+    def test_6(self, client: TestClient, superuser_token_headers: dict):
+        """
+        GIVEN: a payload with changed text and position
+        WHEN: the PATCH request is made
+        THEN: the question is updated
+        """
         question = self.question_dto.new(text="Text", position=0)
         self.question_dto.save(question)
         response = client.put(
@@ -88,9 +115,12 @@ class TestCaseQuestionEP:
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def test_changingContentUrlWithText(
-        self, client: TestClient, superuser_token_headers: dict
-    ):
+    def test_7(self, client: TestClient, superuser_token_headers: dict):
+        """
+        GIVEN: a payload with NULL text and a new content_url
+        WHEN: the PATCH request is made
+        THEN: the text is replaced with the content_url
+        """
         url = "https://img.org"
         question = self.question_dto.new(text="Text", position=0)
         self.question_dto.save(question)
@@ -104,7 +134,12 @@ class TestCaseQuestionEP:
         assert response.json()["text"] == "ContentURL"
         assert response.json()["position"] == 0
 
-    def test_reorderAnswers(self, client: TestClient, superuser_token_headers: dict):
+    def test_8(self, client: TestClient, superuser_token_headers: dict):
+        """
+        GIVEN: a payload with an array of answers with a new order
+        WHEN: the PATCH request is made to the question.edit endpoint
+        THEN: the question's answers are reordered
+        """
         question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
         a1 = self.answer_dto.new(question_uid=question.uid, text="Answer1", position=0)
@@ -127,9 +162,12 @@ class TestCaseQuestionEP:
         assert question.answers_by_position[1].uid == a3.uid
         assert question.answers_by_position[2].uid == a1.uid
 
-    def test_partialUpdateAnswerTextAndLevel(
-        self, client: TestClient, superuser_token_headers: dict
-    ):
+    def test_9(self, client: TestClient, superuser_token_headers: dict):
+        """
+        GIVEN: a payload with the text of an answer changed
+        WHEN: the PATCH request is issued to the question.edit
+        THEN: the text of the answer is updated
+        """
         question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
         a1 = self.answer_dto.new(
@@ -150,9 +188,12 @@ class TestCaseQuestionEP:
         assert question.answers_by_position[0].text == "updated text"
         assert question.answers_by_position[0].level == 1
 
-    def test_listAllQuestions(
-        self, client: TestClient, superuser_token_headers: dict, question_dto
-    ):
+    def test_10(self, client: TestClient, superuser_token_headers: dict, question_dto):
+        """
+        GIVEN: a set of existing questions
+        WHEN: a GET request is made to the /questions endpoint
+        THEN: all the records are returned
+        """
         new_question = question_dto.new(text="First Question", position=1)
         question_dto.save(new_question)
 
