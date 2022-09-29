@@ -15,9 +15,9 @@ class TestCaseQuestionEP:
 
     def test_1(self, client: TestClient):
         """
-        GIVEN: the id of a question
-        WHEN: the GET request is made
-        THEN: a NOT-FOUND is returned if
+        GIVEN: the `id` of a question
+        WHEN: the GET request is issued
+        THEN: a 404 is returned if not found
         """
         question_id = 30
         response = client.get(f"{settings.API_V1_STR}/questions/{question_id}")
@@ -38,10 +38,10 @@ class TestCaseQuestionEP:
 
     def test_3(self, client: TestClient, superuser_token_headers: dict):
         """
-        GIVEN: a payload with text and position
-        WHEN: the POST request is made to the /new endpoint
-        THEN: the object is created and the response contains
-                the question's data
+        GIVEN: a payload containing text and position
+        WHEN: the POST request is issued
+        THEN: the object is created at the given position with
+                the provided text
         """
         # CSRF token is needed also in this case
         response = client.post(
@@ -59,10 +59,10 @@ class TestCaseQuestionEP:
 
     def test_4(self, client: TestClient, superuser_token_headers: dict):
         """
-        GIVEN: a payload with position and contentURL instead of text
-        WHEN: the POST request is made to the /new endpoint
-        THEN: the object is created and the response contains
-                the question's data
+        GIVEN: a payload with position and content_url
+        WHEN: the POST request is issued
+        THEN: the object is created at the given position with
+                the provided content_url
         """
         # CSRF token is needed also in this case
         response = client.post(
@@ -81,9 +81,10 @@ class TestCaseQuestionEP:
 
     def test_5(self, client: TestClient, superuser_token_headers: dict):
         """
-        GIVEN: a payload with a changed text and position
-        WHEN: the PATCH request is made
-        THEN: the question is updated
+        GIVEN: a payload with a text and position
+        WHEN: the PATCH request is issued
+        THEN: the question is updated with the new text and moved
+                to the new position
         """
         question = self.question_dto.new(text="Text", position=0, time=10)
         self.question_dto.save(question)
@@ -102,9 +103,9 @@ class TestCaseQuestionEP:
 
     def test_6(self, client: TestClient, superuser_token_headers: dict):
         """
-        GIVEN: a payload with changed text and position
-        WHEN: the PATCH request is made
-        THEN: the question is updated
+        GIVEN: a payload with an invalid position value
+        WHEN: the PATCH request is issued
+        THEN: a 422 is returned
         """
         question = self.question_dto.new(text="Text", position=0)
         self.question_dto.save(question)
@@ -117,9 +118,10 @@ class TestCaseQuestionEP:
 
     def test_7(self, client: TestClient, superuser_token_headers: dict):
         """
-        GIVEN: a payload with NULL text and a new content_url
-        WHEN: the PATCH request is made
-        THEN: the text is replaced with the content_url
+        GIVEN: a payload with a text and position
+        WHEN: the PATCH request is issued
+        THEN: the question's content_url is set and the text contains
+                a predefined value
         """
         url = "https://img.org"
         question = self.question_dto.new(text="Text", position=0)
@@ -136,9 +138,9 @@ class TestCaseQuestionEP:
 
     def test_8(self, client: TestClient, superuser_token_headers: dict):
         """
-        GIVEN: a payload with an array of answers with a new order
-        WHEN: the PATCH request is made to the question.edit endpoint
-        THEN: the question's answers are reordered
+        GIVEN: a payload with an array of answers arranged in a different order
+        WHEN: the PATCH request is issued
+        THEN: the answers of the question are effectively reordered
         """
         question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(question)
@@ -164,8 +166,8 @@ class TestCaseQuestionEP:
 
     def test_9(self, client: TestClient, superuser_token_headers: dict):
         """
-        GIVEN: a payload with the text of an answer changed
-        WHEN: the PATCH request is issued to the question.edit
+        GIVEN: a payload with a new text for one of the answers
+        WHEN: the PATCH request is issued
         THEN: the text of the answer is updated
         """
         question = self.question_dto.new(text="new-question", position=0)
@@ -190,9 +192,9 @@ class TestCaseQuestionEP:
 
     def test_10(self, client: TestClient, superuser_token_headers: dict, question_dto):
         """
-        GIVEN: a set of existing questions
-        WHEN: a GET request is made to the /questions endpoint
-        THEN: all the records are returned
+        GIVEN: there exist some questions
+        WHEN: a GET request is made
+        THEN: all these existing questions are returned
         """
         new_question = question_dto.new(text="First Question", position=1)
         question_dto.save(new_question)
