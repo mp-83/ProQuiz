@@ -466,7 +466,7 @@ def create_new_signed_user(_):
 def get_ranking_for_a_match(_):
     match_uid = input("Enter the match ID:  ")
     client = Client()
-    response = client.get(f"{BASE_URL}/rankings/{match_uid}")
+    response = client.get(f"{BASE_URL}/matches/rankings/{match_uid}")
     if not response.ok:
         typer.echo(response.reason)
         return
