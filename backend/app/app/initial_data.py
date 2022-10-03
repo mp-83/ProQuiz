@@ -204,6 +204,12 @@ class EmptyDB:
             self.question_dto.create_with_answers(new_question, question["answers"])
 
     def create_signed_user(self):
+        """
+        Create a set of signed users for testing purposes.
+
+        These are also used in Locust, so every change in
+        data here, must be reflected in Locust too
+        """
         data = [
             ("rob@aol.com", "20081990"),
             ("alixa@gm.com", "05031950"),

@@ -4,15 +4,12 @@ from random import randint
 from time import sleep
 
 from locust import HttpUser, between, task
+from requests.exceptions import RequestException
 
 logger = logging.getLogger(__name__)
 
 
 BASE_URL = "http://backend:7070/api/v1"
-
-
-class Me:
-    """"""
 
 
 class BackEndApi(HttpUser):
@@ -37,7 +34,7 @@ class BackEndApi(HttpUser):
         self.client.headers.update(**{"Authorization": f"Bearer {token}"})
         matches = self.list_matches()
         self.restricted_matches = [
-            (match["uid"], match["uhash"], match["code"])
+            (match["uid"], match["uhash"], match["password"])
             for match in matches
             if match["is_restricted"]
         ]
@@ -53,25 +50,84 @@ class BackEndApi(HttpUser):
             return {}
         return response.json()["matches"]
 
-    @task
-    def play_restricted_matches(self):
-        assert len(self.restricted_matches)
-        assert len(self.public_matches)
-
     def player_sign(self):
-        original_email = input("Original email: ")
-        token = input("Token (birthday ddmmyyyy): ")
-        if not (original_email or token):
-            return
+        users = [
+            ("rob@aol.com", "20081990"),
+            ("alixa@gm.com", "05031950"),
+            ("greg@yahoo.com", "28041980"),
+            ("ross@gl.com", "11052001"),
+            ("paul@mail.com", "30091995"),
+        ]
+        idx = randint(0, len(users) - 1)
+        email, token = users[idx]
 
         response = self.client.post(
-            f"{BASE_URL}/play/sign", json={"email": original_email, "token": token}
+            f"{BASE_URL}/play/sign", json={"email": email, "token": token}
         )
-        if response.status_code in [200, 422, 400]:
-            logger.info(response.json())
+        if response.ok:
+            logger.info(f"Logged in: {email}")
             return response.json()["user"]
         else:
+            logger.error(f"{response.status_code}: {email}")
+
+    @task
+    def play_restricted_matches(self):
+        n = randint(0, len(self.restricted_matches) - 1)
+        match_uid, match_uhash, password = self.restricted_matches[n]
+        response = self.client.post(f"{BASE_URL}/play/h/{match_uhash}")
+
+        if response.ok:
+            logger.info(response.json())
+        elif response.status_code in [422, 400]:
+            logger.error(response.json())
+            return
+
+        # temporary
+        assert match_uid == response.json()["match_uid"]
+        payload = {"match_uid": response.json()["match_uid"], "password": password}
+        user_uid = self.player_sign()
+        if not user_uid:
+            return
+
+        payload.update(user_uid=user_uid)
+        logger.info(f"Starting match {match_uhash}: {payload}")
+        response = self.client.post(f"{BASE_URL}/play/start", json=payload)
+        if not response.ok:
             logger.error(response.reason)
+            return
+
+        response_data = response.json()
+        current_game_id = response_data["question"]["game"]["uid"]
+        while response_data["question"] is not None:
+            question = response_data["question"]
+            if question["game"]["uid"] != current_game_id:
+                current_game_id = question["game"]["uid"]
+                index = question["game"]["index"]
+                logger.info(f"Starting Game {index} of match {match_uid}")
+
+            question_time = response_data["question"]["time"] or 11
+            time_upper_bound = min(question_time, 10)
+            wait_seconds = randint(3, time_upper_bound)
+            sleep(wait_seconds)
+
+            answer_idx = randint(0, len(question["answers_to_display"]) - 1)
+            answer = question["answers_to_display"][answer_idx]
+
+            payload = {
+                "match_uid": response_data["match_uid"],
+                "question_uid": response_data["question"]["uid"],
+                "answer_uid": answer["uid"],
+                "user_uid": response_data["user_uid"],
+            }
+
+            response = self.client.post(f"{BASE_URL}/play/next", json=payload)
+            try:
+                response_data = response.json()
+            except RequestException:
+                logger.error(f"{response.code}: {match_uhash} - {payload}")
+                break
+
+        logger.info(f"Completed match {match_uhash}")
 
     @task
     def play_public_match(self):
@@ -87,23 +143,13 @@ class BackEndApi(HttpUser):
 
         if response.ok:
             logger.info(response.json())
-
         elif response.status_code in [422, 400]:
             logger.error(response.json())
             return
 
         payload = {"match_uid": response.json()["match_uid"]}
-
-        user_uid = None
-        # user_uid = player_sign(None)
-
-        if user_uid:
-            payload.update(user_uid=user_uid)
-
+        logger.info(f"Starting match {match_uhash or match_code}: {payload}")
         response = self.client.post(f"{BASE_URL}/play/start", json=payload)
-        if response.status_code in [422, 400]:
-            logger.error(response.json())
-
         if not response.ok:
             logger.error(response.reason)
             return
@@ -116,7 +162,8 @@ class BackEndApi(HttpUser):
             if question["game"]["uid"] != current_game_id:
                 current_game_id = question["game"]["uid"]
                 index = question["game"]["index"]
-                logger.debug(f"Starting Game {index} of match {match_uid}")
+                # TODO log.msg: starting game 1 of X
+                logger.info(f"Starting Game {index} of match {match_uid}")
 
             question_time = response_data["question"]["time"] or 11
             time_upper_bound = min(question_time, 10)
@@ -126,18 +173,18 @@ class BackEndApi(HttpUser):
             answer_idx = randint(0, len(question["answers_to_display"]) - 1)
             answer = question["answers_to_display"][answer_idx]
 
-            response = self.client.post(
-                f"{BASE_URL}/play/next",
-                json={
-                    "match_uid": response_data["match_uid"],
-                    "question_uid": response_data["question"]["uid"],
-                    "answer_uid": answer["uid"],
-                    "user_uid": response_data["user_uid"],
-                },
-            )
-            response_data = response.json()
-            if response.status_code in [422, 400]:
-                logger.error(response.json())
+            payload = {
+                "match_uid": response_data["match_uid"],
+                "question_uid": response_data["question"]["uid"],
+                "answer_uid": answer["uid"],
+                "user_uid": response_data["user_uid"],
+            }
+
+            response = self.client.post(f"{BASE_URL}/play/next", json=payload)
+            try:
+                response_data = response.json()
+            except RequestException:
+                logger.error(f"{response.code}: {match_uhash} - {payload}")
                 break
 
-        logger.info(f"Completed match {match_uhash if match_uhash else match_code}")
+        logger.info(f"Completed match {match_uhash or match_code}")
