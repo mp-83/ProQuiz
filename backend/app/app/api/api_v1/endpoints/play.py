@@ -70,6 +70,7 @@ def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
         player = SinglePlayer(player_status, user, match, db_session=session)
         current_question = player.start()
     except InternalException as exc:
+        logger.error(exc.message)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
         ) from exc
@@ -94,6 +95,7 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
     try:
         player = SinglePlayer(player_status, user, match, db_session=session)
     except InternalException as exc:
+        logger.error(exc.message)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
         ) from exc

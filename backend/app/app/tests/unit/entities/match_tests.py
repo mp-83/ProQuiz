@@ -178,6 +178,36 @@ class TestCaseMatchModel:
         assert match.reactions[0].user == user
         assert match.left_attempts(user) == 0
 
+    def test_10(self, db_session):
+        """
+        GIVEN: a match already started once
+        WHEN: the user wants to start
+        THEN: the user should be able to do it indefinitely because
+                because the times parameter of the match is 0
+        """
+        match = self.match_dto.new(times=0)
+        self.match_dto.save(match)
+        game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(game)
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
+        question = self.question_dto.new(
+            text="1+1 is = to", position=0, game_uid=game.uid
+        )
+        self.question_dto.save(question)
+        reaction_dto = ReactionDTO(session=db_session)
+        reaction_dto.save(
+            reaction_dto.new(
+                question=question,
+                user=user,
+                match=match,
+                game_uid=game.uid,
+            )
+        )
+
+        assert match.reactions[0].user == user
+        assert match.left_attempts(user) == 1
+
     def test_insertBooleanQuestionsIntoTwoDifferentGames(self):
         questions = [
             {

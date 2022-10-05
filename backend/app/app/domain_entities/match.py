@@ -90,6 +90,8 @@ class Match(TableMixin, Base):
         return self.reactions.count()
 
     def left_attempts(self, user):
+        if self.times == 0:
+            return 1
         return (
             self.times
             - self.reactions.filter_by(user_uid=user.uid)

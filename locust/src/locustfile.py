@@ -43,6 +43,7 @@ class BackEndApi(HttpUser):
             for match in matches
             if not match["is_restricted"]
         ]
+        self.client.headers.pop("Authorization", None)
 
     def list_matches(self):
         response = self.client.get(f"{BASE_URL}/matches/")
@@ -82,18 +83,20 @@ class BackEndApi(HttpUser):
             logger.error(response.json())
             return
 
-        # temporary
-        assert match_uid == response.json()["match_uid"]
-        payload = {"match_uid": response.json()["match_uid"], "password": password}
-        user_uid = self.player_sign()
-        if not user_uid:
-            return
+        payload = {"match_uid": response.json()["match_uid"]}
+        # user_uid = self.player_sign()
+        # if not user_uid:
+        #     self.client.headers.pop("Authorization", None)
+        #     return
 
-        payload.update(user_uid=user_uid)
+        # payload.update(user_uid=user_uid)
+        if password:
+            payload["password"] = password
+
         logger.info(f"Starting match {match_uhash}: {payload}")
         response = self.client.post(f"{BASE_URL}/play/start", json=payload)
         if not response.ok:
-            logger.error(response.reason)
+            logger.error(f"{response.status_code}: {payload}")
             return
 
         response_data = response.json()
@@ -124,10 +127,11 @@ class BackEndApi(HttpUser):
             try:
                 response_data = response.json()
             except RequestException:
-                logger.error(f"{response.code}: {match_uhash} - {payload}")
+                logger.error(f"{response.status_code}: {match_uhash} - {payload}")
                 break
 
-        logger.info(f"Completed match {match_uhash}")
+        logger.info(f"Completed restricted match {match_uhash}")
+        self.client.headers.pop("Authorization", None)
 
     @task
     def play_public_match(self):
@@ -184,7 +188,7 @@ class BackEndApi(HttpUser):
             try:
                 response_data = response.json()
             except RequestException:
-                logger.error(f"{response.code}: {match_uhash} - {payload}")
+                logger.error(f"{response.status_code}: {match_uhash} - {payload}")
                 break
 
         logger.info(f"Completed match {match_uhash or match_code}")
