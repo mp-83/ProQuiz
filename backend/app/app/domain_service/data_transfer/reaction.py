@@ -51,15 +51,15 @@ class ReactionDTO:
             instance.score = rs.value()
 
         instance.update_timestamp = response_datetime
-        if answer:
+        if answer or open_answer:
             instance.answer_time = instance.update_timestamp
-            # TODO review this logic. use open_answer
-            if instance.question.is_open:
-                instance.open_answer_uid = answer.uid
+            if open_answer:
+                instance.open_answer_uid = open_answer.uid
             else:
                 instance.answer_uid = answer.uid
+            self.save(instance)
 
-        return self.save(instance)
+        return instance
 
 
 class ReactionScore:
