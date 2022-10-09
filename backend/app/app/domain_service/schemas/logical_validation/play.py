@@ -115,6 +115,7 @@ class ValidatePlayNext:
         self.answer_uid = kwargs.get("answer_uid")
         self.user_uid = kwargs.get("user_uid")
         self.question_uid = kwargs.get("question_uid")
+        self.answer_text = kwargs.get("answer_text")
         self._data = {}
         self.user_dto = UserDTO(session=db_session)
 
@@ -138,11 +139,21 @@ class ValidatePlayNext:
 
         answer = AnswerDTO(session=self._session).get(uid=self.answer_uid)
         if answer is None:
-            raise NotFoundObjectError("Unexisting answer")
+            raise NotFoundObjectError("Nonexistent answer")
 
         question = QuestionDTO(session=self._session).get(uid=self.question_uid)
         if question and answer in question.answers:
             self._data["answer"] = answer
+            return
+
+        raise ValidateError("Invalid answer")
+
+    def valid_open_answer(self):
+        if self.answer_text is None:
+            return
+
+        question = QuestionDTO(session=self._session).get(uid=self.question_uid)
+        if question and question.is_open and self.answer_text:
             return
 
         raise ValidateError("Invalid answer")
@@ -164,6 +175,7 @@ class ValidatePlayNext:
     def is_valid(self):
         # expected to run in sequence
         self.valid_answer()
+        self.valid_open_answer()
         self.valid_user()
         self.valid_match()
         self.valid_reaction()

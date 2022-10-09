@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 class TestCaseQuestion:
     @pytest.fixture(autouse=True)
-    def setUp(self, db_session, question_dto, answer_dto, match_dto, game_dto):
+    def setup(self, db_session, question_dto, answer_dto, match_dto, game_dto):
         self.question_dto = question_dto
         self.answer_dto = answer_dto
         self.match_dto = match_dto
@@ -21,7 +21,12 @@ class TestCaseQuestion:
         )
         yield
 
-    def test_theQuestionAtPosition(self, samples):
+    def test_1(self, samples):
+        """
+        GIVEN: a set of existing questions
+        WHEN: the query at position zero is queries
+        THEN: the expected element is returned
+        """
         question = self.question_dto.at_position(0)
         assert question.text == "q1.text"
         assert question.create_timestamp is not None
@@ -44,7 +49,7 @@ class TestCaseQuestion:
         assert question.answers[0].question_uid == question.uid
 
     def test_createQuestionWithoutGame(self, samples):
-        new_question = self.question_dto.new(text="new-question", position=1)
+        new_question = self.question_dto.new(text="new-question", position=0)
         self.question_dto.save(new_question)
         assert new_question.is_open
         assert new_question.is_template

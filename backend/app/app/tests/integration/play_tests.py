@@ -400,3 +400,44 @@ class TestCasePlayNext:
         assert response.json()["question"] is None
         assert response.json()["match_uid"] is None
         assert match.rankings.count() == 1
+
+    def test_7(self, client: TestClient, superuser_token_headers: dict, db_session):
+        """
+        GIVEN: an existing match with one open question
+        WHEN: it is answered
+        THEN: then an OpenAnswer is created.
+        """
+        match_dto = MatchDTO(session=db_session)
+        match = match_dto.new(with_code=True)
+        match_dto.save(match)
+
+        game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(game)
+        question = self.question_dto.new(
+            text="Where is London?",
+            game_uid=game.uid,
+            position=0,
+            time=2,
+        )
+        self.question_dto.save(question)
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
+
+        response = client.post(
+            f"{settings.API_V1_STR}/play/next",
+            json={
+                "match_uid": match.uid,
+                "question_uid": question.uid,
+                "answer_uid": None,
+                "answer_text": "London is in the United Kindom",
+                "user_uid": user.uid,
+            },
+            headers=superuser_token_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["question"] is None
+        assert response.json()["match_uid"] is None
+
+        assert match.reactions.filter_by(open_answer_uid__isnot=None).count()
+        # assert question.open_answers.first().text == "London is in the United Kingdom"
+        assert match.rankings.count() == 1

@@ -197,6 +197,28 @@ class TestCaseNextEndPoint(TestCaseBase):
         with pytest.raises(NotFoundObjectError):
             ValidatePlayNext(match_uid=1, db_session=db_session).valid_match()
 
+    def test_6(self, db_session):
+        """
+        GIVEN: a question already associated to `fixed` Answers
+        WHEN: an open answer is sent
+        THEN: an error should be raised
+        """
+        match = self.match_dto.save(self.match_dto.new())
+        game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(game)
+        question = self.question_dto.new(
+            text="Where is Paris?", game_uid=game.uid, position=0
+        )
+        self.question_dto.save(question)
+        answer = self.answer_dto.new(question_uid=question.uid, text="UK", position=1)
+        self.answer_dto.save(answer)
+        with pytest.raises(ValidateError):
+            ValidatePlayNext(
+                answer_text="Paris is in France",
+                question_uid=question.uid,
+                db_session=db_session,
+            ).valid_open_answer()
+
 
 class TestCaseCreateMatch:
     now = datetime.now(tz=timezone.utc)

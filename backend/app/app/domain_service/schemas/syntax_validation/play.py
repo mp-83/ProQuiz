@@ -60,6 +60,7 @@ class NextPlay(BaseModel):
     user_uid: PositiveInt
     answer_uid: PositiveInt = None
     question_uid: PositiveInt
+    answer_text: str = None
 
 
 class SignPlay(BaseModel):

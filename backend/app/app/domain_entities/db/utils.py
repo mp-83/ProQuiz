@@ -67,6 +67,7 @@ class QAppenderClass(Query):
         "in": "in_",
         "notin": "notin_",
         "lt": "__lt__",
+        "isnot": "isnot",
     }
 
     def __init__(self, *args, **kwargs):

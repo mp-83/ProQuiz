@@ -90,7 +90,6 @@ class TestCaseMatchModel:
         question_2 = self.question_dto.new(text="Where is Vienna?", position=1)
         self.question_dto.add_many([question_1, question_2])
 
-        self.question_dto.add_many([question_1, question_2])
         answer = self.answer_dto.new(
             question_uid=question_1.uid,
             text="question2.answer1",

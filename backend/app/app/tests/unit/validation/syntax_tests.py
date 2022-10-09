@@ -71,7 +71,7 @@ class TestCasePlaySchemas:
 
     def test_7(self):
         """
-        GIVEN: this payload consumed by the play.next endpoint
+        GIVEN: this payload
         WHEN: validation is run
         THEN: no error should be raised
         """
@@ -81,7 +81,7 @@ class TestCasePlaySchemas:
 
     def test_8(self):
         """
-        GIVEN: this payload consumed by the play.next endpoint
+        GIVEN: this payload
         WHEN: validation is run
         THEN: error should be raised because question_uid is required
         """
@@ -93,7 +93,7 @@ class TestCasePlaySchemas:
 
     def test_9(self):
         """
-        GIVEN: this payload consumed by the play.sign endpoint
+        GIVEN: this payload
         WHEN: validation is run
         THEN: no error is raised because the data matches the
                 expected format (token: ddmmyyyy)
@@ -102,7 +102,7 @@ class TestCasePlaySchemas:
 
     def test_10(self):
         """
-        GIVEN: this payload consumed by the play.sign endpoint
+        GIVEN: this payload
         WHEN: validation is run
         THEN: an error is raised because the token cannot be null
         """
@@ -114,7 +114,7 @@ class TestCasePlaySchemas:
 
     def test_11(self):
         """
-        GIVEN: this payload consumed by the play.sign endpoint
+        GIVEN: this payload
         WHEN: validation is run
         THEN: an error is raised because the email cannot be null
         """
@@ -123,6 +123,21 @@ class TestCasePlaySchemas:
         except ValidationError as err:
             assert err.errors()[0]["loc"] == ("email",)
             assert err.errors()[0]["msg"] == "none is not an allowed value"
+
+    def test_12(self):
+        """
+        GIVEN: this payload
+        WHEN: validation is run
+        THEN: no error should be raised
+        """
+        assert syntax.NextPlay(
+            **{
+                "match_uid": 1,
+                "user_uid": 2,
+                "answer_text": "Open answer text",
+                "question_uid": 4,
+            }
+        )
 
 
 class TestCaseQuestionSchema:

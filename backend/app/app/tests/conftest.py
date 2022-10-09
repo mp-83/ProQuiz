@@ -17,7 +17,9 @@ from app.domain_entities.db.session import get_db
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.game import GameDTO
 from app.domain_service.data_transfer.match import MatchDTO
+from app.domain_service.data_transfer.open_answer import OpenAnswerDTO
 from app.domain_service.data_transfer.question import QuestionDTO
+from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.domain_service.data_transfer.user import UserDTO
 from app.main import app
 from app.tests.fixtures import TEST_1
@@ -186,6 +188,16 @@ def user_dto(db_session) -> UserDTO:
 @pytest.fixture
 def answer_dto(db_session):
     return AnswerDTO(session=db_session)
+
+
+@pytest.fixture
+def open_answer_dto(db_session):
+    return OpenAnswerDTO(session=db_session)
+
+
+@pytest.fixture
+def reaction_dto(db_session):
+    return ReactionDTO(session=db_session)
 
 
 @pytest.fixture(name="trivia_match")

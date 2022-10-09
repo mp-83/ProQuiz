@@ -28,7 +28,7 @@ class Match(TableMixin, Base):
     # determine the time range the match is playable
     from_time = Column(DateTime)
     to_time = Column(DateTime)
-    # how many times a match can be played
+    # how many times a match can be played. times = 0 means unlimited times
     times = Column(Integer, default=1)
     # indicates if games should be played in order
     order = Column(Boolean, default=True)

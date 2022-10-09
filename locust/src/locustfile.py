@@ -84,16 +84,17 @@ class BackEndApi(HttpUser):
             return
 
         payload = {"match_uid": response.json()["match_uid"]}
-        # user_uid = self.player_sign()
-        # if not user_uid:
-        #     self.client.headers.pop("Authorization", None)
-        #     return
-
-        # payload.update(user_uid=user_uid)
+        # if randint(1, 20) % 9 == 0:
+        #     user_uid = self.player_sign()
+        #     if not user_uid:
+        #         self.client.headers.pop("Authorization", None)
+        #         return
+        #
+        #     payload.update(user_uid=user_uid)
         if password:
             payload["password"] = password
 
-        logger.info(f"Starting match {match_uhash}: {payload}")
+        logger.info(f"Starting restricted match {match_uhash}: {payload}")
         response = self.client.post(f"{BASE_URL}/play/start", json=payload)
         if not response.ok:
             logger.error(f"{response.status_code}: {payload}")
