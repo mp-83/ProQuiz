@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.match import MatchDTO
+from app.domain_service.data_transfer.open_answer import OpenAnswerDTO
 from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.user import UserDTO, WordDigest
 from app.domain_service.schemas.logical_validation import RetrieveObject
@@ -154,6 +155,10 @@ class ValidatePlayNext:
 
         question = QuestionDTO(session=self._session).get(uid=self.question_uid)
         if question and question.is_open and self.answer_text:
+            open_answer_dto = OpenAnswerDTO(session=self._session)
+            open_answer = open_answer_dto.new(text=self.answer_text)
+            open_answer_dto.save(open_answer)
+            self._data["open_answer"] = open_answer
             return
 
         raise ValidateError("Invalid answer")

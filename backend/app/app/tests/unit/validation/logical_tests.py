@@ -219,6 +219,28 @@ class TestCaseNextEndPoint(TestCaseBase):
                 db_session=db_session,
             ).valid_open_answer()
 
+    def test_7(self, db_session, open_answer_dto):
+        """
+        GIVEN: an open question
+        WHEN: the user sends a answer_text
+        THEN: no error should be raised and the OpenAnswer be
+                created inside the validation process
+        """
+        match = self.match_dto.save(self.match_dto.new())
+        game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(game)
+        question = self.question_dto.new(
+            text="Where is Paris?", game_uid=game.uid, position=0
+        )
+        self.question_dto.save(question)
+        answer_text = "Paris is in France"
+        ValidatePlayNext(
+            answer_text=answer_text,
+            question_uid=question.uid,
+            db_session=db_session,
+        ).valid_open_answer()
+        assert open_answer_dto.get(text=answer_text)
+
 
 class TestCaseCreateMatch:
     now = datetime.now(tz=timezone.utc)

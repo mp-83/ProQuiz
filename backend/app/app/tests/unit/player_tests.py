@@ -543,7 +543,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
         player.start()
-        next_q = player.react(answer, first_question)
+        next_q = player.react(first_question, answer)
 
         assert user.reactions.count() > 0
         assert next_q == second_question
@@ -593,7 +593,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         player = SinglePlayer(status, user, match, db_session=db_session)
         player.start()
         with pytest.raises(MatchError) as e:
-            player.react(answer, question)
+            player.react(question, answer)
 
         assert e.value.message == "Expired match"
 
@@ -615,7 +615,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         player = SinglePlayer(status, user, match, db_session=db_session)
         assert player.start() == first_question
         try:
-            player.react(first_answer, first_question)
+            player.react(first_question, first_answer)
         except MatchOver:
             pass
 
@@ -647,7 +647,7 @@ class TestCaseSinglePlayer(TestCaseBase):
             assert status.start_fresh_one()
             assert player.start() == first_question
             try:
-                player.react(first_answer, first_question)
+                player.react(first_question, first_answer)
             except MatchOver:
                 pass
 
@@ -678,7 +678,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         player = SinglePlayer(status, user, match, db_session=db_session)
         player.start()
         with pytest.raises(MatchOver):
-            player.react(answer, question)
+            player.react(question, answer)
 
     def test_playMatchOverMultipleHttpRequests(self, db_session):
         # the SinglePlayer is instanced multiple times
@@ -722,18 +722,18 @@ class TestCaseSinglePlayer(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
         assert player.start() == first_question
-        next_q = player.react(None, first_question)
+        next_q = player.react(first_question, None)
         assert next_q == second_question
 
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
-        next_q = player.react(second_answer, second_question)
+        next_q = player.react(second_question, second_answer)
 
         assert user.reactions[1].question == second_question
         assert next_q == third_question
         player = SinglePlayer(status, user, match, db_session=db_session)
         with pytest.raises(MatchOver):
-            player.react(third_answer, third_question)
+            player.react(third_question, third_answer)
 
     def test_restoreOpenQuestionsMatchFromSecondQuestion(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
@@ -773,7 +773,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
         try:
-            player.react(open_answer_2, second_question)
+            player.react(second_question, open_answer_2)
         except MatchOver:
             pass
 
@@ -805,7 +805,7 @@ class TestCaseResumeMatch(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
         player.start()
-        player.react(answer, first_question)
+        player.react(first_question, answer)
         assert player.match_can_be_resumed
 
     def test_matchCanNotBeResumedBecausePublic(self, db_session):

@@ -21,7 +21,7 @@ class ReactionDTO:
         self._session.commit()
         return instance
 
-    def record_answer(self, instance, answer):
+    def record_answer(self, instance, answer=None, open_answer=None):
         """Save the answer given by the user
 
         If question is expired discard the answer
@@ -53,6 +53,7 @@ class ReactionDTO:
         instance.update_timestamp = response_datetime
         if answer:
             instance.answer_time = instance.update_timestamp
+            # TODO review this logic. use open_answer
             if instance.question.is_open:
                 instance.open_answer_uid = answer.uid
             else:

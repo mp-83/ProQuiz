@@ -90,7 +90,7 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
     user = data.get("user")
     answer = data.get("answer")
     question = data.get("question")
-    _ = data.get("answer_text")
+    open_answer = data.get("open_answer")
 
     player_status = PlayerStatus(user, match, db_session=session)
     try:
@@ -102,7 +102,7 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
         ) from exc
 
     try:
-        next_q = player.react(answer, question)
+        next_q = player.react(question, answer, open_answer)
     except MatchOver:
         score = PlayScore(
             match.uid, user.uid, player_status.current_score(), db_session=session

@@ -136,7 +136,7 @@ class TestCaseReactionModel:
                 when the question is displayed
         WHEN: the user's answers before the question's
                 time is elapsed
-        THEN: the answer should be recorded
+        THEN: the answer is recorded
         """
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid)
@@ -168,9 +168,8 @@ class TestCaseReactionModel:
         """
         GIVEN: an existing reaction of a user created
                 when the question is displayed
-        WHEN: the user's answers before the question's
-                time is elapsed
-        THEN: the answer should be recorded
+        WHEN: the user's replies with an OpenAnswer
+        THEN: it should be associated with the reaction
         """
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid)
@@ -188,7 +187,7 @@ class TestCaseReactionModel:
         self.reaction_dto.save(reaction)
 
         open_answer_dto = OpenAnswerDTO(session=db_session)
-        open_answer = open_answer_dto.new(text="Florida")
+        open_answer = open_answer_dto.new(text="Miami is in Florida")
         open_answer_dto.save(open_answer)
 
         self.reaction_dto.record_answer(reaction, answer=open_answer)

@@ -263,7 +263,7 @@ class SinglePlayer:
             and len(self._status.all_reactions()) < self._match.questions_count
         )
 
-    def react(self, answer, question):
+    def react(self, question, answer=None, open_answer=None):
         if not self._match.is_active:
             raise MatchError("Expired match")
 
@@ -279,7 +279,7 @@ class SinglePlayer:
         elif self._current_reaction.question != question:
             self._current_reaction = self._new_reaction(question)
 
-        self.reaction_dto.record_answer(self._current_reaction, answer)
+        self.reaction_dto.record_answer(self._current_reaction, answer, open_answer)
         return self.forward()
 
     @property
