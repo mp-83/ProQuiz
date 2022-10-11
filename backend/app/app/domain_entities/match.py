@@ -100,6 +100,10 @@ class Match(TableMixin, Base):
         )
 
     @property
+    def open_answers(self):
+        return [r.answer for r in self.reactions.filter_by(open_answer_uid__isnot=None)]
+
+    @property
     def json(self):
         """
         Store questions as list, one per game

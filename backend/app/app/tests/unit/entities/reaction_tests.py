@@ -210,7 +210,7 @@ class TestCaseReactionModel:
         self.game_dto.save(game_1)
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
-        q1 = self.question_dto.new(text="t1", position=0)
+        q1 = self.question_dto.new(text="Where is Choir?", position=0)
         self.question_dto.save(q1)
         r1 = self.reaction_dto.new(
             match=match_1, question=q1, user=user, game_uid=game_1.uid
@@ -220,7 +220,9 @@ class TestCaseReactionModel:
         match_2 = self.match_dto.save(self.match_dto.new())
         game_2 = self.game_dto.new(match_uid=match_2.uid, index=0)
         self.game_dto.save(game_2)
-        q2 = self.question_dto.new(text="t1", game_uid=game_2.uid, position=0)
+        q2 = self.question_dto.new(
+            text="Where is Basel?", game_uid=game_2.uid, position=0
+        )
         self.question_dto.save(q2)
 
         r2 = self.reaction_dto.new(
@@ -231,6 +233,58 @@ class TestCaseReactionModel:
         reactions = user.reactions.filter_by(match_uid=match_1.uid).all()
         assert len(reactions) == 1
         assert reactions[0] == r1
+        assert match_1.reactions.count() == 1
+        assert match_1.reactions.first() == r1
+
+    def test_7(self, db_session):
+        """
+        GIVEN: three reactions to a match, each from different user
+        WHEN: the open_answer property is accessed
+        THEN: it returns a list of two OpenAnswer objects for this
+                match, because one reaction didn't `contain` an answer
+        """
+        open_answer_dto = OpenAnswerDTO(session=db_session)
+
+        match = self.match_dto.save(self.match_dto.new())
+        game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(game)
+        user_1 = self.user_dto.new(email="user_1@test.project")
+        self.user_dto.save(user_1)
+        question_1 = self.question_dto.new(text="Where is Lausanne?", position=0)
+        self.question_dto.save(question_1)
+
+        open_answer_1 = open_answer_dto.new(text="Lausanne is in Switzerland.")
+        open_answer_dto.save(open_answer_1)
+        r1 = self.reaction_dto.new(
+            match=match,
+            question=question_1,
+            user=user_1,
+            game_uid=game.uid,
+            open_answer_uid=open_answer_1.uid,
+        )
+        self.reaction_dto.save(r1)
+
+        user_2 = self.user_dto.new(email="user_2@test.project")
+        self.user_dto.save(user_2)
+        open_answer_2 = open_answer_dto.new(text="Lausanne is in France.")
+        open_answer_dto.save(open_answer_2)
+        r2 = self.reaction_dto.new(
+            match=match,
+            question=question_1,
+            user=user_2,
+            game_uid=game.uid,
+            open_answer_uid=open_answer_2.uid,
+        )
+        self.reaction_dto.save(r2)
+
+        user_3 = self.user_dto.new(email="user_3@test.project")
+        self.user_dto.save(user_3)
+        r3 = self.reaction_dto.new(
+            match=match, question=question_1, user=user_2, game_uid=game.uid
+        )
+        self.reaction_dto.save(r3)
+
+        assert match.open_answers == [open_answer_1, open_answer_2]
 
 
 class TestCaseReactionScore:

@@ -120,6 +120,7 @@ class QAppenderClass(Query):
         return f_clause.filter(*op_clause)
 
     def filter_join(self, position):
+        # TODO: make this dynamic
         game_table = self.table_map.get("games")
         question_table = self.table_map.get("questions")
 
