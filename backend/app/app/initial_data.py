@@ -49,7 +49,7 @@ class EmptyDB:
         name = "Food quiz"
         food_match = self.match_dto.get(name=name)
         if not food_match:
-            food_match = self.match_dto.new(name=name, is_restricted=True)
+            food_match = self.match_dto.new(name=name, is_restricted=True, times=0)
             logger.info(
                 f"Creating match: {name} :: with hash {food_match.uhash} :: restricted"
             )
@@ -61,7 +61,7 @@ class EmptyDB:
         name = "GEO quiz [multi-game]"
         geo_match = self.match_dto.get(name=name)
         if not geo_match:
-            geo_match = self.match_dto.new(name=name, order=False)
+            geo_match = self.match_dto.new(name=name, order=False, times=0)
             logger.info(
                 f"Creating multi-game match: {name} :: with-hash {geo_match.uhash} :: not-restricted"
             )
@@ -85,7 +85,9 @@ class EmptyDB:
         name = "Brief GEO quiz.1"
         geo_match = self.match_dto.get(name=name)
         if not geo_match:
-            geo_match = self.match_dto.new(name=name, with_code=True, order=False)
+            geo_match = self.match_dto.new(
+                name=name, with_code=True, order=False, times=0
+            )
             logger.info(
                 f"Creating match: {name} :: with-code {geo_match.code} :: not-restricted"
             )
@@ -96,7 +98,7 @@ class EmptyDB:
         name = "GEO quiz.2 [multi-game]"
         geo_match = self.match_dto.get(name=name)
         if not geo_match:
-            geo_match = self.match_dto.new(name=name, with_code=True)
+            geo_match = self.match_dto.new(name=name, with_code=True, times=0)
             logger.info(
                 f"Creating multi-game match: {name} :: with-code {geo_match.code} :: not-restricted"
             )
@@ -114,7 +116,7 @@ class EmptyDB:
         name = "History quiz.1"
         history_match_1 = self.match_dto.get(name=name)
         if not history_match_1:
-            history_match_1 = self.match_dto.new(name=name, is_restricted=True)
+            history_match_1 = self.match_dto.new(name=name, is_restricted=True, times=0)
             logger.info(
                 f"Creating match: {name} :: with-hash {history_match_1.uhash} :: restricted"
             )
@@ -125,7 +127,7 @@ class EmptyDB:
         name = "History quiz.2"
         history_match_2 = self.match_dto.get(name=name)
         if not history_match_2:
-            history_match_2 = self.match_dto.new(name=name)
+            history_match_2 = self.match_dto.new(name=name, times=0)
             logger.info(
                 f"Creating match: {name} :: with times questions :: with-hash {history_match_2.uhash} :: not-restricted"
             )
@@ -139,7 +141,9 @@ class EmptyDB:
         name = "MISC quiz.1 [multi-game]"
         match = self.match_dto.get(name=name)
         if not match:
-            match = self.match_dto.new(name=name, with_code=True, is_restricted=True)
+            match = self.match_dto.new(
+                name=name, with_code=True, is_restricted=True, times=0
+            )
             logger.info(
                 f"Creating multi-game match: {name} :: with-hash {match.code} :: restricted"
             )
@@ -154,7 +158,7 @@ class EmptyDB:
         name = "MISC quiz.2 [multi-game]"
         match = self.match_dto.get(name=name)
         if not match:
-            match = self.match_dto.new(name=name, with_code=True)
+            match = self.match_dto.new(name=name, with_code=True, times=0)
             logger.info(
                 f"Creating multi-game match: {name} :: with-code {match.code} :: not-restricted"
             )
@@ -173,7 +177,7 @@ class EmptyDB:
         boolean_match_1 = self.match_dto.get(name=name)
         if not boolean_match_1:
             boolean_match_1 = self.match_dto.new(
-                name=name, is_restricted=True, order=False
+                name=name, is_restricted=True, order=False, times=0
             )
             logger.info(
                 f"Creating match: {name} :: with-hash {boolean_match_1.uhash} :: restricted"
@@ -185,7 +189,7 @@ class EmptyDB:
         name = "Boolean quiz.2"
         boolean_match_2 = self.match_dto.get(name=name)
         if not boolean_match_2:
-            boolean_match_2 = self.match_dto.new(name=name, with_code=True)
+            boolean_match_2 = self.match_dto.new(name=name, with_code=True, times=0)
             logger.info(
                 f"Creating match: {name} :: with-code {boolean_match_2.code} :: not-restricted"
             )
@@ -202,6 +206,152 @@ class EmptyDB:
                 text=question["text"], position=position
             )
             self.question_dto.create_with_answers(new_question, question["answers"])
+
+    def create_open_matches(self):
+        content = {
+            "questions": [
+                {
+                    "text": "What self-governing country was the first in the world to give women the chance to vote?",
+                    "time": None,
+                    "answers": [],
+                },
+                {
+                    "text": "Who won the Grammy for Best Album in 2001?",
+                    "time": None,
+                    "answers": [],
+                },
+                {
+                    "text": 'On "The Simpsons" episode entitled "Lisa\'s First Word", who voiced Maggie\'s first word?',
+                    "time": None,
+                    "answers": [],
+                },
+                {
+                    "text": "What colour are most Shasta daisy flowers?",
+                    "time": None,
+                    "answers": [],
+                },
+                {
+                    "text": "Which religious organization is known as the Mormons?",
+                    "time": None,
+                    "answers": [],
+                },
+            ]
+        }
+        name = "Open Match 1"
+        open_match_1 = self.match_dto.get(name=name)
+        if not open_match_1:
+            open_match_1 = self.match_dto.new(name=name, with_code=True, times=0)
+            logger.info(
+                f"Creating match: {name} :: with-code {open_match_1.code} :: not-restricted"
+            )
+            self.match_dto.save(open_match_1)
+            self.match_dto.insert_questions(open_match_1, content["questions"])
+
+        content = {
+            "questions": [
+                {
+                    "text": "Lille is the capital of Hauts-de-France. The city is located on which river?",
+                    "time": None,
+                    "answers": [],
+                },
+                {
+                    "text": "Known for its neo-Tudor architecture, Hardelot Castle is located in which village of Hauts-de-France?",
+                    "time": None,
+                    "answers": [],
+                },
+                {
+                    "text": "Which other of the 18 regions of France borders Hauts-de-France to the east?",
+                    "time": None,
+                    "answers": [],
+                },
+                {
+                    "text": "Which of these features of England can be seen from Calais, Hauts-de-France, on a clear day?",
+                    "time": None,
+                    "answers": [],
+                },
+                {
+                    "text": "The Church of Saint-Éloi stands in which city of Hauts-de-France?",
+                    "time": None,
+                    "answers": [],
+                },
+            ]
+        }
+
+        name = "Open Match 2"
+        open_match_2 = self.match_dto.get(name=name)
+        if not open_match_2:
+            open_match_2 = self.match_dto.new(name=name, is_restricted=True, times=0)
+            logger.info(
+                f"Creating match: {name} :: with-hash {open_match_2.uhash} :: restricted"
+            )
+            self.match_dto.save(open_match_2)
+            self.match_dto.insert_questions(open_match_2, content["questions"])
+
+    def create_mixed_question_matches(self):
+        content = {
+            "questions": [
+                {
+                    "text": "What is going to be Daniel's new strategy, according to Mr. Miyagi?",
+                    "time": 4,
+                    "answers": [
+                        {"text": "early retirement"},
+                        {"text": "early entry into the tournament"},
+                        {"text": "early training"},
+                        {"text": "early sleet"},
+                    ],
+                },
+                {
+                    "text": "What is Johnny's punishment for losing to Daniel?",
+                    "time": None,
+                    "answers": [],
+                },
+                {
+                    "text": "Before telling Daniel that he's the one who's going to stay in the room he's building, Miyagi tells him that it's for a what?",
+                    "time": 5,
+                    "answers": [
+                        {"text": "refugee"},
+                        {"text": "nomad"},
+                        {"text": "pilgrim"},
+                        {"text": "frient"},
+                    ],
+                },
+                {
+                    "text": "In the early part of the movie, does Mr. Miyagi think he can break a log?",
+                    "time": None,
+                    "answers": [],
+                },
+                {
+                    "text": "Who 'sings the same tune' in front of the Shinto shrine?",
+                    "time": 6,
+                    "answers": [
+                        {"text": "Kumiko"},
+                        {"text": "Toshio"},
+                        {"text": "Sato"},
+                        {"text": "Ichiro"},
+                    ],
+                },
+                {
+                    "text": "How many days does Sato give Miyagi to mourn his father's death?",
+                    "time": 10,
+                    "answers": [
+                        {"text": "0"},
+                        {"text": "3"},
+                        {"text": "1"},
+                        {"text": "2"},
+                    ],
+                },
+            ]
+        }
+
+        name = "Mixed Match"
+        mixed_match = self.match_dto.get(name=name)
+        if not mixed_match:
+            mixed_match = self.match_dto.new(name=name, with_code=True, times=0)
+            logger.info(
+                f"Creating match: {name} :: with-hash {mixed_match.uhash} :: not-restricted"
+            )
+            self.match_dto.save(mixed_match)
+            self.match_dto.insert_questions(mixed_match, content["questions"])
 
     def create_signed_user(self):
         """
@@ -229,6 +379,8 @@ class EmptyDB:
         self.create_misc_matches()
         self.create_boolean_matches()
         self.create_template_questions()
+        self.create_open_matches()
+        self.create_mixed_question_matches()
         self.create_signed_user()
 
 

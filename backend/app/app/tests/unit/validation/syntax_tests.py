@@ -126,7 +126,8 @@ class TestCasePlaySchemas:
 
     def test_12(self):
         """
-        GIVEN: this payload
+        GIVEN: payload with an answer text,
+            either empty or valued
         WHEN: validation is run
         THEN: no error should be raised
         """

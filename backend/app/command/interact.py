@@ -368,21 +368,25 @@ def play(client):
             sleep(1)
 
         answer_map = print_question_and_answers(response_data["question"])
-
-        question_time = response_data["question"]["time"]
-        if question_time:
-            typer.echo(f"You have {question_time} seconds to answer!")
-
-        index, o, e = select.select([sys.stdin], [], [], question_time)
-
-        if index:
-            index = sys.stdin.readline().strip()
-            if int(index[0]) not in answer_map:
-                index = 0
-            answer_uid = answer_map[int(index)]
+        open_answer_text = None
+        answer_uid = None
+        if not answer_map:
+            open_answer_text = input("Answer: ")
         else:
-            typer.echo("No answer!")
-            answer_uid = None
+            question_time = response_data["question"]["time"]
+            if question_time:
+                typer.echo(f"You have {question_time} seconds to answer!")
+
+            index, o, e = select.select([sys.stdin], [], [], question_time)
+
+            if index:
+                index = sys.stdin.readline().strip()
+                if int(index[0]) not in answer_map:
+                    index = 0
+                answer_uid = answer_map[int(index)]
+            else:
+                typer.echo("No answer!")
+                answer_uid = None
 
         response = client.post(
             f"{BASE_URL}/play/next",
@@ -390,13 +394,14 @@ def play(client):
                 "match_uid": response_data["match_uid"],
                 "question_uid": response_data["question"]["uid"],
                 "answer_uid": answer_uid,
+                "answer_text": open_answer_text,
                 "user_uid": response_data["user_uid"],
             },
         )
         response_data = response.json()
         if response.status_code in [422, 400]:
             typer.echo(pprint(response.json()))
-            break
+            return
 
     typer.echo("\n\n")
     typer.echo(f"Match Over. Your score is: {response_data['score']}")

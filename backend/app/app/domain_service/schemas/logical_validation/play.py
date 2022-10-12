@@ -131,7 +131,7 @@ class ValidatePlayNext:
             self._data["question"] = question
 
         reaction = user.reactions.filter_by(question_uid=question.uid).one_or_none()
-        if reaction and reaction.answer:
+        if reaction and reaction.answer:  # TODO and not question.is_open:
             raise ValidateError("Duplicate Reactions")
 
     def valid_answer(self):
@@ -154,7 +154,7 @@ class ValidatePlayNext:
             return
 
         question = QuestionDTO(session=self._session).get(uid=self.question_uid)
-        if question and question.is_open and self.answer_text:
+        if question and question.is_open:
             open_answer_dto = OpenAnswerDTO(session=self._session)
             open_answer = open_answer_dto.new(text=self.answer_text)
             open_answer_dto.save(open_answer)

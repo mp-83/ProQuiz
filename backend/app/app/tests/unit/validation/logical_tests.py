@@ -241,6 +241,28 @@ class TestCaseNextEndPoint(TestCaseBase):
         ).valid_open_answer()
         assert open_answer_dto.get(text=answer_text)
 
+    def test_8(self, db_session, open_answer_dto):
+        """
+        GIVEN: an open question
+        WHEN: the user sends a blank answer_text
+        THEN: validation succeeds. Although empty a new question
+                is created for data consistency
+        """
+        match = self.match_dto.save(self.match_dto.new())
+        game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(game)
+        question = self.question_dto.new(
+            text="Where is Paris?", game_uid=game.uid, position=0
+        )
+        self.question_dto.save(question)
+        count_before = open_answer_dto.count()
+        ValidatePlayNext(
+            answer_text="",
+            question_uid=question.uid,
+            db_session=db_session,
+        ).valid_open_answer()
+        assert open_answer_dto.count() == count_before + 1
+
 
 class TestCaseCreateMatch:
     now = datetime.now(tz=timezone.utc)
