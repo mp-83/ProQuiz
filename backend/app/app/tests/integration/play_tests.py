@@ -441,3 +441,72 @@ class TestCasePlayNext:
         assert match.reactions.filter_by(open_answer_uid__isnot=None).count()
         # assert question.open_answers.first().text == "London is in the United Kingdom"
         assert match.rankings.count() == 1
+
+    def test_8(self, client: TestClient, superuser_token_headers: dict, db_session):
+        """
+        GIVEN: a match with two question that can be played unlimited times
+        WHEN: the user plays two times
+        THEN: the system should behave correctly
+        """
+        match_dto = MatchDTO(session=db_session)
+        match = match_dto.new(is_restricted=True, times=0)
+        match_dto.save(match)
+        game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(game)
+        question_1 = self.question_dto.new(
+            text="Where is London?",
+            game_uid=game.uid,
+            position=0,
+            time=None,
+        )
+        self.question_dto.save(question_1)
+        answer_1 = self.answer_dto.new(
+            question=question_1, text="UK", position=0, level=2
+        )
+        self.answer_dto.save(answer_1)
+
+        question_2 = self.question_dto.new(
+            text="Where is Tokyo?",
+            game_uid=game.uid,
+            position=1,
+            time=None,
+        )
+        self.question_dto.save(question_2)
+        answer_2 = self.answer_dto.new(
+            question=question_2, text="Japan", position=0, level=2
+        )
+        self.answer_dto.save(answer_2)
+
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
+        for _ in range(2):
+            client.post(
+                f"{settings.API_V1_STR}/play/start",
+                json={"match_uid": match.uid, "user_uid": user.uid},
+                headers=superuser_token_headers,
+            )
+            client.post(
+                f"{settings.API_V1_STR}/play/next",
+                json={
+                    "match_uid": match.uid,
+                    "question_uid": question_1.uid,
+                    "answer_uid": answer_1.uid,
+                    "user_uid": user.uid,
+                },
+                headers=superuser_token_headers,
+            )
+            response = client.post(
+                f"{settings.API_V1_STR}/play/next",
+                json={
+                    "match_uid": match.uid,
+                    "question_uid": question_2.uid,
+                    "answer_uid": answer_2.uid,
+                    "user_uid": user.uid,
+                },
+                headers=superuser_token_headers,
+            )
+            assert response.status_code == status.HTTP_200_OK
+            assert response.json()["question"] is None
+            assert response.json()["match_uid"] is None
+            assert response.json()["score"] > 0
+            assert match.rankings.count() == 1

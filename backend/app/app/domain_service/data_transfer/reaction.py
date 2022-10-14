@@ -41,8 +41,9 @@ class ReactionDTO:
             instance.question.time is not None
             and instance.question.time - response_time_in_secs < 0
         )
+        instance.update_timestamp = response_datetime
         if question_expired:
-            return instance
+            return self.save(instance)
 
         if answer:
             rs = ReactionScore(
@@ -50,7 +51,6 @@ class ReactionDTO:
             )
             instance.score = rs.value()
 
-        instance.update_timestamp = response_datetime
         if answer or open_answer:
             instance.answer_time = instance.update_timestamp
             if open_answer:

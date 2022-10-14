@@ -136,6 +136,8 @@ class PlayerStatus:
         )
 
     def _no_attempts(self):
+        # tODO to fix and/or remove it as it always false,
+        # since a Reaction is created immediately after /start
         return self.match.reactions.filter_by(user_uid=self._user.uid).count() == 0
 
     def start_fresh_one(self):
@@ -279,6 +281,7 @@ class SinglePlayer:
         elif self._current_reaction.question != question:
             self._current_reaction = self._new_reaction(question)
 
+        # import pdb;pdb.set_trace()
         self.reaction_dto.record_answer(self._current_reaction, answer, open_answer)
         return self.forward()
 
