@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from uuid import uuid4
 
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,9 @@ class ReactionDTO:
     def save(self, instance):
         if not instance.game_uid:
             instance.game_uid = instance.question.game.uid
+
+        if not instance.attempt_uid:
+            instance.attempt_uid = uuid4().hex
 
         self._session.add(instance)
         self._session.commit()

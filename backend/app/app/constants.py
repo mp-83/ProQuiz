@@ -26,3 +26,5 @@ USER_NAME_MAX_LENGTH = 30
 # no matter the password's length,
 # the hash length stays the same
 PASSWORD_HASH_LENGTH = 60
+
+ATTEMPT_ID_LENGTH = 32
