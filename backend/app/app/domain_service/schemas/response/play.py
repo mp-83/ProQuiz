@@ -32,6 +32,7 @@ class StartResponse(BaseModel):
     match_uid: PositiveInt
     question: Question
     user_uid: PositiveInt
+    attempt_uid: str
 
 
 class NextResponse(BaseModel):

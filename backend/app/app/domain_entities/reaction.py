@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, St
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
 
-from app.constants import ATTEMPT_ID_LENGTH
+from app.constants import ATTEMPT_UID_LENGTH
 from app.domain_entities.db.base import Base
 from app.domain_entities.db.utils import TableMixin
 
@@ -40,7 +40,7 @@ class Reaction(TableMixin, Base):
     answer_time = Column(DateTime(timezone=True), nullable=True)
     score = Column(Float)
     # used to distinguish the reactions for the same match
-    attempt_uid = Column(String(ATTEMPT_ID_LENGTH), nullable=False)
+    attempt_uid = Column(String(ATTEMPT_UID_LENGTH), nullable=False)
 
     __table_args__ = (
         UniqueConstraint(

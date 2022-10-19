@@ -117,6 +117,7 @@ class ValidatePlayNext:
         self.user_uid = kwargs.get("user_uid")
         self.question_uid = kwargs.get("question_uid")
         self.answer_text = kwargs.get("answer_text")
+        self.attempt_uid = kwargs.get("attempt_uid")
         self._data = {}
         self.user_dto = UserDTO(session=db_session)
 
@@ -130,6 +131,11 @@ class ValidatePlayNext:
             question = QuestionDTO(session=self._session).get(uid=self.question_uid)
             self._data["question"] = question
 
+        attempt_reactions = user.reactions.filter_by(attempt_uid=self.attempt_uid)
+        if attempt_reactions.count() == 0:
+            raise ValidateError("Invalid attempt-uid")
+
+        self._data["attempt_uid"] = self.attempt_uid
         reaction = user.reactions.filter_by(question_uid=question.uid).one_or_none()
         if reaction and reaction.answer:  # TODO and not question.is_open:
             raise ValidateError("Duplicate Reactions")

@@ -203,7 +203,9 @@ class TestCaseReactionModel:
                 distinct matches
         WHEN: the reverse relationship is queried for the
                 user's reactions to the first match
-        THEN: only the correct reactions should be returned
+        THEN: only two reactions should be returned
+                from the reactions property and their
+                attempt_uid should be different
         """
         match_1 = self.match_dto.save(self.match_dto.new())
         game_1 = self.game_dto.new(match_uid=match_1.uid)
@@ -235,13 +237,16 @@ class TestCaseReactionModel:
         assert reactions[0] == r1
         assert match_1.reactions.count() == 1
         assert match_1.reactions.first() == r1
+        assert user.reactions[0].attempt_uid != user.reactions[1].attempt_uid
 
     def test_7(self, db_session):
         """
         GIVEN: three reactions to a match, each from different user
         WHEN: the open_answer property is accessed
         THEN: it returns a list of two OpenAnswer objects for this
-                match, because one reaction didn't `contain` an answer
+                match, because one reaction didn't `contain` an answer.
+                All reactions, because they belong to different users
+                are different
         """
         open_answer_dto = OpenAnswerDTO(session=db_session)
 
@@ -285,6 +290,7 @@ class TestCaseReactionModel:
         self.reaction_dto.save(r3)
 
         assert match.open_answers == [open_answer_1, open_answer_2]
+        assert r2.attempt_uid != r3.attempt_uid
 
 
 class TestCaseReactionScore:

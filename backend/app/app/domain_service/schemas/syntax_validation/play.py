@@ -4,6 +4,8 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, PositiveInt, validator
 
 from app.constants import (
+    ATTEMPT_UID_LENGTH,
+    ATTEMPT_UID_POPULATION,
     CODE_POPULATION,
     HASH_POPULATION,
     MATCH_CODE_LEN,
@@ -25,7 +27,7 @@ class LandPlay(BaseModel):
 
     @validator("match_uhash")
     def valid(cls, v):
-        rex = "[" + f"{HASH_POPULATION}" + "]{" + f"{MATCH_HASH_LEN}" + "}"
+        rex = "[" + f"{HASH_POPULATION}" + "]{" + f"{MATCH_HASH_LEN}" + "}$"
         if not re.match(rex, v):
             raise ValueError(f"uHash {v} does not match regex")
         return v
@@ -36,7 +38,7 @@ class CodePlay(BaseModel):
 
     @validator("match_code")
     def valid(cls, v):
-        rex = "[" + f"{CODE_POPULATION}" + "]{" + f"{MATCH_CODE_LEN}" + "}"
+        rex = "[" + f"{CODE_POPULATION}" + "]{" + f"{MATCH_CODE_LEN}" + "}$"
         if not re.match(rex, v):
             raise ValueError(f"Code {v} does not match regex")
         return v
@@ -49,7 +51,7 @@ class StartPlay(BaseModel):
 
     @validator("password")
     def valid(cls, v):
-        rex = "[" + f"{PASSWORD_POPULATION}" + "]{" + f"{MATCH_PASSWORD_LEN}" + "}"
+        rex = "[" + f"{PASSWORD_POPULATION}" + "]{" + f"{MATCH_PASSWORD_LEN}" + "}$"
         if not re.match(rex, v):
             raise ValueError(f"Password {v} does not match regex")
         return v
@@ -61,6 +63,14 @@ class NextPlay(BaseModel):
     answer_uid: PositiveInt = None
     question_uid: PositiveInt
     answer_text: str = None
+    attempt_uid: str
+
+    @validator("attempt_uid")
+    def valid(cls, v):
+        rex = "[" + f"{ATTEMPT_UID_POPULATION}" + "]{" + f"{ATTEMPT_UID_LENGTH}" + "}$"
+        if not re.match(rex, v):
+            raise ValueError(f"Attempt-uid {v} does not match regex")
+        return v
 
 
 class SignPlay(BaseModel):

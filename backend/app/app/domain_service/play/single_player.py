@@ -108,18 +108,26 @@ class PlayerStatus:
         self._current_match = match
         self._session = db_session
         self.reaction_dto = ReactionDTO(session=db_session)
+        self.__current_attempt_uid = None
+
+    @property
+    def current_attempt_uid(self):
+        return self.__current_attempt_uid
+
+    @current_attempt_uid.setter
+    def current_attempt_uid(self, value):
+        self.__current_attempt_uid = value
 
     @property
     def _all_reactions_query(self):
-        return self._user.reactions.filter_by(match_uid=self._current_match.uid)
+        return self._user.reactions.filter_by(
+            match_uid=self._current_match.uid, attempt_uid=self.__current_attempt_uid
+        )
 
     def all_reactions(self):
         return self._all_reactions_query.all()
 
     def questions_displayed(self):
-        if self.start_fresh_one():
-            return {}
-
         return {r.question.uid: r.question for r in self._all_reactions_query.all()}
 
     def questions_displayed_by_game(self, game):
@@ -130,7 +138,9 @@ class PlayerStatus:
 
     def match_completed(self):
         return (
-            self._current_match.reactions.count()
+            self._current_match.reactions.filter_by(
+                attempt_uid=self.__current_attempt_uid
+            ).count()
             - len(self._current_match.questions_list)
             == 0
         )
@@ -141,19 +151,13 @@ class PlayerStatus:
         return self.match.reactions.filter_by(user_uid=self._user.uid).count() == 0
 
     def start_fresh_one(self):
-        return (
-            self._no_attempts()
-            or self.match_completed()
-            and self._current_match.left_attempts(self._user) > 0
-        )
+        return self._no_attempts() or self._current_match.left_attempts(self._user) > 0
 
     def all_games_played(self):
         """
         Return games that were completed
         """
         result = {}
-        if self.start_fresh_one():
-            return result
 
         for game in self._current_match.games:
             if (
@@ -180,7 +184,7 @@ class PlayerStatus:
 
 
 class SinglePlayer:
-    def __init__(self, status, user, match, db_session):
+    def __init__(self, status: "PlayerStatus", user, match, db_session):
         self._status = status
         self._user = user
         self._match = match
@@ -208,7 +212,6 @@ class SinglePlayer:
             game, *self._status.questions_displayed()
         )
         question = self._question_factory.next()
-
         self._current_reaction = self.reaction_dto.new(
             match_uid=self._match.uid,
             user_uid=self._user.uid,
@@ -217,7 +220,7 @@ class SinglePlayer:
         )
         self.reaction_dto.save(self._current_reaction)
 
-        return question
+        return question, self._current_reaction.attempt_uid
 
     @property
     def match_started(self):
@@ -230,28 +233,29 @@ class SinglePlayer:
     def next_game(self):
         return self._game_factory.next_game()
 
-    @property
-    def match_score(self):
-        return self._status.total_score()
-
-    def _new_reaction(self, question):
+    def _new_reaction(self, question, attempt_uid):
         new_reaction = self.reaction_dto.new(
             match_uid=self._match.uid,
             question_uid=question.uid,
             game_uid=question.game.uid,
             user_uid=self._user.uid,
+            attempt_uid=attempt_uid,
         )
         return self.reaction_dto.save(new_reaction)
 
     def last_reaction(self, question):
-        reactions = self._user.reactions.filter_by(
-            match_uid=self._match.uid, question_uid=question.uid
-        ).filter_by(answer_uid=None, open_answer_uid=None)
+        match_reactions = self._user.reactions.filter_by(match_uid=self._match.uid)
+        attempt_uid = (
+            match_reactions.first().attempt_uid if match_reactions.count() > 0 else None
+        )
 
-        if reactions.count() > 0:
-            return reactions.first()
+        question_reaction = match_reactions.filter_by(
+            question_uid=question.uid, update_timestamp=None
+        ).one_or_none()
+        if question_reaction:
+            return question_reaction
 
-        return self._new_reaction(question)
+        return self._new_reaction(question, attempt_uid)
 
     @property
     def match_can_be_resumed(self):
@@ -279,9 +283,9 @@ class SinglePlayer:
                 self._current_reaction.game, *self._status.questions_displayed()
             )
         elif self._current_reaction.question != question:
-            self._current_reaction = self._new_reaction(question)
+            attempt_uid = self._current_reaction.attempt_uid
+            self._current_reaction = self._new_reaction(question, attempt_uid)
 
-        # import pdb;pdb.set_trace()
         self.reaction_dto.record_answer(self._current_reaction, answer, open_answer)
         return self.forward()
 

@@ -6,6 +6,8 @@ MATCH_PASSWORD_LEN = 5
 PASSWORD_POPULATION = digits
 MATCH_CODE_LEN = 4
 CODE_POPULATION = digits
+ATTEMPT_UID_LENGTH = 32
+ATTEMPT_UID_POPULATION = "abcdef" + digits
 
 ISOFORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
@@ -26,5 +28,3 @@ USER_NAME_MAX_LENGTH = 30
 # no matter the password's length,
 # the hash length stays the same
 PASSWORD_HASH_LENGTH = 60
-
-ATTEMPT_ID_LENGTH = 32

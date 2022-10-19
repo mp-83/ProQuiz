@@ -33,6 +33,7 @@ class ReactionDTO:
         questions.
         """
         response_datetime = datetime.now(tz=timezone.utc)
+        assert not instance.update_timestamp
         if not instance.create_timestamp.tzinfo:
             instance.create_timestamp = instance.create_timestamp.replace(
                 tzinfo=response_datetime.tzinfo

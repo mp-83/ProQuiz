@@ -68,7 +68,7 @@ def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
     player_status = PlayerStatus(user, match, db_session=session)
     try:
         player = SinglePlayer(player_status, user, match, db_session=session)
-        current_question = player.start()
+        next_question, attempt_uid = player.start()
     except InternalException as exc:
         logger.error(exc.message)
         raise HTTPException(
@@ -77,7 +77,8 @@ def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
 
     return {
         "match_uid": match.uid,
-        "question": current_question,
+        "question": next_question,
+        "attempt_uid": attempt_uid,
         "user_uid": user.uid,
     }
 
@@ -91,8 +92,11 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
     answer = data.get("answer")
     question = data.get("question")
     open_answer = data.get("open_answer")
+    attempt_uid = data.get("attempt_uid")
 
     player_status = PlayerStatus(user, match, db_session=session)
+    player_status.current_attempt_uid = attempt_uid
+    assert player_status.current_attempt_uid
     try:
         player = SinglePlayer(player_status, user, match, db_session=session)
     except InternalException as exc:

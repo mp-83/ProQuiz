@@ -27,7 +27,7 @@ class User(TableMixin, Base):
     reactions = relationship(
         "Reaction",
         viewonly=True,
-        order_by="Reaction.uid",
+        order_by="desc(Reaction.uid)",
         lazy="dynamic",
         query_class=QAppenderClass,
     )

@@ -22,17 +22,16 @@ class TestCaseNullable:
 class TestCasePlaySchemas:
     def test_1(self):
         value = "IJD34KOP"
-        try:
+        with pytest.raises(ValidationError) as err:
             syntax.LandPlay(**{"match_uhash": value})
-        except ValidationError as err:
-            assert err.errors()[0]["msg"] == f"uHash {value} does not match regex"
+
+        assert err.value.errors()[0]["msg"] == f"uHash {value} does not match regex"
 
     def test_2(self):
         value = "34569"
-        try:
+        with pytest.raises(ValidationError) as err:
             syntax.CodePlay(**{"match_code": value})
-        except ValidationError as err:
-            assert err.errors()[0]["msg"] == f"Code {value} does not match regex"
+        assert err.value.errors()[0]["msg"] == f"Code {value} does not match regex"
 
     def test_3(self):
         assert syntax.StartPlay(**{"match_uid": 1})
@@ -53,10 +52,12 @@ class TestCasePlaySchemas:
         THEN: error should be raised
         """
         password = "IJD34KOP"
-        try:
+        with pytest.raises(ValidationError) as err:
             syntax.StartPlay(**{"match_uid": 1, "user_uid": 1, "password": password})
-        except ValidationError as err:
-            assert err.errors()[0]["msg"] == f"Password {password} does not match regex"
+
+        assert (
+            err.value.errors()[0]["msg"] == f"Password {password} does not match regex"
+        )
 
     def test_6(self):
         """
@@ -76,7 +77,13 @@ class TestCasePlaySchemas:
         THEN: no error should be raised
         """
         assert syntax.NextPlay(
-            **{"match_uid": 1, "user_uid": 2, "answer_uid": 3, "question_uid": 4}
+            **{
+                "match_uid": 1,
+                "user_uid": 2,
+                "answer_uid": 3,
+                "question_uid": 4,
+                "attempt_uid": "40dd7e2d1c5a4a25adc2d3a5367b8de3",
+            }
         )
 
     def test_8(self):
@@ -85,11 +92,18 @@ class TestCasePlaySchemas:
         WHEN: validation is run
         THEN: error should be raised because question_uid is required
         """
-        try:
-            syntax.NextPlay(**{"match_uid": 1, "user_uid": 2, "answer_uid": 3})
-        except ValidationError as err:
-            assert err.errors()[0]["loc"] == ("question_uid",)
-            assert err.errors()[0]["msg"] == "field required"
+        with pytest.raises(ValidationError) as err:
+            syntax.NextPlay(
+                **{
+                    "match_uid": 1,
+                    "user_uid": 2,
+                    "answer_uid": 3,
+                    "attempt_uid": "40dd7e2d1c5a4a25adc2d3a5367b8de3",
+                }
+            )
+
+        assert err.value.errors()[0]["loc"] == ("question_uid",)
+        assert err.value.errors()[0]["msg"] == "field required"
 
     def test_9(self):
         """
@@ -106,11 +120,11 @@ class TestCasePlaySchemas:
         WHEN: validation is run
         THEN: an error is raised because the token cannot be null
         """
-        try:
+        with pytest.raises(ValidationError) as err:
             syntax.SignPlay(**{"email": "user@pp.com", "token": None})
-        except ValidationError as err:
-            assert err.errors()[0]["loc"] == ("token",)
-            assert err.errors()[0]["msg"] == "none is not an allowed value"
+
+        assert err.value.errors()[0]["loc"] == ("token",)
+        assert err.value.errors()[0]["msg"] == "none is not an allowed value"
 
     def test_11(self):
         """
@@ -118,11 +132,11 @@ class TestCasePlaySchemas:
         WHEN: validation is run
         THEN: an error is raised because the email cannot be null
         """
-        try:
+        with pytest.raises(ValidationError) as err:
             syntax.SignPlay(**{"email": None, "token": "11012014"})
-        except ValidationError as err:
-            assert err.errors()[0]["loc"] == ("email",)
-            assert err.errors()[0]["msg"] == "none is not an allowed value"
+
+        assert err.value.errors()[0]["loc"] == ("email",)
+        assert err.value.errors()[0]["msg"] == "none is not an allowed value"
 
     def test_12(self):
         """
@@ -137,7 +151,49 @@ class TestCasePlaySchemas:
                 "user_uid": 2,
                 "answer_text": "Open answer text",
                 "question_uid": 4,
+                "attempt_uid": "40dd7e2d1c5a4a25adc2d3a5367b8de3",
             }
+        )
+
+    def test_13(self):
+        """
+        GIVEN: payload with a null attempt_uid,
+        WHEN: validation is run
+        THEN: no error should be raised
+        """
+        with pytest.raises(ValidationError) as err:
+            syntax.NextPlay(
+                **{
+                    "match_uid": 1,
+                    "user_uid": 2,
+                    "answer_text": "Open answer text",
+                    "question_uid": 4,
+                    "attempt_uid": None,
+                }
+            )
+        assert err.value.errors()[0]["loc"] == ("attempt_uid",)
+        assert err.value.errors()[0]["msg"] == "none is not an allowed value"
+
+    def test_14(self):
+        """
+        GIVEN: payload with an invalid attempt_uid,
+        WHEN: validation is run
+        THEN: no error should be raised
+        """
+        value = "40dz7e2d1c5a4a25adc2d3a5367b8dew"
+        with pytest.raises(ValidationError) as err:
+            syntax.NextPlay(
+                **{
+                    "match_uid": 1,
+                    "user_uid": 2,
+                    "answer_text": "Open answer text",
+                    "question_uid": 4,
+                    "attempt_uid": value,
+                }
+            )
+        assert err.value.errors()[0]["loc"] == ("attempt_uid",)
+        assert (
+            err.value.errors()[0]["msg"] == f"Attempt-uid {value} does not match regex"
         )
 
 
