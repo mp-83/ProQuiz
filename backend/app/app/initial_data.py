@@ -25,7 +25,7 @@ class EmptyDB:
         self.user_dto = UserDTO(session=db_session)
 
     def parse_yaml_content(self, fname):
-        # DO REMEMBER that changes to MatchYamlImport.to_expected_mapping
+        # DO REMEMBER that changes to MatchYamlImport.fixed_match_structure
         # must be manually ported here
         with open(fname, "r") as fp:
             file_content = yaml.load(fp.read(), yaml.Loader)

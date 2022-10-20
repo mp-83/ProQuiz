@@ -488,7 +488,7 @@ class TestCaseYamlSchema:
     def test_6(self):
         """
         GIVEN: this value object
-        WHEN: to_expected_mapping is invoked
+        WHEN: fixed_match_structure is invoked
         THEN: produces the expected result
         """
         # test meant to document input => output transformation
@@ -497,23 +497,126 @@ class TestCaseYamlSchema:
                 {"text": None},
                 {"time": None},
                 {"answers": ["Australia", "Japan", "Kenya"]},
-                {"text": "Where is Paris"},
+                {"text": "Where is Paris?"},
                 {"time": 10},
                 {"answers": ["France", "Argentina", "Iceland"]},
             ]
         }
 
-        result = syntax.MatchYamlImport.to_expected_mapping(value)
+        result = syntax.MatchYamlImport.fixed_match_structure(value)
         assert result == {
             "questions": [
                 {
-                    "text": "Where is Paris",
+                    "text": "Where is Paris?",
                     "time": 10,
                     "answers": [
                         {"text": "France"},
                         {"text": "Argentina"},
                         {"text": "Iceland"},
                     ],
+                },
+            ]
+        }
+
+    def test_7(self):
+        """
+        GIVEN: a data structure mapping an open match
+                without `answers`
+        WHEN: is_open_match is called
+        THEN: it should return True
+        """
+        value = {
+            "questions": [
+                {"text": "Where is Austin?"},
+                {"time": None},
+                {"text": "Where is Dallas?"},
+                {"time": 10},
+            ]
+        }
+
+        assert syntax.MatchYamlImport.is_open_match(value)
+
+    def test_8(self):
+        """
+        GIVEN: a data structure mapping an open match
+                with `answers` provided
+        WHEN: is_open_match is called
+        THEN: it should return False
+        """
+        value = {
+            "questions": [
+                {"text": "Where is Austin?"},
+                {"time": None},
+                {"answers": ["Texas", "Georgia", "Montana"]},
+                {"text": "Where is Dallas?"},
+                {"time": 10},
+                {"answers": ["Florida", "Ohio", "Kentucky"]},
+            ]
+        }
+
+        assert not syntax.MatchYamlImport.is_open_match(value)
+
+    def test_9(self):
+        """
+        GIVEN: this value object
+        WHEN: fixed_match_structure is invoked
+        THEN: produces the expected result
+        """
+        # test meant to document input => output transformation
+        value = {
+            "questions": [
+                {"text": None},
+                {"time": None},
+                {"answers": ["Australia", "Japan", "Kenya"]},
+                {"text": "Where is Paris?"},
+                {"time": 10},
+                {"answers": ["France", "Argentina", "Iceland"]},
+            ]
+        }
+
+        result = syntax.MatchYamlImport.fixed_match_structure(value)
+        assert result == {
+            "questions": [
+                {
+                    "text": "Where is Paris?",
+                    "time": 10,
+                    "answers": [
+                        {"text": "France"},
+                        {"text": "Argentina"},
+                        {"text": "Iceland"},
+                    ],
+                },
+            ]
+        }
+
+    def test_10(self):
+        """
+        GIVEN: this value object
+        WHEN: open_match_structure is invoked
+        THEN: produces the expected result
+        """
+        # test meant to document input => output transformation
+        value = {
+            "questions": [
+                {"text": "Where is Austin?"},
+                {"time": None},
+                {"text": "Where is Dallas?"},
+                {"time": 10},
+            ]
+        }
+
+        result = syntax.MatchYamlImport.open_match_structure(value)
+        assert result == {
+            "questions": [
+                {
+                    "text": "Where is Austin?",
+                    "time": None,
+                    "answers": [],
+                },
+                {
+                    "text": "Where is Dallas?",
+                    "time": 10,
+                    "answers": [],
                 },
             ]
         }

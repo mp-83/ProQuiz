@@ -227,14 +227,22 @@ def create_fixture_test(db_session, match_dto, game_dto, question_dto):
 
 
 @pytest.fixture
-def yaml_file_handler():
-    with open("app/tests/files/file.yaml", "rb") as fp:
+def fixed_answers_match_yaml_file():
+    with open("app/tests/files/fixed_answers_match.yaml", "rb") as fp:
         b64content = b64encode(fp.read()).decode()
         b64string = f"data:application/x-yaml;base64,{b64content}"
-        yield b64string, "file.yaml"
+        yield b64string, "fixed_answers_match.yaml"
 
 
 @pytest.fixture
-def excel_file_handler():
+def open_answers_match_yaml_file():
+    with open("app/tests/files/open_answers_match.yaml", "rb") as fp:
+        b64content = b64encode(fp.read()).decode()
+        b64string = f"data:application/x-yaml;base64,{b64content}"
+        yield b64string, "open_answers_match.yaml"
+
+
+@pytest.fixture
+def excel_file():
     with open("app/tests/files/file.xlsx", "rb") as fp:
         yield fp, "file.xlsx"

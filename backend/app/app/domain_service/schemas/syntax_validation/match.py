@@ -65,7 +65,9 @@ class MatchYamlImport(BaseModel):
     def coerce(cls, value):
         value = cls.coerce_to_b64content(value)
         value = cls.coerce_yaml_content(value)
-        return cls.to_expected_mapping(value)
+        if cls.is_open_match(value):
+            return cls.open_match_structure(value)
+        return cls.fixed_match_structure(value)
 
     @classmethod
     def coerce_yaml_content(cls, value):
@@ -83,7 +85,11 @@ class MatchYamlImport(BaseModel):
         return b64decode(b64content)
 
     @classmethod
-    def to_expected_mapping(cls, value):
+    def is_open_match(cls, value):
+        return all("answers" not in elem for elem in value.get("questions") if elem)
+
+    @classmethod
+    def fixed_match_structure(cls, value):
         result = {"questions": []}
         question = {}
         for i, elem in enumerate(value.get("questions"), start=1):
@@ -92,10 +98,26 @@ class MatchYamlImport(BaseModel):
             elif i % 3 == 2 and elem and "time" in elem:
                 question["time"] = elem["time"]
             elif i % 3 == 0:
-                question["answers"] = [{"text": text} for text in elem["answers"]]
+                question["answers"] = [
+                    {"text": text} for text in elem.get("answers") or []
+                ]
                 if question.get("text") is None:
                     question = {}
                     continue
+                result["questions"].append(question)
+                question = {}
+        return result
+
+    @classmethod
+    def open_match_structure(cls, value):
+        result = {"questions": []}
+        question = {}
+        for i, elem in enumerate(value.get("questions"), start=1):
+            if i % 2 == 1 and elem and "text" in elem:
+                question["text"] = elem["text"]
+            elif i % 2 == 0 and elem and "time" in elem:
+                question["time"] = elem["time"]
+                question["answers"] = []
                 result["questions"].append(question)
                 question = {}
         return result

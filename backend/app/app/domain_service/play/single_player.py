@@ -157,20 +157,18 @@ class PlayerStatus:
         """
         Return games that were completed
         """
-        result = {}
-
-        for game in self._current_match.games:
+        return {
+            game.uid: game
+            for game in self._current_match.games
             if (
                 game.questions.count() > 0
                 and game.questions.count()
                 == self._all_reactions_query.filter_by(game_uid=game.uid).count()
-            ):
-                result[game.uid] = game
-        return result
+            )
+        }
 
     def current_score(self):
-        """
-        Sum the scores of all reactions for the match
+        """Sum the scores of all reactions for the match
 
         If reaction.score is None it either means the
         the answer was recorded after question.time or

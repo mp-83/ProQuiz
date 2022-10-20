@@ -231,13 +231,22 @@ class TestCaseMatchEndpoints:
             "uid",
         }
 
-    def test_importQuestionsFromYaml(
-        self, client: TestClient, superuser_token_headers: dict, yaml_file_handler
+    def test_9(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        fixed_answers_match_yaml_file,
     ):
+        """
+        GIVEN: a file containing questions and answers of a match
+        WHEN: it is imported
+        THEN: the questions are correctly created in order and
+                same is for the answers associated to each question
+        """
         match = self.match_dto.new()
         self.match_dto.save(match)
         game = self.game_dto.save(self.game_dto.new(match_uid=match.uid))
-        base64_content, fname = yaml_file_handler
+        base64_content, fname = fixed_answers_match_yaml_file
         superuser_token_headers.update(filename=fname)
         response = client.post(
             f"{settings.API_V1_STR}/matches/yaml_import",
@@ -245,6 +254,7 @@ class TestCaseMatchEndpoints:
             headers=superuser_token_headers,
         )
 
+        assert response.ok
         assert response.json()["questions_list"][0]["text"] == "Where is Paris?"
         assert response.json()["questions_list"][0]["answers_list"][0]["is_correct"]
         assert (
@@ -257,6 +267,40 @@ class TestCaseMatchEndpoints:
             response.json()["questions_list"][1]["answers_list"][1]["text"] == "Sweden"
         )
         assert response.json()["questions_list"][1]["time"] is None
+
+    def test_10(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        open_answers_match_yaml_file,
+    ):
+        """
+        GIVEN: a file containing data of a match with open questions
+        WHEN: it is imported
+        THEN: the questions are correctly created in the provided order
+                and are `open`
+        """
+        match = self.match_dto.new(is_restricted=True)
+        self.match_dto.save(match)
+        game = self.game_dto.save(self.game_dto.new(match_uid=match.uid))
+        base64_content, fname = open_answers_match_yaml_file
+        superuser_token_headers.update(filename=fname)
+        response = client.post(
+            f"{settings.API_V1_STR}/matches/yaml_import",
+            json={"uid": match.uid, "data": base64_content, "game_uid": game.uid},
+            headers=superuser_token_headers,
+        )
+
+        assert response.ok
+        assert response.json()["questions_list"][0]["text"] == "Where is Buenos Aires?"
+        assert response.json()["questions_list"][0]["answers_list"] == []
+        assert response.json()["questions_list"][0]["time"] == 10
+
+        assert response.json()["questions_list"][1]["text"] == "Where is Atlanta?"
+        assert response.json()["questions_list"][1]["answers_list"] == []
+        assert response.json()["questions_list"][1]["time"] is None
+        assert match.questions_list[0].is_open
+        assert match.questions_list[1].is_open
 
     def test_importTemplateQuestions(
         self, client: TestClient, superuser_token_headers: dict, question_dto
