@@ -427,9 +427,10 @@ class TestCasePlayNext:
 
     def test_8(self, client: TestClient, superuser_token_headers: dict, db_session):
         """
-        GIVEN: a match with two question that can be played unlimited times
+        GIVEN: a restricted match with two question that can be
+                played unlimited times
         WHEN: the user plays two times
-        THEN: the system should behave correctly
+        THEN: the system should behave correctly, each time
         """
         match_dto = MatchDTO(session=db_session)
         match = match_dto.new(is_restricted=True, times=0)
@@ -500,7 +501,8 @@ class TestCasePlayNext:
             assert response.json()["question"] is None
             assert response.json()["match_uid"] is None
             assert response.json()["score"] > 0
-            assert match.rankings.count() == 1
+
+        assert match.rankings.count() == 2
 
     def test_9(self, client: TestClient, superuser_token_headers: dict, db_session):
         """

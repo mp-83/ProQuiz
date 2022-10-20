@@ -136,7 +136,9 @@ class ValidatePlayNext:
             raise ValidateError("Invalid attempt-uid")
 
         self._data["attempt_uid"] = self.attempt_uid
-        reaction = user.reactions.filter_by(question_uid=question.uid).one_or_none()
+        reaction = user.reactions.filter_by(
+            question_uid=question.uid, attempt_uid=self.attempt_uid
+        ).one_or_none()
         if reaction and reaction.answer:  # TODO and not question.is_open:
             raise ValidateError("Duplicate Reactions")
 
