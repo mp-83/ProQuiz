@@ -300,17 +300,56 @@ def upload_yaml(client):
         typer.echo((result.status_code, result.json()))
 
 
+def display_options_and_answer_question(data, game_uid):
+    if data["question"]["game"]["uid"] != game_uid:
+        game_uid = data["question"]["game"]["uid"]
+        index = data["question"]["game"]["index"]
+        typer.echo(f"Starting {index} Game")
+        sleep(1)
+
+    answer_map = print_question_and_answers(data["question"])
+    answer_uid = None
+    open_answer_text = None
+    if not answer_map:
+        open_answer_text = input("Answer: ")
+    else:
+        question_time = data["question"]["time"]
+        if question_time:
+            typer.echo(f"You have {question_time} seconds to answer!")
+
+        index, o, e = select.select([sys.stdin], [], [], question_time)
+
+        if index:
+            index = sys.stdin.readline().strip()
+            if int(index[0]) not in answer_map:
+                index = 0
+            answer_uid = answer_map[int(index)]
+        else:
+            typer.echo("No answer!")
+            answer_uid = None
+
+    return answer_uid, open_answer_text, game_uid
+
+
+def display_matches_to_play(matches_list):
+    result = {}
+    for i, _match in enumerate(matches_list):
+        result[i] = _match
+        visibility = "restricted" if _match["is_restricted"] else "public"
+        typer.echo(f"n. {i} :: {_match['name']} :: {visibility}")
+    return result
+
+
+def exit_with_error(response):
+    typer.echo(pprint(response.json()))
+    typer.echo(response.reason)
+
+
 def play(client):
     response = client.get(f"{BASE_URL}/matches")
     typer.echo("List of Matches:\n")
-    all_matches = {}
-    for i, _match in enumerate(response.json()["matches"]):
-        all_matches[i] = _match
-        visibility = "restricted" if _match["is_restricted"] else "public"
-        typer.echo(f"n. {i} :: {_match['name']} :: {visibility}")
-
-    typer.echo("\n\n")
-    match_number = input("Enter match number or q(quit): ")
+    all_matches = display_matches_to_play(response.json()["matches"])
+    match_number = input("\n\nEnter match number or q(quit): ")
     if match_number == "q":
         exit_command()
 
@@ -337,11 +376,8 @@ def play(client):
         code = all_matches[int(match_number)]["code"]
         response = client.post(f"{BASE_URL}/play/code", json={"match_code": code})
 
-    if response.status_code in [200, 422, 400]:
-        typer.echo(pprint(response.json()))
-
     if not response.ok:
-        typer.echo(response.reason)
+        exit_with_error(response)
         return
 
     payload = {"match_uid": response.json()["match_uid"]}
@@ -351,43 +387,19 @@ def play(client):
         payload.update(password=match_password)
 
     response = client.post(f"{BASE_URL}/play/start", json=payload)
-    if response.status_code in [422, 400]:
-        typer.echo(pprint(response.json()))
-
     if not response.ok:
-        typer.echo(response.reason)
+        exit_with_error(response)
         return
 
     response_data = response.json()
+    attempt_uid = response_data["attempt_uid"]
     current_game_id = response_data["question"]["game"]["uid"]
     while response_data["question"] is not None:
-        if response_data["question"]["game"]["uid"] != current_game_id:
-            current_game_id = response_data["question"]["game"]["uid"]
-            index = response_data["question"]["game"]["index"]
-            typer.echo(f"Starting {index} Game")
-            sleep(1)
-
-        answer_map = print_question_and_answers(response_data["question"])
-        open_answer_text = None
-        answer_uid = None
-        if not answer_map:
-            open_answer_text = input("Answer: ")
-        else:
-            question_time = response_data["question"]["time"]
-            if question_time:
-                typer.echo(f"You have {question_time} seconds to answer!")
-
-            index, o, e = select.select([sys.stdin], [], [], question_time)
-
-            if index:
-                index = sys.stdin.readline().strip()
-                if int(index[0]) not in answer_map:
-                    index = 0
-                answer_uid = answer_map[int(index)]
-            else:
-                typer.echo("No answer!")
-                answer_uid = None
-
+        (
+            answer_uid,
+            open_answer_text,
+            current_game_id,
+        ) = display_options_and_answer_question(response_data, current_game_id)
         response = client.post(
             f"{BASE_URL}/play/next",
             json={
@@ -396,15 +408,15 @@ def play(client):
                 "answer_uid": answer_uid,
                 "answer_text": open_answer_text,
                 "user_uid": response_data["user_uid"],
+                "attempt_uid": attempt_uid,
             },
         )
         response_data = response.json()
-        if response.status_code in [422, 400]:
-            typer.echo(pprint(response.json()))
+        if not response.ok:
+            exit_with_error(response)
             return
 
-    typer.echo("\n\n")
-    typer.echo(f"Match Over. Your score is: {response_data['score']}")
+    typer.echo(f"\n\nMatch Over. Your score is: {response_data['score']}")
 
 
 def print_question_and_answers(question):

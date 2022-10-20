@@ -24,7 +24,7 @@ class EmptyDB:
         self.game_dto = GameDTO(session=db_session)
         self.user_dto = UserDTO(session=db_session)
 
-    def parse_yaml_content(self, fname):
+    def parse_fixed_match(self, fname):
         # DO REMEMBER that changes to MatchYamlImport.fixed_match_structure
         # must be manually ported here
         with open(fname, "r") as fp:
@@ -45,6 +45,23 @@ class EmptyDB:
                     question = {}
             return result
 
+    def parse_open_match(self, fname):
+        # DO REMEMBER that changes to MatchYamlImport.open_match_structure
+        # must be manually ported here
+        with open(fname, "r") as fp:
+            file_content = yaml.load(fp.read(), yaml.Loader)
+            result = {"questions": []}
+            question = {}
+            for i, elem in enumerate(file_content.get("questions"), start=1):
+                if i % 2 == 1 and elem and "text" in elem:
+                    question["text"] = elem["text"]
+                elif i % 2 == 0 and elem and "time" in elem:
+                    question["time"] = elem["time"]
+                    question["answers"] = []
+                    result["questions"].append(question)
+                    question = {}
+            return result
+
     def create_food_match(self):
         name = "Food quiz"
         food_match = self.match_dto.get(name=name)
@@ -54,7 +71,7 @@ class EmptyDB:
                 f"Creating match: {name} :: with hash {food_match.uhash} :: restricted"
             )
             self.match_dto.save(food_match)
-            content = self.parse_yaml_content("/app/quizzes/quiz_food.1.yaml")
+            content = self.parse_fixed_match("/app/quizzes/quiz_food.1.yaml")
             self.match_dto.insert_questions(food_match, content["questions"])
 
     def create_geography_matches(self):
@@ -77,7 +94,7 @@ class EmptyDB:
                 game = self.game_dto.save(
                     self.game_dto.new(match_uid=geo_match.uid, index=index)
                 )
-                content = self.parse_yaml_content(f"/app/quizzes/{fname}")
+                content = self.parse_fixed_match(f"/app/quizzes/{fname}")
                 self.match_dto.insert_questions(
                     geo_match, content["questions"], game.uid
                 )
@@ -92,7 +109,7 @@ class EmptyDB:
                 f"Creating match: {name} :: with-code {geo_match.code} :: not-restricted"
             )
             self.match_dto.save(geo_match)
-            content = self.parse_yaml_content("/app/quizzes/quiz_geo.4.yaml")
+            content = self.parse_fixed_match("/app/quizzes/quiz_geo.4.yaml")
             self.match_dto.insert_questions(geo_match, content["questions"])
 
         name = "GEO quiz.2 [multi-game]"
@@ -107,7 +124,7 @@ class EmptyDB:
                 game = self.game_dto.save(
                     self.game_dto.new(match_uid=geo_match.uid, index=index)
                 )
-                content = self.parse_yaml_content(f"/app/quizzes/{fname}")
+                content = self.parse_fixed_match(f"/app/quizzes/{fname}")
                 self.match_dto.insert_questions(
                     geo_match, content["questions"], game.uid
                 )
@@ -121,7 +138,7 @@ class EmptyDB:
                 f"Creating match: {name} :: with-hash {history_match_1.uhash} :: restricted"
             )
             self.match_dto.save(history_match_1)
-            content = self.parse_yaml_content("/app/quizzes/quiz_history.1.yaml")
+            content = self.parse_fixed_match("/app/quizzes/quiz_history.1.yaml")
             self.match_dto.insert_questions(history_match_1, content["questions"])
 
         name = "History quiz.2"
@@ -132,7 +149,7 @@ class EmptyDB:
                 f"Creating match: {name} :: with times questions :: with-hash {history_match_2.uhash} :: not-restricted"
             )
             self.match_dto.save(history_match_2)
-            content = self.parse_yaml_content("/app/quizzes/quiz_history.2.yaml")
+            content = self.parse_fixed_match("/app/quizzes/quiz_history.2.yaml")
             for question_data in content["questions"]:
                 question_data["time"] = randint(3, 10)
             self.match_dto.insert_questions(history_match_2, content["questions"])
@@ -152,7 +169,7 @@ class EmptyDB:
                 game = self.game_dto.save(
                     self.game_dto.new(match_uid=match.uid, index=index)
                 )
-                content = self.parse_yaml_content(f"/app/quizzes/{fname}")
+                content = self.parse_fixed_match(f"/app/quizzes/{fname}")
                 self.match_dto.insert_questions(match, content["questions"], game.uid)
 
         name = "MISC quiz.2 [multi-game]"
@@ -169,7 +186,7 @@ class EmptyDB:
                 game = self.game_dto.save(
                     self.game_dto.new(match_uid=match.uid, index=index)
                 )
-                content = self.parse_yaml_content(f"/app/quizzes/{fname}")
+                content = self.parse_fixed_match(f"/app/quizzes/{fname}")
                 self.match_dto.insert_questions(match, content["questions"], game.uid)
 
     def create_boolean_matches(self):
@@ -183,7 +200,7 @@ class EmptyDB:
                 f"Creating match: {name} :: with-hash {boolean_match_1.uhash} :: restricted"
             )
             self.match_dto.save(boolean_match_1)
-            content = self.parse_yaml_content("/app/quizzes/quiz_bool.1.yaml")
+            content = self.parse_fixed_match("/app/quizzes/quiz_bool.1.yaml")
             self.match_dto.insert_questions(boolean_match_1, content["questions"])
 
         name = "Boolean quiz.2"
@@ -194,11 +211,11 @@ class EmptyDB:
                 f"Creating match: {name} :: with-code {boolean_match_2.code} :: not-restricted"
             )
             self.match_dto.save(boolean_match_2)
-            content = self.parse_yaml_content("/app/quizzes/quiz_bool.1.yaml")
+            content = self.parse_fixed_match("/app/quizzes/quiz_bool.1.yaml")
             self.match_dto.insert_questions(boolean_match_2, content["questions"])
 
     def create_template_questions(self):
-        content = self.parse_yaml_content("/app/quizzes/quiz_gen.1.yaml")
+        content = self.parse_fixed_match("/app/quizzes/quiz_gen.1.yaml")
         logger.info(f"Creating {len(content['questions'])} template questions")
 
         for position, question in enumerate(content["questions"]):
@@ -208,35 +225,6 @@ class EmptyDB:
             self.question_dto.create_with_answers(new_question, question["answers"])
 
     def create_open_matches(self):
-        content = {
-            "questions": [
-                {
-                    "text": "What self-governing country was the first in the world to give women the chance to vote?",
-                    "time": None,
-                    "answers": [],
-                },
-                {
-                    "text": "Who won the Grammy for Best Album in 2001?",
-                    "time": None,
-                    "answers": [],
-                },
-                {
-                    "text": 'On "The Simpsons" episode entitled "Lisa\'s First Word", who voiced Maggie\'s first word?',
-                    "time": None,
-                    "answers": [],
-                },
-                {
-                    "text": "What colour are most Shasta daisy flowers?",
-                    "time": None,
-                    "answers": [],
-                },
-                {
-                    "text": "Which religious organization is known as the Mormons?",
-                    "time": None,
-                    "answers": [],
-                },
-            ]
-        }
         name = "Open Match 1"
         open_match_1 = self.match_dto.get(name=name)
         if not open_match_1:
@@ -245,37 +233,8 @@ class EmptyDB:
                 f"Creating match: {name} :: with-code {open_match_1.code} :: not-restricted"
             )
             self.match_dto.save(open_match_1)
+            content = self.parse_open_match("/app/quizzes/open_quiz.1.yaml")
             self.match_dto.insert_questions(open_match_1, content["questions"])
-
-        content = {
-            "questions": [
-                {
-                    "text": "Lille is the capital of Hauts-de-France. The city is located on which river?",
-                    "time": None,
-                    "answers": [],
-                },
-                {
-                    "text": "Known for its neo-Tudor architecture, Hardelot Castle is located in which village of Hauts-de-France?",
-                    "time": None,
-                    "answers": [],
-                },
-                {
-                    "text": "Which other of the 18 regions of France borders Hauts-de-France to the east?",
-                    "time": None,
-                    "answers": [],
-                },
-                {
-                    "text": "Which of these features of England can be seen from Calais, Hauts-de-France, on a clear day?",
-                    "time": None,
-                    "answers": [],
-                },
-                {
-                    "text": "The Church of Saint-Éloi stands in which city of Hauts-de-France?",
-                    "time": None,
-                    "answers": [],
-                },
-            ]
-        }
 
         name = "Open Match 2"
         open_match_2 = self.match_dto.get(name=name)
@@ -285,67 +244,67 @@ class EmptyDB:
                 f"Creating match: {name} :: with-hash {open_match_2.uhash} :: restricted"
             )
             self.match_dto.save(open_match_2)
+            content = self.parse_open_match("/app/quizzes/open_quiz.2.yaml")
             self.match_dto.insert_questions(open_match_2, content["questions"])
 
     def create_mixed_question_matches(self):
-        content = {
-            "questions": [
-                {
-                    "text": "What is going to be Daniel's new strategy, according to Mr. Miyagi?",
-                    "time": 4,
-                    "answers": [
-                        {"text": "early retirement"},
-                        {"text": "early entry into the tournament"},
-                        {"text": "early training"},
-                        {"text": "early sleet"},
-                    ],
-                },
-                {
-                    "text": "What is Johnny's punishment for losing to Daniel?",
-                    "time": None,
-                    "answers": [],
-                },
-                {
-                    "text": "Before telling Daniel that he's the one who's going to stay in the room he's building, Miyagi tells him that it's for a what?",
-                    "time": 5,
-                    "answers": [
-                        {"text": "refugee"},
-                        {"text": "nomad"},
-                        {"text": "pilgrim"},
-                        {"text": "frient"},
-                    ],
-                },
-                {
-                    "text": "In the early part of the movie, does Mr. Miyagi think he can break a log?",
-                    "time": None,
-                    "answers": [],
-                },
-                {
-                    "text": "Who 'sings the same tune' in front of the Shinto shrine?",
-                    "time": 6,
-                    "answers": [
-                        {"text": "Kumiko"},
-                        {"text": "Toshio"},
-                        {"text": "Sato"},
-                        {"text": "Ichiro"},
-                    ],
-                },
-                {
-                    "text": "How many days does Sato give Miyagi to mourn his father's death?",
-                    "time": 10,
-                    "answers": [
-                        {"text": "0"},
-                        {"text": "3"},
-                        {"text": "1"},
-                        {"text": "2"},
-                    ],
-                },
-            ]
-        }
-
         name = "Mixed Match"
         mixed_match = self.match_dto.get(name=name)
         if not mixed_match:
+            content = {
+                "questions": [
+                    {
+                        "text": "What is going to be Daniel's new strategy, according to Mr. Miyagi?",
+                        "time": 4,
+                        "answers": [
+                            {"text": "early retirement"},
+                            {"text": "early entry into the tournament"},
+                            {"text": "early training"},
+                            {"text": "early sleet"},
+                        ],
+                    },
+                    {
+                        "text": "What is Johnny's punishment for losing to Daniel?",
+                        "time": None,
+                        "answers": [],
+                    },
+                    {
+                        "text": "Before telling Daniel that he's the one who's going to stay in the room he's building, Miyagi tells him that it's for a what?",
+                        "time": 5,
+                        "answers": [
+                            {"text": "refugee"},
+                            {"text": "nomad"},
+                            {"text": "pilgrim"},
+                            {"text": "frient"},
+                        ],
+                    },
+                    {
+                        "text": "In the early part of the movie, does Mr. Miyagi think he can break a log?",
+                        "time": None,
+                        "answers": [],
+                    },
+                    {
+                        "text": "Who 'sings the same tune' in front of the Shinto shrine?",
+                        "time": 6,
+                        "answers": [
+                            {"text": "Kumiko"},
+                            {"text": "Toshio"},
+                            {"text": "Sato"},
+                            {"text": "Ichiro"},
+                        ],
+                    },
+                    {
+                        "text": "How many days does Sato give Miyagi to mourn his father's death?",
+                        "time": 10,
+                        "answers": [
+                            {"text": "0"},
+                            {"text": "3"},
+                            {"text": "1"},
+                            {"text": "2"},
+                        ],
+                    },
+                ]
+            }
             mixed_match = self.match_dto.new(name=name, with_code=True, times=0)
             logger.info(
                 f"Creating match: {name} :: with-hash {mixed_match.uhash} :: not-restricted"
