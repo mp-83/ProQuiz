@@ -119,7 +119,8 @@ class TestCaseMatchModel:
         with pytest.raises(NotUsableQuestionError):
             self.match_dto.import_template_questions(match, [question.uid])
 
-    def test_moveFirstQuestionToSecondGame(self):
+    def test_8(self):
+        # moveFirstQuestionToSecondGame
         match = self.match_dto.save(self.match_dto.new())
         first_game = self.game_dto.new(match_uid=match.uid, index=0)
         self.game_dto.save(first_game)
@@ -147,14 +148,17 @@ class TestCaseMatchModel:
         self.match_dto.update(match, **data)
         assert question_1.game == second_game
 
-    def test_updateGameProperty(self):
+    def test_9(self):
+        # updateGameProperty
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(game)
         data = {"games": [{"uid": game.uid, "order": False}]}
         self.match_dto.update(match, **data)
         assert not game.order
 
-    def test_matchCannotBePlayedIfAreNoLeftAttempts(self, db_session):
+    def test_10(self, db_session):
+        # matchCannotBePlayedIfAreNoLeftAttempts
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
@@ -177,7 +181,7 @@ class TestCaseMatchModel:
         assert match.reactions[0].user == user
         assert match.left_attempts(user) == 0
 
-    def test_10(self, db_session):
+    def test_11(self, db_session):
         """
         GIVEN: a match already started once
         WHEN: the user wants to start

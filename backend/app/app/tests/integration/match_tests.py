@@ -216,20 +216,6 @@ class TestCaseMatchEndpoints:
         response = client.get(f"{settings.API_V1_STR}/matches/")
         assert response.ok
         assert len(response.json()["matches"]) == 3
-        assert set(response.json()["matches"][0].keys()) == {
-            "code",
-            "expires",
-            "from_time",
-            "games_list",
-            "is_restricted",
-            "name",
-            "order",
-            "password",
-            "questions_list",
-            "times",
-            "uhash",
-            "uid",
-        }
 
     def test_9(
         self,
@@ -299,8 +285,10 @@ class TestCaseMatchEndpoints:
         assert response.json()["questions_list"][1]["text"] == "Where is Atlanta?"
         assert response.json()["questions_list"][1]["answers_list"] == []
         assert response.json()["questions_list"][1]["time"] is None
+        assert response.json()["is_open"]
         assert match.questions_list[0].is_open
         assert match.questions_list[1].is_open
+        assert match.is_open
 
     def test_importTemplateQuestions(
         self, client: TestClient, superuser_token_headers: dict, question_dto

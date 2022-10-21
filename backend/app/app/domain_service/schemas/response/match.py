@@ -42,6 +42,7 @@ class Match(BaseModel):
     from_time: Optional[datetime]
     times: Optional[int]
     order: Optional[bool]
+    is_open: Optional[bool]
     expires: Optional[datetime]
     questions_list: List[Question] = None
     games_list: List[Game] = None

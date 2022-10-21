@@ -79,6 +79,10 @@ class Match(TableMixin, Base):
         return self.to_time
 
     @property
+    def is_open(self):
+        return all(q.is_open for g in self.games for q in g.questions.all())
+
+    @property
     def is_active(self):
         if self.expires:
             now = datetime.now() if self.expires.tzinfo else datetime.now()
