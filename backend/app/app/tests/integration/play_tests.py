@@ -230,14 +230,14 @@ class TestCasePlayNext:
                 "question_uid": question.uid,
                 "answer_uid": answer.uid,
                 "user_uid": user.uid,
-                "attempt_uid": "8941f4a9a94f4d9cae2ee35afea6d692",
+                "attempt_uid": current_reaction.attempt_uid,
             },
             headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json() == {"detail": "Invalid attempt-uid"}
+        assert response.json() == {"detail": "Duplicate Reactions"}
 
-    def test_completeMatch(
+    def test_completeMixedMatch(
         self, client: TestClient, superuser_token_headers: dict, db_session
     ):
         match_dto = MatchDTO(session=db_session)
@@ -254,6 +254,14 @@ class TestCasePlayNext:
         self.question_dto.save(question)
         answer = self.answer_dto.new(question=question, text="UK", position=1, level=2)
         self.answer_dto.save(answer)
+        open_question = self.question_dto.new(
+            text="Where is Dallas?",
+            game_uid=game.uid,
+            position=1,
+            time=2,
+        )
+        self.question_dto.save(open_question)
+
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)
         response = client.post(
@@ -272,6 +280,19 @@ class TestCasePlayNext:
                 "match_uid": match.uid,
                 "question_uid": question.uid,
                 "answer_uid": answer.uid,
+                "user_uid": user.uid,
+                "attempt_uid": attempt_uid,
+            },
+            headers=superuser_token_headers,
+        )
+        assert response.json()["question"]["answers_to_display"] == []
+
+        response = client.post(
+            f"{settings.API_V1_STR}/play/next",
+            json={
+                "match_uid": match.uid,
+                "question_uid": open_question.uid,
+                "open_answer_text": "Dallas is in Texas",
                 "user_uid": user.uid,
                 "attempt_uid": attempt_uid,
             },
