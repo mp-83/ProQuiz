@@ -3,8 +3,9 @@ import os
 from random import randint
 from time import sleep
 
-from locust import HttpUser, between, task
 from requests.exceptions import RequestException
+
+from locust import HttpUser, between, task
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class BackEndApi(HttpUser):
         super(BackEndApi, self).__init__(*args, **kwargs)
         self.restricted_matches = []
         self.public_matches = []
+        self.open_matches = []
 
     def on_start(self):
         username = os.getenv("FIRST_SUPERUSER")
@@ -43,6 +45,7 @@ class BackEndApi(HttpUser):
             for match in matches
             if not match["is_restricted"]
         ]
+        self.open_matches = [match["uid"] for match in matches if match["is_open"]]
         self.client.headers.pop("Authorization", None)
 
     def list_matches(self):
@@ -94,7 +97,10 @@ class BackEndApi(HttpUser):
         if password:
             payload["password"] = password
 
-        logger.info(f"Starting restricted match {match_uhash}: {payload}")
+        open_match = match_uid in self.open_matches
+        logger.info(
+            f"Starting {'OPEN' if open_match else 'CLOSED'} restricted match {match_uhash}: {match_uid} : {password}"
+        )
         response = self.client.post(f"{BASE_URL}/play/start", json=payload)
         if not response.ok:
             logger.error(f"{response.status_code}: {payload}")
@@ -102,6 +108,7 @@ class BackEndApi(HttpUser):
 
         response_data = response.json()
         current_game_id = response_data["question"]["game"]["uid"]
+        attempt_uid = response_data["attempt_uid"]
         while response_data["question"] is not None:
             question = response_data["question"]
             if question["game"]["uid"] != current_game_id:
@@ -114,16 +121,29 @@ class BackEndApi(HttpUser):
             wait_seconds = randint(3, time_upper_bound)
             sleep(wait_seconds)
 
-            answer_idx = randint(0, len(question["answers_to_display"]) - 1)
-            answer = question["answers_to_display"][answer_idx]
+            answer_uid = None
+            open_answer_text = None
+            if not question["answers_to_display"]:
+                open_answer_text = "Open question answer text"
+                if randint(0, 100) > 90:
+                    open_answer_text = ""
+            else:
+                answer_idx = randint(0, len(question["answers_to_display"]) - 1)
+                answer = question["answers_to_display"][answer_idx]
+                answer_uid = answer["uid"]
 
             payload = {
                 "match_uid": response_data["match_uid"],
                 "question_uid": response_data["question"]["uid"],
-                "answer_uid": answer["uid"],
+                "answer_uid": answer_uid,
+                "open_answer_text": open_answer_text,
                 "user_uid": response_data["user_uid"],
+                "attempt_uid": attempt_uid,
             }
 
+            logger.info(
+                f"Next payload: {payload['match_uid']} : {payload['question_uid']} : {payload['user_uid']} : {answer_uid if answer_uid else open_answer_text}"
+            )
             response = self.client.post(f"{BASE_URL}/play/next", json=payload)
             try:
                 response_data = response.json()
@@ -153,14 +173,19 @@ class BackEndApi(HttpUser):
             return
 
         payload = {"match_uid": response.json()["match_uid"]}
-        logger.info(f"Starting match {match_uhash or match_code}: {payload}")
         response = self.client.post(f"{BASE_URL}/play/start", json=payload)
+        open_match = match_uid in self.open_matches
+        logger.info(
+            f"Starting {'OPEN' if open_match else 'CLOSED'} match : {match_uhash or match_code}: {match_uid}"
+        )
         if not response.ok:
             logger.error(response.reason)
             return
 
         response_data = response.json()
         current_game_id = response_data["question"]["game"]["uid"]
+        attempt_uid = response_data["attempt_uid"]
+        user_uid = response_data["user_uid"]
 
         while response_data["question"] is not None:
             question = response_data["question"]
@@ -175,16 +200,29 @@ class BackEndApi(HttpUser):
             wait_seconds = randint(3, time_upper_bound)
             sleep(wait_seconds)
 
-            answer_idx = randint(0, len(question["answers_to_display"]) - 1)
-            answer = question["answers_to_display"][answer_idx]
+            answer_uid = None
+            open_answer_text = None
+            if not question["answers_to_display"]:
+                open_answer_text = "Open question answer text"
+                if randint(0, 100) > 90:
+                    open_answer_text = ""
+            else:
+                answer_idx = randint(0, len(question["answers_to_display"]) - 1)
+                answer = question["answers_to_display"][answer_idx]
+                answer_uid = answer["uid"]
 
             payload = {
                 "match_uid": response_data["match_uid"],
                 "question_uid": response_data["question"]["uid"],
-                "answer_uid": answer["uid"],
+                "answer_uid": answer_uid,
+                "open_answer_text": open_answer_text,
                 "user_uid": response_data["user_uid"],
+                "attempt_uid": attempt_uid,
             }
 
+            logger.info(
+                f"Next payload: {payload['match_uid']} : {payload['question_uid']} : {payload['user_uid']} : {answer_uid if answer_uid else open_answer_text}"
+            )
             response = self.client.post(f"{BASE_URL}/play/next", json=payload)
             try:
                 response_data = response.json()
@@ -192,4 +230,4 @@ class BackEndApi(HttpUser):
                 logger.error(f"{response.status_code}: {match_uhash} - {payload}")
                 break
 
-        logger.info(f"Completed match {match_uhash or match_code}")
+        logger.info(f"User {user_uid} completed match {match_uhash or match_code}")
