@@ -56,20 +56,6 @@ app.dependency_overrides[get_current_user] = override_get_current_user
 
 
 @pytest.fixture()
-def old_db_session() -> Generator:
-    # alembic_cfg = alembic.config.Config(alembic_ini_file)
-    # alembic.command.stamp(alembic_cfg, None, purge=True)
-
-    # run migrations to initialize the database
-    # depending on how we want to initialize the database from scratch
-    # we could alternatively call:
-    # alembic.command.stamp(alembic_cfg, "head")
-    # alembic.command.upgrade(alembic_cfg, "head")
-    # alembic.command.stamp(alembic_cfg, None, purge=True)
-    yield
-
-
-@pytest.fixture()
 def db_session() -> Session:
     init_db()
     _session_factory = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
