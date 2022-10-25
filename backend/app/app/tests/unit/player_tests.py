@@ -652,6 +652,11 @@ class TestCaseSinglePlayer(TestCaseBase):
         assert e.value.message == "Expired match"
 
     def test_matchCanBePlayedAnotherTime(self, db_session):
+        """
+        GIVEN: a match that can be played two times
+        WHEN: the user plays once
+        THEN: the method `start_fresh_one`
+        """
         match = self.match_dto.save(self.match_dto.new(times=2))
         user = self.user_dto.new(email="user@test.project")
         self.user_dto.save(user)

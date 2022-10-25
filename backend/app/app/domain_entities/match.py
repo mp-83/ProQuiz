@@ -8,6 +8,7 @@ from app.constants import (
     MATCH_HASH_LEN,
     MATCH_NAME_MAX_LENGTH,
     MATCH_PASSWORD_LEN,
+    TOPIC_NAME_LENGTH,
 )
 from app.domain_entities.db.base import Base
 from app.domain_entities.db.utils import QAppenderClass, TableMixin
@@ -32,6 +33,7 @@ class Match(TableMixin, Base):
     times = Column(Integer, default=1)
     # indicates if games should be played in order
     order = Column(Boolean, default=True)
+    topic = Column(String(TOPIC_NAME_LENGTH))
 
     games = relationship(
         "Game",
