@@ -573,6 +573,12 @@ class TestCaseSinglePlayer(TestCaseBase):
         assert user.reactions.count() == 1
 
     def test_reactToFirstQuestion(self, db_session):
+        """
+        GIVEN: a match with one question only
+        WHEN: the user reacts to it
+        THEN: the answer is correct because was the only
+        one and it was at position 0
+        """
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
@@ -582,7 +588,7 @@ class TestCaseSinglePlayer(TestCaseBase):
             position=0,
         )
         self.question_dto.save(first_question)
-        answer = self.answer_dto.new(question=first_question, text="UK", position=1)
+        answer = self.answer_dto.new(question=first_question, text="UK", position=0)
         self.answer_dto.save(answer)
         second_question = self.question_dto.new(
             text="Where is Paris?",
@@ -596,10 +602,11 @@ class TestCaseSinglePlayer(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
         player.start()
-        next_q = player.react(first_question, answer)
+        next_q, was_correct = player.react(first_question, answer)
 
         assert user.reactions.count() > 0
         assert next_q == second_question
+        assert was_correct
 
     def test_startMatchAlreadyExpired(self, db_session):
         match = self.match_dto.new(to_time=datetime.now() - timedelta(microseconds=10))
@@ -619,35 +626,6 @@ class TestCaseSinglePlayer(TestCaseBase):
         player = SinglePlayer(status, user, match, db_session=db_session)
         with pytest.raises(MatchError) as e:
             player.start()
-
-        assert e.value.message == "Expired match"
-
-    @pytest.mark.skip("to fix. too brittle")
-    def test_matchExpiresAfterStartButBeforeReaction(self, db_session):
-        # the to_time attribute is set right before the player initialisation
-        # to bypass the is_active check inside start() and fail at reaction
-        # time (where is expected)
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
-            text="Where is London?",
-            game_uid=game.uid,
-            position=0,
-        )
-        self.question_dto.save(question)
-        answer = self.answer_dto.new(question=question, text="UK", position=1)
-        self.answer_dto.save(answer)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-
-        match.to_time = datetime.now() + timedelta(milliseconds=200)
-        self.match_dto.save(match)
-        status = PlayerStatus(user, match, db_session=db_session)
-        player = SinglePlayer(status, user, match, db_session=db_session)
-        player.start()
-        with pytest.raises(MatchError) as e:
-            player.react(question, answer)
 
         assert e.value.message == "Expired match"
 
@@ -763,7 +741,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         )
         self.question_dto.save(second_question)
         second_answer = self.answer_dto.new(
-            question=second_question, text="France", position=1
+            question=second_question, text="France", position=1, is_correct=True
         )
         self.answer_dto.save(second_answer)
         third_question = self.question_dto.new(
@@ -773,7 +751,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         )
         self.question_dto.save(third_question)
         third_answer = self.answer_dto.new(
-            question=third_question, text="Ireland", position=1
+            question=third_question, text="Ireland", position=0
         )
         self.answer_dto.save(third_answer)
 
@@ -784,16 +762,18 @@ class TestCaseSinglePlayer(TestCaseBase):
         player = SinglePlayer(status, user, match, db_session=db_session)
         next_question, attempt_uid = player.start()
         assert next_question == first_question
-        next_q = player.react(first_question, None)
+        next_q, was_correct = player.react(first_question, None)
         assert next_q == second_question
+        assert not was_correct
 
         status = PlayerStatus(user, match, db_session=db_session)
         status.current_attempt_uid = attempt_uid
         player = SinglePlayer(status, user, match, db_session=db_session)
-        next_q = player.react(second_question, second_answer)
+        next_q, was_correct = player.react(second_question, second_answer)
 
         assert user.reactions[0].question == second_question
         assert next_q == third_question
+        assert was_correct
         player = SinglePlayer(status, user, match, db_session=db_session)
         with pytest.raises(MatchOver):
             player.react(third_question, third_answer)
@@ -836,7 +816,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
         try:
-            player.react(second_question, open_answer_2)
+            player.react(second_question, open_answer=open_answer_2)
         except MatchOver:
             pass
 
@@ -854,7 +834,9 @@ class TestCaseResumeMatch(TestCaseBase):
             position=0,
         )
         self.question_dto.save(first_question)
-        answer = self.answer_dto.new(question=first_question, text="UK", position=1)
+        answer = self.answer_dto.new(
+            question=first_question, text="UK", position=0, is_correct=False
+        )
         self.answer_dto.save(answer)
         second_question = self.question_dto.new(
             text="Where is Moscow?",
@@ -868,8 +850,9 @@ class TestCaseResumeMatch(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
         player.start()
-        player.react(first_question, answer)
+        _, was_correct = player.react(first_question, answer)
         assert player.match_can_be_resumed
+        assert not was_correct
 
     def test_matchCanNotBeResumedBecausePublic(self, db_session):
         match = self.match_dto.save(self.match_dto.new(is_restricted=False))

@@ -610,5 +610,58 @@ class TestCasePlayNext:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
         assert response.json()["match_uid"] is None
-        assert response.json()["correct"]
+        assert response.json()["was_correct"]
         assert response.json()["score"] > 0
+
+    def test_11(
+        self, client: TestClient, superuser_token_headers: dict, db_session, mocker
+    ):
+        """
+        GIVEN: a match that is valid at start time
+        WHEN: the match expires before the user answers
+        THEN: a response.BAD_REQUEST should be returned
+        """
+        mocker.patch(
+            "app.domain_entities.match.Match.is_active",
+            new_callable=mocker.PropertyMock,
+            side_effect=[True, True, False],
+        )
+        match_dto = MatchDTO(session=db_session)
+        match = match_dto.new(to_time=datetime.now())
+        match_dto.save(match)
+        game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(game)
+        question = self.question_dto.new(
+            text="Where is London?",
+            game_uid=game.uid,
+            position=0,
+        )
+        self.question_dto.save(question)
+        answer = self.answer_dto.new(question=question, text="UK", position=1)
+        self.answer_dto.save(answer)
+        user = self.user_dto.new(email="user@test.project")
+        self.user_dto.save(user)
+
+        response = client.post(
+            f"{settings.API_V1_STR}/play/start",
+            json={
+                "match_uid": match.uid,
+                "user_uid": user.uid,
+            },
+            headers=superuser_token_headers,
+        )
+        assert response.ok
+        attempt_uid = response.json()["attempt_uid"]
+
+        response = client.post(
+            f"{settings.API_V1_STR}/play/next",
+            json={
+                "match_uid": match.uid,
+                "question_uid": question.uid,
+                "answer_uid": answer.uid,
+                "user_uid": user.uid,
+                "attempt_uid": attempt_uid,
+            },
+            headers=superuser_token_headers,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

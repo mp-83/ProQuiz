@@ -105,7 +105,8 @@ class TestCaseReactionModel:
                 when the question is displayed
         WHEN: the question's time is elapsed and the
                 user answers
-        THEN: the answer should not be recorded
+        THEN: the answer should not be recorded, therefore
+        is not correct
         """
         # and the score remains Null
         match = self.match_dto.save(self.match_dto.new())
@@ -123,12 +124,15 @@ class TestCaseReactionModel:
         )
         self.reaction_dto.save(reaction)
 
-        answer = self.answer_dto.new(question=question, text="9", position=1)
+        answer = self.answer_dto.new(
+            question=question, text="9", position=1, is_correct=True
+        )
         self.answer_dto.save(answer)
-        self.reaction_dto.record_answer(reaction, answer)
+        was_correct = self.reaction_dto.record_answer(reaction, answer)
 
         assert reaction.answer is None
         assert reaction.score is None
+        assert not was_correct
 
     def test_4(self):
         """
@@ -155,10 +159,11 @@ class TestCaseReactionModel:
 
         answer = self.answer_dto.new(question=question, text="2", position=1)
         self.answer_dto.save(answer)
-        self.reaction_dto.record_answer(reaction, answer)
+        was_correct = self.reaction_dto.record_answer(reaction, answer)
 
         assert reaction.answer
         assert reaction.answer_time
+        assert not was_correct
         # because the score is computed over the response
         # time and this one variates at each tests run
         # isclose is used to avoid brittleness
@@ -191,11 +196,12 @@ class TestCaseReactionModel:
         open_answer = open_answer_dto.new(text="Miami is in Florida")
         open_answer_dto.save(open_answer)
 
-        self.reaction_dto.record_answer(reaction, open_answer=open_answer)
+        was_correct = self.reaction_dto.record_answer(reaction, open_answer=open_answer)
         assert question.is_open
         assert reaction.answer == open_answer
         assert reaction.answer_time
         assert not reaction.score
+        assert not was_correct
 
     def test_6(self):
         """

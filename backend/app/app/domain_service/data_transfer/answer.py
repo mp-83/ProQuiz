@@ -20,6 +20,8 @@ class AnswerDTO:
         kwargs["text"] = boolean_texts.get(text, text)
         kwargs["boolean"] = kwargs["text"] in boolean_texts.values()
         kwargs.pop("uid", None)
+        if kwargs.get("is_correct") is None:
+            kwargs["is_correct"] = kwargs["position"] == 0
         if kwargs.get("level") is None:
             kwargs["level"] = 1 if kwargs["position"] == 0 else 0
         return self.klass(**kwargs)

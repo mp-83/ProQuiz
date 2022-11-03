@@ -25,13 +25,14 @@ class ReactionDTO:
         self._session.commit()
         return instance
 
-    def record_answer(self, instance, answer=None, open_answer=None):
+    def record_answer(self, instance, answer=None, open_answer=None) -> bool:
         """Save the answer given by the user
 
         If question is expired discard the answer
         Store the answer for bot, open or timed
         questions.
         """
+        was_correct = False
         response_datetime = datetime.now(tz=timezone.utc)
         assert not instance.update_timestamp
         if not instance.create_timestamp.tzinfo:
@@ -48,7 +49,8 @@ class ReactionDTO:
         )
         instance.update_timestamp = response_datetime
         if question_expired:
-            return self.save(instance)
+            self.save(instance)
+            return was_correct
 
         if answer:
             rs = ReactionScore(
@@ -62,9 +64,10 @@ class ReactionDTO:
                 instance.open_answer_uid = open_answer.uid
             else:
                 instance.answer_uid = answer.uid
+                was_correct = answer.is_correct
             self.save(instance)
 
-        return instance
+        return was_correct
 
 
 class ReactionScore:

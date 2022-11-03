@@ -29,7 +29,7 @@ class Answer(TableMixin, Base):
     # whether the content of the answer is an image or any external source
     content_url = Column(String(URL_LENGTH))
     # no constraint are defined as there might be more than one correct answer
-    is_correct = Column(Boolean, default=False)
+    is_correct = Column(Boolean, server_default="0")
     level = Column(Integer)
 
     __table_args__ = (

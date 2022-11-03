@@ -183,6 +183,9 @@ class ValidatePlayNext:
         match = RetrieveObject(
             self.match_uid, otype="match", db_session=self._session
         ).get()
+        if not match.is_active:
+            raise ValidateError("Expired match")
+
         self._data["match"] = match
 
     def is_valid(self):
