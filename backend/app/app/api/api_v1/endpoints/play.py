@@ -105,13 +105,14 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
         ) from exc
 
+    was_correct = player.react(question, answer, open_answer)
     try:
-        next_q, was_correct = player.react(question, answer, open_answer)
+        next_q = player.forward()
     except MatchOver:
         score = PlayScore(
             match.uid, user.uid, player_status.current_score(), db_session=session
         ).save_to_ranking()
-        return {"question": None, "score": score.score, "was_correct": None}
+        return {"question": None, "score": score.score, "was_correct": was_correct}
 
     return {
         "question": next_q,

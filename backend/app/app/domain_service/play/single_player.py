@@ -281,10 +281,9 @@ class SinglePlayer:
             attempt_uid = self._current_reaction.attempt_uid
             self._current_reaction = self._new_reaction(question, attempt_uid)
 
-        was_correct = self.reaction_dto.record_answer(
+        return self.reaction_dto.record_answer(
             self._current_reaction, answer=answer, open_answer=open_answer
         )
-        return self.forward(), was_correct
 
     @property
     def current(self):

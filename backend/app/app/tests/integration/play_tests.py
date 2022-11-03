@@ -302,6 +302,7 @@ class TestCasePlayNext:
         assert response.json()["question"] is None
         assert response.json()["match_uid"] is None
         assert response.json()["score"] > 0
+        assert not response.json()["was_correct"]
         assert match.rankings.count() == 1
 
     def test_continueStartedMatchWithMultipleGames(

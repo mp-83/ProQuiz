@@ -602,10 +602,9 @@ class TestCaseSinglePlayer(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
         player.start()
-        next_q, was_correct = player.react(first_question, answer)
-
+        was_correct = player.react(first_question, answer)
         assert user.reactions.count() > 0
-        assert next_q == second_question
+        assert player.forward() == second_question
         assert was_correct
 
     def test_startMatchAlreadyExpired(self, db_session):
@@ -633,7 +632,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         """
         GIVEN: a match that can be played two times
         WHEN: the user plays once
-        THEN: the method `start_fresh_one`
+        THEN: the method `start_fresh_one` should return True
         """
         match = self.match_dto.save(self.match_dto.new(times=2))
         user = self.user_dto.new(email="user@test.project")
@@ -650,12 +649,12 @@ class TestCaseSinglePlayer(TestCaseBase):
 
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
-        returned_question, _ = player.start()
+        returned_question, attempt_uid = player.start()
+        status.current_attempt_uid = attempt_uid
         assert returned_question == first_question
-        try:
-            player.react(first_question, first_answer)
-        except MatchOver:
-            pass
+        player.react(first_question, first_answer)
+        with pytest.raises(MatchOver):
+            player.forward()
 
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
@@ -683,12 +682,12 @@ class TestCaseSinglePlayer(TestCaseBase):
             status = PlayerStatus(user, match, db_session=db_session)
             player = SinglePlayer(status, user, match, db_session=db_session)
             assert status.start_fresh_one()
-            next_question, _ = player.start()
+            next_question, attempt_uid = player.start()
+            status.current_attempt_uid = attempt_uid
             assert next_question == first_question
-            try:
-                player.react(first_question, first_answer)
-            except MatchOver:
-                pass
+            player.react(first_question, first_answer)
+            with pytest.raises(MatchOver):
+                player.forward()
 
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
@@ -697,29 +696,8 @@ class TestCaseSinglePlayer(TestCaseBase):
 
         db_session.rollback()
 
-    def test_matchOver(self, db_session):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
-            text="Where is London?",
-            game_uid=game.uid,
-            position=0,
-            time=2,
-        )
-        self.question_dto.save(question)
-        answer = self.answer_dto.new(question=question, text="UK", position=1, level=2)
-        self.answer_dto.save(answer)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-
-        status = PlayerStatus(user, match, db_session=db_session)
-        player = SinglePlayer(status, user, match, db_session=db_session)
-        player.start()
-        with pytest.raises(MatchOver):
-            player.react(question, answer)
-
     def test_playMatchOverMultipleHttpRequests(self, db_session):
+        # TODO: is it duplicated
         # the SinglePlayer is instanced multiple times
         match = self.match_dto.save(self.match_dto.new())
         game = self.game_dto.new(match_uid=match.uid, order=False)
@@ -762,21 +740,23 @@ class TestCaseSinglePlayer(TestCaseBase):
         player = SinglePlayer(status, user, match, db_session=db_session)
         next_question, attempt_uid = player.start()
         assert next_question == first_question
-        next_q, was_correct = player.react(first_question, None)
-        assert next_q == second_question
+        was_correct = player.react(first_question, None)
+        assert player.forward() == second_question
         assert not was_correct
 
         status = PlayerStatus(user, match, db_session=db_session)
         status.current_attempt_uid = attempt_uid
         player = SinglePlayer(status, user, match, db_session=db_session)
-        next_q, was_correct = player.react(second_question, second_answer)
+        was_correct = player.react(second_question, second_answer)
 
         assert user.reactions[0].question == second_question
-        assert next_q == third_question
+        assert player.forward() == third_question
         assert was_correct
+        # new player emulates a new connection
         player = SinglePlayer(status, user, match, db_session=db_session)
+        player.react(third_question, third_answer)
         with pytest.raises(MatchOver):
-            player.react(third_question, third_answer)
+            player.forward()
 
     def test_restoreOpenQuestionsMatchFromSecondQuestion(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
@@ -799,7 +779,7 @@ class TestCaseSinglePlayer(TestCaseBase):
         open_answer_1 = open_answer_dto.new(text="Austria")
         open_answer_dto.save(open_answer_1)
 
-        self.reaction_dto.save(
+        first_reaction = self.reaction_dto.save(
             self.reaction_dto.new(
                 match=match,
                 question=first_question,
@@ -814,13 +794,14 @@ class TestCaseSinglePlayer(TestCaseBase):
         open_answer_dto.save(open_answer_2)
 
         status = PlayerStatus(user, match, db_session=db_session)
+        status.current_attempt_uid = first_reaction.attempt_uid
         player = SinglePlayer(status, user, match, db_session=db_session)
-        try:
-            player.react(second_question, open_answer=open_answer_2)
-        except MatchOver:
-            pass
+        was_correct = player.react(second_question, open_answer=open_answer_2)
+        with pytest.raises(MatchOver):
+            player.forward()
 
         assert user.reactions.count() == 2
+        assert not was_correct
 
 
 class TestCaseResumeMatch(TestCaseBase):
@@ -850,7 +831,7 @@ class TestCaseResumeMatch(TestCaseBase):
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
         player.start()
-        _, was_correct = player.react(first_question, answer)
+        was_correct = player.react(first_question, answer)
         assert player.match_can_be_resumed
         assert not was_correct
 
