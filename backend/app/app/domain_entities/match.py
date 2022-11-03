@@ -34,6 +34,9 @@ class Match(TableMixin, Base):
     # indicates if games should be played in order
     order = Column(Boolean, default=True)
     topic = Column(String(TOPIC_NAME_LENGTH))
+    # indicates whether the user has to be told that the answer given
+    # (if any) was the correct one
+    notify_correct = Column(Boolean, default=False)
 
     games = relationship(
         "Game",

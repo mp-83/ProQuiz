@@ -40,6 +40,7 @@ class NextResponse(BaseModel):
     question: Question = None
     user_uid: PositiveInt = None
     score: int = None
+    correct: bool = None
 
 
 class SignResponse(BaseModel):

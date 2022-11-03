@@ -529,7 +529,7 @@ class TestCasePlayNext:
         """
         GIVEN: an existing match, not started via previous
                 call to /next
-        WHEN: the user send a request to /next endpoint
+        WHEN: the user sends a request to /next endpoint
         THEN: an error should be returned
         """
         match_dto = MatchDTO(session=db_session)
@@ -559,3 +559,56 @@ class TestCasePlayNext:
             headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_10(self, client: TestClient, superuser_token_headers: dict, db_session):
+        """
+        GIVEN: a restricted match with two question that can be
+                played unlimited times
+        WHEN: the user plays two times
+        THEN: the system should behave correctly, each time
+        """
+        match_dto = MatchDTO(session=db_session)
+        match = match_dto.new(is_restricted=True, times=1)
+        match_dto.save(match)
+        game = self.game_dto.new(match_uid=match.uid)
+        self.game_dto.save(game)
+        question_1 = self.question_dto.new(
+            text="Where is London?",
+            game_uid=game.uid,
+            position=0,
+            time=None,
+        )
+        self.question_dto.save(question_1)
+        answer_1 = self.answer_dto.new(
+            question=question_1, text="UK", position=0, level=2
+        )
+        self.answer_dto.save(answer_1)
+        user = self.user_dto.fetch(signed=True)
+        response = client.post(
+            f"{settings.API_V1_STR}/play/start",
+            json={
+                "match_uid": match.uid,
+                "user_uid": user.uid,
+                "password": match.password,
+            },
+            headers=superuser_token_headers,
+        )
+        assert response.ok
+        attempt_uid = response.json()["attempt_uid"]
+
+        response = client.post(
+            f"{settings.API_V1_STR}/play/next",
+            json={
+                "match_uid": match.uid,
+                "question_uid": question_1.uid,
+                "answer_uid": answer_1.uid,
+                "user_uid": user.uid,
+                "attempt_uid": attempt_uid,
+            },
+            headers=superuser_token_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["question"] is None
+        assert response.json()["match_uid"] is None
+        assert response.json()["correct"]
+        assert response.json()["score"] > 0
