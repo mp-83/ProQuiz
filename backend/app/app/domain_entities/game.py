@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
 
@@ -12,9 +12,9 @@ class Game(TableMixin, Base):
     match_uid = Column(
         Integer, ForeignKey("matches.uid", ondelete="CASCADE"), nullable=False
     )
-    index = Column(Integer, default=0)
+    index = Column(Integer, server_default=text("0"))
     # when True question should be returned in order
-    order = Column(Boolean, default=True)
+    order = Column(Boolean, server_default="1")
     match = relationship("Match")
     questions = relationship(
         "Question",

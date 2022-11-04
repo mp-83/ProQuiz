@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, text
 from sqlalchemy.orm import relationship
 
 from app.constants import (
@@ -25,14 +25,14 @@ class Match(TableMixin, Base):
     # password needed to start the match if it's restricted
     password = Column(String(MATCH_PASSWORD_LEN))
     # designates the accessibility to this match
-    is_restricted = Column(Boolean, default=False)
+    is_restricted = Column(Boolean, server_default="0")
     # determine the time range the match is playable
     from_time = Column(DateTime)
     to_time = Column(DateTime)
     # how many times a match can be played. times = 0 means unlimited times
-    times = Column(Integer, default=1)
+    times = Column(Integer, server_default=text("1"))
     # indicates if games should be played in order
-    order = Column(Boolean, default=True)
+    order = Column(Boolean, server_default="1")
     topic = Column(String(TOPIC_NAME_LENGTH))
     # indicates whether the user has to be told that the answer given
     # (if any) was the correct one

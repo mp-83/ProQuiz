@@ -23,7 +23,7 @@ class User(TableMixin, Base):
     name = Column(String(USER_NAME_MAX_LENGTH))
     password_hash = Column(String(PASSWORD_HASH_LENGTH))
     key = Column(String(KEY_LENGTH))
-    is_admin = Column(Boolean, default=False)
+    is_admin = Column(Boolean, server_default="0")
     reactions = relationship(
         "Reaction",
         viewonly=True,

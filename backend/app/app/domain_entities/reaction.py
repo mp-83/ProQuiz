@@ -36,7 +36,7 @@ class Reaction(TableMixin, Base):
     game = relationship("Game")
 
     # used to mark reactions of a user when drops out of a match
-    dirty = Column(Boolean, default=False)
+    dirty = Column(Boolean, server_default="0")
     answer_time = Column(DateTime(timezone=True), nullable=True)
     score = Column(Float)
     # used to distinguish the reactions for the same match
