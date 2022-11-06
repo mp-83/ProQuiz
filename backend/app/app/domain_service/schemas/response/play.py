@@ -1,8 +1,7 @@
-from typing import List
+from typing import List, NamedTuple
 
 from pydantic import BaseModel, NonNegativeInt, PositiveInt
 
-from app.domain_service.schemas.response.answer import Answer
 from app.domain_service.schemas.response.game import Game
 
 
@@ -13,6 +12,11 @@ class UIDSchemaBase(BaseModel):
         orm_mode = True
 
 
+class SimpleAnswer(NamedTuple):
+    uid: PositiveInt
+    text: str
+
+
 class Question(BaseModel):
     uid: PositiveInt
     position: NonNegativeInt
@@ -21,7 +25,7 @@ class Question(BaseModel):
     content_url: str = None
     boolean: bool = None
     game: Game = None
-    answers_to_display: List[Answer] = []
+    answers_to_display: List[SimpleAnswer] = []
 
     class Config:
         orm_mode = True

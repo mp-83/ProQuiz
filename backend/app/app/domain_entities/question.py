@@ -53,9 +53,9 @@ class Question(TableMixin, Base):
 
     @property
     def answers_to_display(self):
-        _answers = self.answers.all()
+        _answers = [(a.uid, a.text or a.content_url) for a in self.answers.all()]
         shuffle(_answers)
-        return [a.json for a in _answers]
+        return _answers
 
     @property
     def is_template(self):

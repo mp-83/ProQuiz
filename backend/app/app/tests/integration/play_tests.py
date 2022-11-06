@@ -241,7 +241,7 @@ class TestCasePlayNext:
         self, client: TestClient, superuser_token_headers: dict, db_session
     ):
         match_dto = MatchDTO(session=db_session)
-        match = match_dto.new(with_code=True)
+        match = match_dto.new(with_code=True, notify_correct=True)
         match_dto.save(match)
         game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)
@@ -302,7 +302,7 @@ class TestCasePlayNext:
         assert response.json()["question"] is None
         assert response.json()["match_uid"] is None
         assert response.json()["score"] > 0
-        assert not response.json()["was_correct"]
+        assert response.json()["was_correct"] is False
         assert match.rankings.count() == 1
 
     def test_continueStartedMatchWithMultipleGames(
@@ -311,7 +311,7 @@ class TestCasePlayNext:
         # first and only question of the first game is answered
         # first question of the second game is answered
         match_dto = MatchDTO(session=db_session)
-        match = match_dto.new(with_code=True)
+        match = match_dto.new(with_code=True, notify_correct=True)
         match_dto.save(match)
 
         reaction_dto = ReactionDTO(session=db_session)
@@ -325,7 +325,7 @@ class TestCasePlayNext:
         )
         self.question_dto.save(first_question)
         first_answer = self.answer_dto.new(
-            question=first_question, text="UK", position=1
+            question=first_question, text="UK", position=0
         )
         self.answer_dto.save(first_answer)
 
@@ -346,7 +346,7 @@ class TestCasePlayNext:
         )
         self.question_dto.save(third_question)
         third_answer = self.answer_dto.new(
-            question=third_question, text="Ireland", position=1
+            question=third_question, text="Ireland", position=0
         )
         self.answer_dto.save(third_answer)
 
@@ -390,6 +390,7 @@ class TestCasePlayNext:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
         assert response.json()["match_uid"] is None
+        assert response.json()["was_correct"]
         assert match.rankings.count() == 1
         attempt_uid = user.reactions.first().attempt_uid
         assert user.reactions.filter_by(attempt_uid=attempt_uid).count() == 3
@@ -442,6 +443,7 @@ class TestCasePlayNext:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
         assert response.json()["match_uid"] is None
+        assert response.json()["was_correct"] is None
 
         assert match.reactions.filter_by(open_answer_uid__isnot=None).count()
         # assert question.open_answers.first().text == "London is in the United Kingdom"
@@ -523,6 +525,7 @@ class TestCasePlayNext:
             assert response.json()["question"] is None
             assert response.json()["match_uid"] is None
             assert response.json()["score"] > 0
+            assert response.json()["was_correct"] is None
 
         assert match.rankings.count() == 2
 
@@ -569,7 +572,7 @@ class TestCasePlayNext:
         THEN: the system should behave correctly, each time
         """
         match_dto = MatchDTO(session=db_session)
-        match = match_dto.new(is_restricted=True, times=1)
+        match = match_dto.new(is_restricted=True, times=1, notify_correct=True)
         match_dto.save(match)
         game = self.game_dto.new(match_uid=match.uid)
         self.game_dto.save(game)

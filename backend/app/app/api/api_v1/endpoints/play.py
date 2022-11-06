@@ -106,6 +106,9 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
         ) from exc
 
     was_correct = player.react(question, answer, open_answer)
+    if not match.notify_correct:
+        was_correct = None
+
     try:
         next_q = player.forward()
     except MatchOver:
