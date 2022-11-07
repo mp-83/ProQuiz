@@ -96,7 +96,7 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
 
     player_status = PlayerStatus(user, match, db_session=session)
     player_status.current_attempt_uid = attempt_uid
-    assert player_status.current_attempt_uid
+
     try:
         player = SinglePlayer(player_status, user, match, db_session=session)
     except InternalException as exc:
