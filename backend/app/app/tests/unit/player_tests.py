@@ -26,6 +26,13 @@ from app.exceptions import (
 )
 
 
+@pytest.fixture
+def shuffle_patch(mocker):
+    yield mocker.patch(
+        "app.domain_service.play.single_player.shuffle", side_effect=lambda arr: arr
+    )
+
+
 class TestCaseBase:
     @pytest.fixture(autouse=True)
     def setUp(self, db_session, mocker):
@@ -35,154 +42,109 @@ class TestCaseBase:
         self.answer_dto = AnswerDTO(session=db_session)
         self.game_dto = GameDTO(session=db_session)
         self.user_dto = UserDTO(session=db_session)
-        # make the shuffle transparent by returning the same input array
-        mocker.patch(
-            "app.domain_service.play.single_player.shuffle", side_effect=lambda arr: arr
-        )
 
 
-class TestCaseQuestionFactory(TestCaseBase):
-    def test_questionsAreShuffledWhenNotOrdered(self):
-        """Questions are inversely created
-        to make the ordering meaningful.
+class TestCaseQuestionFactory:
+    def test_1(self, game_dto, match_dto, question_dto, shuffle_patch):
         """
-
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, index=0, order=False)
-        self.game_dto.save(game)
-        q_berlin = self.question_dto.new(
-            text="Where is Berlin?", game_uid=game.uid, position=0
-        )
-        self.question_dto.save(q_berlin)
-        q_zurich = self.question_dto.new(
-            text="Where is Zurich?", game_uid=game.uid, position=1
-        )
-        self.question_dto.save(q_zurich)
-        q_paris = self.question_dto.new(
-            text="Where is Paris?", game_uid=game.uid, position=2
-        )
-        self.question_dto.save(q_paris)
-
-        question_factory = QuestionFactory(game, *())
-        assert question_factory.next().text == q_berlin.text
-        assert question_factory.next().text == q_zurich.text
-        assert question_factory.current == q_zurich
-        assert question_factory.next().text == q_paris.text
-
-    def test_nextQuestion(self):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        first = self.question_dto.new(
-            text="Where is Paris?", game_uid=game.uid, position=0
-        )
-        self.question_dto.save(first)
-        second = self.question_dto.new(
+        GIVEN: two existing questions
+        WHEN: next() is called twice and then previous()
+        THEN: questions are shuffled before being returned
+        """
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid, order=False)
+        game_dto.save(game)
+        first = question_dto.new(text="Where is Paris?", game_uid=game.uid, position=0)
+        question_dto.save(first)
+        second = question_dto.new(
             text="Where is London?", game_uid=game.uid, position=1
         )
-        self.question_dto.save(second)
+        question_dto.save(second)
 
         question_factory = QuestionFactory(game, *())
         assert question_factory.next() == first
         assert question_factory.next() == second
-
-    def test_gameOverWhenThereAreNoQuestions(self):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-
-        question_factory = QuestionFactory(game, *())
-        with pytest.raises(GameOver):
-            question_factory.next()
-
-    def test_gameIsOverAfterLastQuestion(self):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
-            text="Where is Paris?", game_uid=game.uid, position=0
-        )
-        self.question_dto.save(question)
-
-        question_factory = QuestionFactory(game, *())
-        question_factory.next()
-        with pytest.raises(GameOver):
-            question_factory.next()
-
-    def test_isLastQuestion(self):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
-            text="Where is Amsterdam?",
-            game_uid=game.uid,
-            position=0,
-        )
-        self.question_dto.save(question)
-        question = self.question_dto.new(
-            text="Where is Lion?", game_uid=game.uid, position=1
-        )
-        self.question_dto.save(question)
-
-        question_factory = QuestionFactory(game)
-        question_factory.next()
-        assert not question_factory.is_last_question
-        question_factory.next()
-        assert question_factory.is_last_question
-
-    def test_previousQuestion(self):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        first = self.question_dto.new(
-            text="Where is Amsterdam?",
-            game_uid=game.uid,
-            position=0,
-        )
-        self.question_dto.save(first)
-        second = self.question_dto.new(
-            text="Where is Lion?", game_uid=game.uid, position=1
-        )
-        self.question_dto.save(second)
-
-        question_factory = QuestionFactory(game)
-        question_factory.next()
-        question_factory.next()
+        assert shuffle_patch.call_count == 2
         assert question_factory.previous() == first
 
-    def test_callingPreviousWithoutNext(self):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
+    def test_2(self, match_dto, game_dto):
+        """
+        GIVEN: one match with game without
+        WHEN: next() is called
+        THEN: GameOver is raised
+        """
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+
+        question_factory = QuestionFactory(game, *())
+        with pytest.raises(GameOver):
+            question_factory.next()
+
+    def test_3(self, match_dto, game_dto, question_dto):
+        """
+        GIVEN: one match with game with one question
+        WHEN: next() is called twice
+        THEN: GameOver is raised after the second time
+                because there are no more questions
+        """
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question = question_dto.new(
+            text="Where is Paris?", game_uid=game.uid, position=0
+        )
+        question_dto.save(question)
+
+        question_factory = QuestionFactory(game, *())
+        question_factory.next()
+        assert question_factory.is_last_question
+        with pytest.raises(GameOver):
+            question_factory.next()
+
+    def test_4(self, match_dto, game_dto, question_dto):
+        """
+        GIVEN: a match with one game with one question
+        WHEN: previous() is called without next() never called before
+        THEN: GameError is raised
+        """
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question = question_dto.new(
             text="Where is Amsterdam?",
             game_uid=game.uid,
             position=0,
         )
-        self.question_dto.save(question)
-        question = self.question_dto.new(
+        question_dto.save(question)
+        question = question_dto.new(
             text="Where is Lion?", game_uid=game.uid, position=1
         )
-        self.question_dto.save(question)
+        question_dto.save(question)
 
         question_factory = QuestionFactory(game)
         with pytest.raises(GameError):
             question_factory.previous()
 
-    def test_callingPreviousAfterFirstNext(self):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
+    def test_5(self, match_dto, game_dto, question_dto):
+        """
+        GIVEN: a match with one game with one question
+        WHEN: previous() is called after next() is called once
+        THEN: GameError is raised
+        """
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question = question_dto.new(
             text="Where is Amsterdam?",
             game_uid=game.uid,
             position=0,
         )
-        self.question_dto.save(question)
-        question = self.question_dto.new(
+        question_dto.save(question)
+        question = question_dto.new(
             text="Where is Lion?", game_uid=game.uid, position=1
         )
-        self.question_dto.save(question)
+        question_dto.save(question)
 
         question_factory = QuestionFactory(game)
         question_factory.next()
@@ -695,68 +657,6 @@ class TestCaseSinglePlayer(TestCaseBase):
             player.start()
 
         db_session.rollback()
-
-    def test_playMatchOverMultipleHttpRequests(self, db_session):
-        # TODO: is it duplicated
-        # the SinglePlayer is instanced multiple times
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid, order=False)
-        self.game_dto.save(game)
-        first_question = self.question_dto.new(
-            text="Where is London?",
-            game_uid=game.uid,
-            position=0,
-        )
-        self.question_dto.save(first_question)
-        first_answer = self.answer_dto.new(
-            question=first_question, text="UK", position=1
-        )
-        self.answer_dto.save(first_answer)
-        second_question = self.question_dto.new(
-            text="Where is Paris?",
-            game_uid=game.uid,
-            position=1,
-        )
-        self.question_dto.save(second_question)
-        second_answer = self.answer_dto.new(
-            question=second_question, text="France", position=1, is_correct=True
-        )
-        self.answer_dto.save(second_answer)
-        third_question = self.question_dto.new(
-            text="Where is Dublin?",
-            game_uid=game.uid,
-            position=2,
-        )
-        self.question_dto.save(third_question)
-        third_answer = self.answer_dto.new(
-            question=third_question, text="Ireland", position=0
-        )
-        self.answer_dto.save(third_answer)
-
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-
-        status = PlayerStatus(user, match, db_session=db_session)
-        player = SinglePlayer(status, user, match, db_session=db_session)
-        next_question, attempt_uid = player.start()
-        assert next_question == first_question
-        was_correct = player.react(first_question, None)
-        assert player.forward() == second_question
-        assert not was_correct
-
-        status = PlayerStatus(user, match, db_session=db_session)
-        status.current_attempt_uid = attempt_uid
-        player = SinglePlayer(status, user, match, db_session=db_session)
-        was_correct = player.react(second_question, second_answer)
-
-        assert user.reactions[0].question == second_question
-        assert player.forward() == third_question
-        assert was_correct
-        # new player emulates a new connection
-        player = SinglePlayer(status, user, match, db_session=db_session)
-        player.react(third_question, third_answer)
-        with pytest.raises(MatchOver):
-            player.forward()
 
     def test_restoreOpenQuestionsMatchFromSecondQuestion(self, db_session):
         match = self.match_dto.save(self.match_dto.new())
