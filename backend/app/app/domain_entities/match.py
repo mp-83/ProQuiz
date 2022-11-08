@@ -41,7 +41,7 @@ class Match(TableMixin, Base):
     games = relationship(
         "Game",
         viewonly=True,
-        order_by="Game.uid",
+        order_by="Game.index",
         lazy="dynamic",
         query_class=QAppenderClass,
     )

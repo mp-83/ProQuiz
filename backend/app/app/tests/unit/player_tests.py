@@ -152,24 +152,33 @@ class TestCaseQuestionFactory:
             question_factory.previous()
 
 
-class TestCaseGameFactory(TestCaseBase):
-    def test_nextGameWhenOrdered(self):
-        """ """
-        match = self.match_dto.save(self.match_dto.new(order=True))
-        second = self.game_dto.new(match_uid=match.uid, index=1)
-        self.game_dto.save(second)
-        first = self.game_dto.new(match_uid=match.uid, index=0)
-        self.game_dto.save(first)
-        third = self.game_dto.new(match_uid=match.uid, index=2)
-        self.game_dto.save(third)
+class TestCaseGameFactory:
+    def test_1(self, match_dto, game_dto):
+        """
+        GIVEN: a match with three games
+        WHEN: next() game is called
+        THEN: games are returned based on their position (index - ascending)
+        """
+        match = match_dto.save(match_dto.new(order=True))
+        second = game_dto.new(match_uid=match.uid, index=1)
+        game_dto.save(second)
+        first = game_dto.new(match_uid=match.uid, index=0)
+        game_dto.save(first)
+        third = game_dto.new(match_uid=match.uid, index=2)
+        game_dto.save(third)
 
         game_factory = GameFactory(match, *())
-        assert game_factory.next() == second
         assert game_factory.next() == first
+        assert game_factory.next() == second
         assert game_factory.next() == third
 
-    def test_matchWithoutGamesThrowsError(self, db_session):
-        match = self.match_dto.save(self.match_dto.new())
+    def test_2(self, db_session, match_dto):
+        """
+        GIVEN: a match without games
+        WHEN: next() is called
+        THEN: a MatchOver is expected to be raised
+        """
+        match = match_dto.save(match_dto.new())
         game_factory = GameFactory(match, *())
 
         with pytest.raises(MatchOver):
@@ -177,60 +186,51 @@ class TestCaseGameFactory(TestCaseBase):
 
         db_session.rollback()
 
-    def test_matchStarted(self):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
+    def test_3(self, match_dto, game_dto):
+        """
+        GIVEN: a match with one game
+        WHEN: next() was not called
+        THEN: the match should not be considered as started
+        """
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
         game_factory = GameFactory(match, *())
 
         assert not game_factory.match_started
 
-    def test_isLastGame(self):
-        match = self.match_dto.save(self.match_dto.new())
-        g1 = self.game_dto.new(match_uid=match.uid, index=0)
-        self.game_dto.save(g1)
-        g2 = self.game_dto.new(match_uid=match.uid, index=1)
-        self.game_dto.save(g2)
-        game_factory = GameFactory(match, *())
+    def test_4(self, match_dto, game_dto):
+        """
+        GIVEN: a match with two games
+        WHEN: next() is called after one game was already played
+                (mimics what happens over two separate HTTP requests)
+        THEN: the second should be considered as the last game
+        """
+        match = match_dto.save(match_dto.new())
+        g1 = game_dto.new(match_uid=match.uid, index=0)
+        game_dto.save(g1)
+        g2 = game_dto.new(match_uid=match.uid, index=1)
+        game_dto.save(g2)
+        game_factory = GameFactory(match, g1.uid)
 
-        game_factory.next()
-        assert not game_factory.is_last_game
-        game_factory.next()
+        assert game_factory.next() == g2
         assert game_factory.is_last_game
 
-    def test_nextOverTwoSessions(self):
-        match = self.match_dto.save(self.match_dto.new())
-        g1 = self.game_dto.new(match_uid=match.uid, index=0)
-        self.game_dto.save(g1)
-        g2 = self.game_dto.new(match_uid=match.uid, index=1)
-        self.game_dto.save(g2)
+    def test_5(self, match_dto, game_dto):
+        """
+        GIVEN: a match with two games
+        WHEN: next() is called (there is already one game played)
+        THEN: calling previous() should return the first game
+        """
+        match = match_dto.save(match_dto.new())
+        g1 = game_dto.new(match_uid=match.uid, index=0)
+        game_dto.save(g1)
+        g2 = game_dto.new(match_uid=match.uid, index=1)
+        game_dto.save(g2)
         game_factory = GameFactory(match, g1.uid)
 
         game_factory.next()
-        assert game_factory.is_last_game
-
-    def test_callingPreviousRightAfterFirstNext(self):
-        match = self.match_dto.save(self.match_dto.new())
-        g1 = self.game_dto.new(match_uid=match.uid, index=0)
-        self.game_dto.save(g1)
-        g2 = self.game_dto.new(match_uid=match.uid, index=1)
-        self.game_dto.save(g2)
-        game_factory = GameFactory(match, *())
-
-        game_factory.next()
-        with pytest.raises(MatchError):
-            game_factory.previous()
-
-    def test_callingPreviousWithoutNext(self):
-        match = self.match_dto.save(self.match_dto.new())
-        g1 = self.game_dto.new(match_uid=match.uid, index=0)
-        self.game_dto.save(g1)
-        g2 = self.game_dto.new(match_uid=match.uid, index=1)
-        self.game_dto.save(g2)
-        game_factory = GameFactory(match, *())
-
-        with pytest.raises(MatchError):
-            game_factory.previous()
+        assert game_factory.previous() == g1
 
 
 class TestCaseStatus(TestCaseBase):
