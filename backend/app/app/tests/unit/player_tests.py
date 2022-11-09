@@ -233,22 +233,29 @@ class TestCaseGameFactory:
         assert game_factory.previous() == g1
 
 
-class TestCaseStatus(TestCaseBase):
-    def test_questionsDisplayed(self, db_session):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        q1 = self.question_dto.new(text="Where is Miami", position=0, game=game)
-        self.question_dto.save(q1)
-        q2 = self.question_dto.new(text="Where is London", position=1, game=game)
-        self.question_dto.save(q2)
-        q3 = self.question_dto.new(text="Where is Paris", position=2, game=game)
-        self.question_dto.save(q3)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
+class TestCaseStatus:
+    def test_1(
+        self, db_session, match_dto, game_dto, reaction_dto, question_dto, user_dto
+    ):
+        """
+        GIVEN: a user that played to two matches
+        WHEN: when his Status for one match is restored
+        THEN: the questions_displayed() should be only those of that match
+        """
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        q1 = question_dto.new(text="Where is Miami", position=0, game=game)
+        question_dto.save(q1)
+        q2 = question_dto.new(text="Where is London", position=1, game=game)
+        question_dto.save(q2)
+        q3 = question_dto.new(text="Where is Paris", position=2, game=game)
+        question_dto.save(q3)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
 
-        first_reaction = self.reaction_dto.save(
-            self.reaction_dto.new(
+        first_reaction = reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q1,
                 user=user,
@@ -256,8 +263,8 @@ class TestCaseStatus(TestCaseBase):
             )
         )
         attempt_uid = first_reaction.attempt_uid
-        self.reaction_dto.save(
-            self.reaction_dto.new(
+        reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q2,
                 user=user,
@@ -266,9 +273,9 @@ class TestCaseStatus(TestCaseBase):
             )
         )
 
-        another_match = self.match_dto.save(self.match_dto.new())
-        self.reaction_dto.save(
-            self.reaction_dto.new(
+        another_match = match_dto.save(match_dto.new())
+        reaction_dto.save(
+            reaction_dto.new(
                 match=another_match,
                 question=q3,
                 user=user,
@@ -280,70 +287,86 @@ class TestCaseStatus(TestCaseBase):
         status.current_attempt_uid = attempt_uid
         assert status.questions_displayed() == {q2.uid: q2, q1.uid: q1}
 
-    def test_questionDisplayedByGame(self, db_session):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        q1 = self.question_dto.new(text="Where is Miami", position=0, game=game)
-        self.question_dto.save(q1)
-        q2 = self.question_dto.new(text="Where is London", position=1, game=game)
-        self.question_dto.save(q2)
-        q3 = self.question_dto.new(text="Where is Paris", position=2, game=game)
-        self.question_dto.save(q3)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
+    def test_2(
+        self, db_session, match_dto, game_dto, reaction_dto, question_dto, user_dto
+    ):
+        """
+        GIVEN: a user that played a whole match with two games
+        WHEN: the questions_displayed_by_game() is queried
+        THEN: only the questions belonging to that game should be returned
+        """
+        match = match_dto.save(match_dto.new())
+        first_game = game_dto.new(match_uid=match.uid, index=0)
+        game_dto.save(first_game)
+        q1 = question_dto.new(text="Where is Miami", position=0, game=first_game)
+        question_dto.save(q1)
+        q2 = question_dto.new(text="Where is London", position=1, game=first_game)
+        question_dto.save(q2)
+        second_game = game_dto.new(match_uid=match.uid, index=1)
+        game_dto.save(second_game)
+        q3 = question_dto.new(text="Where is Paris", position=2, game=second_game)
+        question_dto.save(q3)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
 
-        first_reaction = self.reaction_dto.save(
-            self.reaction_dto.new(
+        first_reaction = reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q1,
                 user=user,
-                game_uid=game.uid,
+                game_uid=first_game.uid,
             )
         )
         attempt_uid = first_reaction.attempt_uid
-        self.reaction_dto.save(
-            self.reaction_dto.new(
+        reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q2,
                 user=user,
-                game_uid=game.uid,
+                game_uid=first_game.uid,
                 attempt_uid=attempt_uid,
             )
         )
-        another_match = self.match_dto.save(self.match_dto.new())
-        self.reaction_dto.save(
-            self.reaction_dto.new(
-                match=another_match,
+        reaction_dto.save(
+            reaction_dto.new(
+                match=match,
                 question=q3,
                 user=user,
-                game_uid=game.uid,
+                game_uid=second_game.uid,
             )
         )
         status = PlayerStatus(user, match, db_session=db_session)
         status.current_attempt_uid = attempt_uid
-        assert status.questions_displayed_by_game(game) == {q2.uid: q2, q1.uid: q1}
+        assert status.questions_displayed_by_game(first_game) == {
+            q2.uid: q2,
+            q1.uid: q1,
+        }
 
-    def test_allGamesPlayed_1(self, db_session):
+    def test_3(
+        self, db_session, match_dto, game_dto, reaction_dto, question_dto, user_dto
+    ):
         """
-        there is no reaction for q3, that implies was not displayed
-        therefore g2 should not be considered
+        GIVEN: a match with two games, with 1 and 2 questions respectively,
+                and a user who reacted to the first two questions
+        WHEN: the all_games_played() is queried
+        THEN: only the first game should considered as completed since the second
+                question of the second game was not displayed
         """
-        match = self.match_dto.save(self.match_dto.new())
-        g1 = self.game_dto.new(match_uid=match.uid, index=0)
-        self.game_dto.save(g1)
-        g2 = self.game_dto.new(match_uid=match.uid, index=1)
-        self.game_dto.save(g2)
-        q1 = self.question_dto.new(text="Where is Miami", position=0, game=g1)
-        self.question_dto.save(q1)
-        q2 = self.question_dto.new(text="Where is London", position=0, game=g2)
-        self.question_dto.save(q2)
-        q3 = self.question_dto.new(text="Where is Montreal", position=1, game=g2)
-        self.question_dto.save(q3)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        first_reaction = self.reaction_dto.save(
-            self.reaction_dto.new(
+        match = match_dto.save(match_dto.new())
+        g1 = game_dto.new(match_uid=match.uid, index=0)
+        game_dto.save(g1)
+        g2 = game_dto.new(match_uid=match.uid, index=1)
+        game_dto.save(g2)
+        q1 = question_dto.new(text="Where is Miami", position=0, game=g1)
+        question_dto.save(q1)
+        q2 = question_dto.new(text="Where is London", position=0, game=g2)
+        question_dto.save(q2)
+        q3 = question_dto.new(text="Where is Montreal", position=1, game=g2)
+        question_dto.save(q3)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        first_reaction = reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q1,
                 user=user,
@@ -351,8 +374,8 @@ class TestCaseStatus(TestCaseBase):
             )
         )
         attempt_uid = first_reaction.attempt_uid
-        self.reaction_dto.save(
-            self.reaction_dto.new(
+        reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q2,
                 user=user,
@@ -365,27 +388,30 @@ class TestCaseStatus(TestCaseBase):
         status.current_attempt_uid = attempt_uid
         assert status.all_games_played() == {g1.uid: g1}
 
-    def test_5(self, db_session):
+    def test_4(
+        self, db_session, match_dto, game_dto, reaction_dto, question_dto, user_dto
+    ):
         """
         GIVEN: a two games match, each game with one question
         WHEN: the user `reacts` to all questions
         THEN: the match should be considered as completed because
-                there are 2 reactions with the same attempt_uid
+                there are 2 reactions with the same attempt_uid and
+                both games considered as played
         """
-        match = self.match_dto.save(self.match_dto.new())
-        g1 = self.game_dto.new(match_uid=match.uid, index=0)
-        self.game_dto.save(g1)
-        g2 = self.game_dto.new(match_uid=match.uid, index=1)
-        self.game_dto.save(g2)
-        q1 = self.question_dto.new(text="Where is Miami", position=0, game=g1)
-        self.question_dto.save(q1)
-        q2 = self.question_dto.new(text="Where is London", position=0, game=g2)
-        self.question_dto.save(q2)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
+        match = match_dto.save(match_dto.new())
+        g1 = game_dto.new(match_uid=match.uid, index=0)
+        game_dto.save(g1)
+        g2 = game_dto.new(match_uid=match.uid, index=1)
+        game_dto.save(g2)
+        q1 = question_dto.new(text="Where is Miami", position=0, game=g1)
+        question_dto.save(q1)
+        q2 = question_dto.new(text="Where is London", position=0, game=g2)
+        question_dto.save(q2)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
         status = PlayerStatus(user, match, db_session=db_session)
-        first_reaction = self.reaction_dto.save(
-            self.reaction_dto.new(
+        first_reaction = reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q1,
                 user=user,
@@ -394,8 +420,8 @@ class TestCaseStatus(TestCaseBase):
         )
         status.current_attempt_uid = first_reaction.attempt_uid
         assert status.questions_displayed() == {q1.uid: q1}
-        self.reaction_dto.save(
-            self.reaction_dto.new(
+        reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q2,
                 user=user,
@@ -408,33 +434,36 @@ class TestCaseStatus(TestCaseBase):
         assert not status.start_fresh_one()
         assert status.questions_displayed() == {q1.uid: q1, q2.uid: q2}
 
-    def test_6(self, db_session):
+    def test_5(
+        self, db_session, match_dto, game_dto, reaction_dto, question_dto, user_dto
+    ):
         """
         GIVEN: a match with two questions, that can be played 3 times
         WHEN: the user `reacts` to the first question 2 times
         THEN: the match can't be considered completed because, no
                 attempt was completed (i.e. there are no 2 reactions
-                with the same attempt_uid)
+                with the same attempt_uid) and only the first question
+                was displayed both times
         """
-        match = self.match_dto.save(self.match_dto.new(times=3))
-        g1 = self.game_dto.new(match_uid=match.uid, index=0)
-        self.game_dto.save(g1)
-        q1 = self.question_dto.new(text="Where is Miami", position=0, game=g1)
-        self.question_dto.save(q1)
-        q2 = self.question_dto.new(text="Where is London", position=1, game=g1)
-        self.question_dto.save(q2)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        self.reaction_dto.save(
-            self.reaction_dto.new(
+        match = match_dto.save(match_dto.new(times=3))
+        g1 = game_dto.new(match_uid=match.uid, index=0)
+        game_dto.save(g1)
+        q1 = question_dto.new(text="Where is Miami", position=0, game=g1)
+        question_dto.save(q1)
+        q2 = question_dto.new(text="Where is London", position=1, game=g1)
+        question_dto.save(q2)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q1,
                 user=user,
                 game_uid=g1.uid,
             )
         )
-        another_reaction = self.reaction_dto.save(
-            self.reaction_dto.new(
+        another_reaction = reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q1,
                 user=user,
@@ -449,34 +478,44 @@ class TestCaseStatus(TestCaseBase):
         assert status.start_fresh_one()
         assert status.questions_displayed() == {q1.uid: q1}
 
-    def test_startFreshMatch(self, db_session):
+    def test_6(
+        self, db_session, match_dto, game_dto, reaction_dto, question_dto, user_dto
+    ):
         """
-        verify several context related properties
+        verify several context related properties with a fresh empty match
         """
-        match = self.match_dto.save(self.match_dto.new())
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
+        match = match_dto.save(match_dto.new())
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
         status = PlayerStatus(user, match, db_session=db_session)
         assert status.start_fresh_one()
         assert status.questions_displayed() == {}
         assert status.all_games_played() == {}
 
-    def test_matchTotalScore(self, db_session):
-        match = self.match_dto.save(self.match_dto.new())
-        g1 = self.game_dto.new(match_uid=match.uid, index=0)
-        self.game_dto.save(g1)
-        g2 = self.game_dto.new(match_uid=match.uid, index=1)
-        self.game_dto.save(g2)
-        q1 = self.question_dto.new(text="Where is Miami", position=0, game=g1)
-        self.question_dto.save(q1)
-        q2 = self.question_dto.new(text="Where is London", position=0, game=g2)
-        self.question_dto.save(q2)
-        q3 = self.question_dto.new(text="Where is Montreal", position=1, game=g2)
-        self.question_dto.save(q3)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        first_reaction = self.reaction_dto.save(
-            self.reaction_dto.new(
+    def test_7(
+        self, db_session, match_dto, game_dto, reaction_dto, question_dto, user_dto
+    ):
+        """
+        GIVEN: a match with two games and 3 questions
+        WHEN: the user completes the match
+        THEN: all_games_played() returns both games and the
+                total score is computed
+        """
+        match = match_dto.save(match_dto.new())
+        g1 = game_dto.new(match_uid=match.uid, index=0)
+        game_dto.save(g1)
+        g2 = game_dto.new(match_uid=match.uid, index=1)
+        game_dto.save(g2)
+        q1 = question_dto.new(text="Where is Miami", position=0, game=g1)
+        question_dto.save(q1)
+        q2 = question_dto.new(text="Where is London", position=0, game=g2)
+        question_dto.save(q2)
+        q3 = question_dto.new(text="Where is Montreal", position=1, game=g2)
+        question_dto.save(q3)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        first_reaction = reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q1,
                 user=user,
@@ -485,8 +524,8 @@ class TestCaseStatus(TestCaseBase):
             )
         )
         attempt_uid = first_reaction.attempt_uid
-        self.reaction_dto.save(
-            self.reaction_dto.new(
+        reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q2,
                 user=user,
@@ -495,8 +534,8 @@ class TestCaseStatus(TestCaseBase):
                 score=2.4,
             )
         )
-        self.reaction_dto.save(
-            self.reaction_dto.new(
+        reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=q3,
                 user=user,
