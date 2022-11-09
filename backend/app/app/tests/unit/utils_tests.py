@@ -3,26 +3,22 @@ from datetime import datetime, timedelta
 import pytest
 
 from app.domain_entities.db.utils import QAppenderClass
-from app.domain_service.data_transfer.game import Game, GameDTO
-from app.domain_service.data_transfer.match import MatchDTO
-from app.domain_service.data_transfer.question import QuestionDTO
-from app.domain_service.data_transfer.reaction import Reaction, ReactionDTO
-from app.domain_service.data_transfer.user import UserDTO
+from app.domain_service.data_transfer.game import Game
+from app.domain_service.data_transfer.reaction import Reaction
 
 
 class TestCaseBaseQueryAppender:
     @pytest.fixture
-    def test_data(self, db_session):
-        match_dto = MatchDTO(session=db_session)
+    def test_data(
+        self, db_session, match_dto, game_dto, reaction_dto, question_dto, user_dto
+    ):
         match = match_dto.new(with_code=True)
         match_dto.save(match)
-        game_dto = GameDTO(session=db_session)
         g1 = game_dto.new(match_uid=match.uid, index=0)
         game_dto.save(g1)
         g2 = game_dto.new(match_uid=match.uid, index=1)
         game_dto.save(g2)
 
-        question_dto = QuestionDTO(session=db_session)
         q1 = question_dto.new(text="Where is Miami", position=0, game=g1)
         question_dto.save(q1)
         q2 = question_dto.new(text="Where is London", position=0, game=g2)
@@ -30,11 +26,9 @@ class TestCaseBaseQueryAppender:
         q3 = question_dto.new(text="Where is Montreal", position=1, game=g2)
         question_dto.save(q3)
 
-        user_dto = UserDTO(session=db_session)
         user = user_dto.new(email="user@test.project")
         user_dto.save(user)
 
-        reaction_dto = ReactionDTO(session=db_session)
         reaction_dto.save(
             reaction_dto.new(
                 match=match,
@@ -66,7 +60,15 @@ class TestCaseBaseQueryAppender:
         )
         yield match, q1, q2
 
-    def test_split_clauses(self):
+    def test_1(self):
+        """
+        GIVEN: some input clauses
+        WHEN: the verify split_clauses() method is called
+        THEN: the resulting clauses are split among
+                simple ones (those without operator) and
+                complex ones (those with the operator suffixed
+                in their initial definition)
+        """
         clauses = {
             "user_id": 2,
             "answer_time__gt": "2022-01-01",
@@ -79,7 +81,7 @@ class TestCaseBaseQueryAppender:
             "game_uid": ("notin_", [1, 4]),
         }
 
-    def test_1(self, test_data, db_session):
+    def test_2(self, test_data, db_session):
         match, _, _ = test_data
         tomorrow = datetime.now() + timedelta(days=1)
         expected = (
@@ -88,7 +90,7 @@ class TestCaseBaseQueryAppender:
         result = match.reactions.filter_by(answer_time__lt=tomorrow).all()
         assert result == expected
 
-    def test_2(self, test_data, db_session):
+    def test_3(self, test_data, db_session):
         match, _, _ = test_data
         expected = db_session.query(Game).filter(Game.uid.notin_([0])).all()
         result = match.games.filter_by(uid__notin=[0]).all()
