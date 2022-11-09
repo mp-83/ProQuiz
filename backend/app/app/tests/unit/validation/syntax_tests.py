@@ -13,10 +13,9 @@ class TestCaseNullable:
             (syntax.LandPlay, "match_uhash"),
             (syntax.CodePlay, "match_code"),
         ]:
-            try:
+            with pytest.raises(ValidationError) as err:
                 schema(**{field: None})
-            except ValidationError as err:
-                assert err.errors()[0]["msg"] == "none is not an allowed value"
+            assert err.value.errors()[0]["msg"] == "none is not an allowed value"
 
 
 class TestCasePlaySchemas:
@@ -37,19 +36,11 @@ class TestCasePlaySchemas:
         assert syntax.StartPlay(**{"match_uid": 1})
 
     def test_4(self):
-        """
-        GIVEN: this payload
-        WHEN: validation is run
-        THEN: no errors should be raised as it's enough
-                to start a match via api/start
-        """
         assert syntax.StartPlay(**{"match_uid": 1, "user_uid": 1})
 
     def test_5(self):
         """
-        GIVEN: a payload with an invalid password string
-        WHEN: validation is run
-        THEN: error should be raised
+        invalid password string
         """
         password = "IJD34KOP"
         with pytest.raises(ValidationError) as err:
@@ -61,9 +52,7 @@ class TestCasePlaySchemas:
 
     def test_6(self):
         """
-        GIVEN: a payload with a valid password string
-        WHEN: validation is run
-        THEN: no error is expected
+        valid password string
         """
         schema = syntax.StartPlay(
             **{"match_uid": 1, "user_uid": 1, "password": "04542"}
@@ -72,9 +61,7 @@ class TestCasePlaySchemas:
 
     def test_7(self):
         """
-        GIVEN: this payload
-        WHEN: validation is run
-        THEN: no error should be raised
+        correct/valid payload
         """
         assert syntax.NextPlay(
             **{
@@ -88,9 +75,7 @@ class TestCasePlaySchemas:
 
     def test_8(self):
         """
-        GIVEN: this payload
-        WHEN: validation is run
-        THEN: error should be raised because question_uid is required
+        question_uid is required
         """
         with pytest.raises(ValidationError) as err:
             syntax.NextPlay(
@@ -107,18 +92,13 @@ class TestCasePlaySchemas:
 
     def test_9(self):
         """
-        GIVEN: this payload
-        WHEN: validation is run
-        THEN: no error is raised because the data matches the
-                expected format (token: ddmmyyyy)
+        no error is raised because the data matches the expected format (token: ddmmyyyy)
         """
         assert syntax.SignPlay(**{"email": "user@pp.com", "token": "12022021"})
 
     def test_10(self):
         """
-        GIVEN: this payload
-        WHEN: validation is run
-        THEN: an error is raised because the token cannot be null
+        token cannot be null
         """
         with pytest.raises(ValidationError) as err:
             syntax.SignPlay(**{"email": "user@pp.com", "token": None})
@@ -128,9 +108,7 @@ class TestCasePlaySchemas:
 
     def test_11(self):
         """
-        GIVEN: this payload
-        WHEN: validation is run
-        THEN: an error is raised because the email cannot be null
+        email cannot be null
         """
         with pytest.raises(ValidationError) as err:
             syntax.SignPlay(**{"email": None, "token": "11012014"})
@@ -157,9 +135,7 @@ class TestCasePlaySchemas:
 
     def test_13(self):
         """
-        GIVEN: payload with a null attempt_uid,
-        WHEN: validation is run
-        THEN: no error should be raised
+        a null attempt_uid
         """
         with pytest.raises(ValidationError) as err:
             syntax.NextPlay(
@@ -176,9 +152,7 @@ class TestCasePlaySchemas:
 
     def test_14(self):
         """
-        GIVEN: payload with an invalid attempt_uid,
-        WHEN: validation is run
-        THEN: no error should be raised
+        payload with an invalid attempt_uid,
         """
         value = "40dz7e2d1c5a4a25adc2d3a5367b8dew"
         with pytest.raises(ValidationError) as err:
@@ -200,9 +174,7 @@ class TestCasePlaySchemas:
 class TestCaseQuestionSchema:
     def test_1(self):
         """
-        GIVEN: this payload with a text longer than maxLen
-        WHEN: validation is run
-        THEN: an error is raised
+        text longer than maxLen
         """
         pytest.raises(
             ValidationError,
@@ -212,33 +184,25 @@ class TestCaseQuestionSchema:
 
     def test_2(self):
         """
-        GIVEN: this payload with a text shorter than minLen
-        WHEN: validation is run
-        THEN: an error is raised
+        text shorter than minLen
         """
         pytest.raises(ValidationError, syntax.QuestionCreate, text="aa", position=1)
 
     def test_3(self):
         """
-        GIVEN: this payload with text NULL
-        WHEN: validation is run
-        THEN: no error is expected
+        text NULL
         """
         assert syntax.QuestionCreate(text=None, position=1)
 
     def test_4(self):
         """
-        GIVEN: this payload with a content-url NULL
-        WHEN: validation is run
-        THEN: an error is raised
+        content-url NULL
         """
         assert syntax.QuestionCreate(content_url=None)
 
     def test_5(self):
         """
-        GIVEN: this payload with a content-url string shorter than minLen
-        WHEN: validation is run
-        THEN: an error is raised
+        content-url string shorter than minLen
         """
         pytest.raises(
             ValidationError, syntax.QuestionCreate, content_url="aa", position=1
@@ -248,10 +212,7 @@ class TestCaseQuestionSchema:
 class TestCaseMatchSchema:
     def test_1(self):
         """
-        GIVEN: this payload used to create a question
-        WHEN: validation is run
-        THEN: no issues should arise and values are cast
-                to their pythonic correspondent
+        values are cast to their pythonic correspondent
         """
         schema = syntax.MatchCreate(
             **{
@@ -277,33 +238,21 @@ class TestCaseMatchSchema:
 
     def test_2(self):
         """
-        GIVEN: this payload used to create a question
-        WHEN: validation is run
-        THEN: no issues should arise and values are cast
-                to their pythonic correspondent
+        to_time and from_time can be null as they optional
         """
-        try:
-            syntax.MatchCreate(
-                **{
-                    "name": "new match",
-                    "with_code": "true",
-                    "questions": [],
-                    "to_time": None,
-                    "from_time": None,
-                }
-            )
-        except ValidationError as err:
-            assert err.errors()[0]["loc"] == ("from_time",)
-            assert err.errors()[0]["msg"] == "none is not an allowed value"
-            assert err.errors()[1]["loc"] == ("to_time",)
-            assert err.errors()[1]["msg"] == "none is not an allowed value"
+        assert syntax.MatchCreate(
+            **{
+                "name": "new match",
+                "with_code": "true",
+                "questions": [],
+                "to_time": None,
+                "from_time": None,
+            }
+        )
 
     def test_3(self):
         """
-        GIVEN: this payload with datetime values iso-formatted
-        WHEN: validation is run
-        THEN: no error is raised and values are converted to
-                the expected value
+        valid to_time and from_time values
         """
         schema = syntax.MatchCreate(
             **{
@@ -320,10 +269,7 @@ class TestCaseMatchSchema:
 
     def test_4(self):
         """
-        GIVEN: a base payload to create a question and a set
-                of edge values for the field times
-        WHEN: validation is run
-        THEN: no error is raised
+        a set of edge values for the field times
         """
         document = {
             "name": "new match",
@@ -341,10 +287,7 @@ class TestCaseMatchSchema:
 
     def test_5(self):
         """
-        GIVEN: this payload to update a question
-        WHEN: validation is run
-        THEN: no error is raised and values are converted to
-                the expected value
+        valid payload, values are cast as expected
         """
         schema = syntax.MatchEdit(
             **{
@@ -383,10 +326,7 @@ class TestCaseYamlSchema:
 
     def test_1(self, valid_encoded_yaml_content):
         """
-        GIVEN: a payload with a valid yaml content
-        WHEN: validation is run
-        THEN: no error is raised and the content parsed
-                correctly
+        valid yaml content
         """
         schema = syntax.MatchYamlImport(
             **{"uid": 1, "data": valid_encoded_yaml_content}
@@ -404,10 +344,8 @@ class TestCaseYamlSchema:
 
     def test_2(self):
         """
-        GIVEN: a payload with an invalid yaml content
-        WHEN: validation is run
-        THEN: no error is raised because the key `answers`
-                is not prefix with dash
+        invalid payload because the key `answers` is not
+        prefixed with dash
         """
         document = """
           questions:
@@ -420,31 +358,26 @@ class TestCaseYamlSchema:
         b64content = b64encode(document.encode("utf-8")).decode()
         b64string = f"data:application/x-yaml;base64,{b64content}"
 
-        try:
+        with pytest.raises(ValidationError) as err:
             syntax.MatchYamlImport(**{"uid": 1, "data": b64string})
-        except ValidationError as err:
-            assert err.errors()[0]["msg"] == "Content cannot be coerced"
+
+        assert err.value.errors()[0]["msg"] == "Content cannot be coerced"
 
     def test_3(self, valid_encoded_yaml_content):
         """
-        GIVEN: a payload with an invalid yaml content
-        WHEN: validation is run
-        THEN: an error is raised because the bytes have
-                an invalid padding
+        invalid payload because the bytes have an invalid padding
         """
-        try:
+        with pytest.raises(ValidationError) as err:
             syntax.MatchYamlImport(
                 **{"uid": 1, "data": valid_encoded_yaml_content[:-1]}
             )
-        except ValidationError as err:
-            assert err.errors()[0]["msg"] == "Incorrect padding"
+        assert err.value.errors()[0]["msg"] == "Incorrect padding"
 
     def test_4(self):
         """
-        GIVEN: a yaml file with empty question text
+        GIVEN: a yaml file with question text blank
         WHEN: validation is run
-        THEN: an error is raised because the empty text
-                is parsed as null value
+        THEN: no error is raised but the answers are ignored
         """
         document = """
           questions:
@@ -458,18 +391,15 @@ class TestCaseYamlSchema:
         b64content = b64encode(document.encode("utf-8")).decode()
         b64string = f"data:application/x-yaml;base64,{b64content}"
 
-        try:
-            syntax.MatchYamlImport(**{"uid": 1, "data": b64string})
-        except ValidationError as err:
-            assert err.errors()[0]["loc"] == ("data", "questions", 0, "text")
-            assert err.errors()[0]["msg"] == "none is not an allowed value"
+        schema = syntax.MatchYamlImport(**{"uid": 1, "data": b64string})
+        assert schema.dict() == {"uid": 1, "data": {"questions": []}, "game_uid": None}
 
     def test_5(self):
         """
         GIVEN: a yaml file with missing question key
         WHEN: validation is run
         THEN: no error is raised but the answers are ignored
-                because there is not related question
+                because there is not related question (no text)
         """
         document = """
           questions:
@@ -487,9 +417,7 @@ class TestCaseYamlSchema:
 
     def test_6(self):
         """
-        GIVEN: this value object
-        WHEN: fixed_match_structure is invoked
-        THEN: produces the expected result
+        fixed_match_structure returns the expected result
         """
         # test meant to document input => output transformation
         value = {
@@ -625,25 +553,19 @@ class TestCaseYamlSchema:
 class TestCaseUserSchema:
     def test_1(self):
         """
-        GIVEN: a payload to create a signed user
-        WHEN: validation is run
-        THEN: an error is raised because the email cannot be empty
+        email cannot be empty
         """
-        try:
+        with pytest.raises(ValidationError) as err:
             syntax.SignedUserCreate(**{"email": "", "token": "02031980"})
-        except ValidationError as err:
-            assert err.errors()[0]["msg"] == "value is not a valid email address"
+
+        assert err.value.errors()[0]["msg"] == "value is not a valid email address"
 
     def test_2(self):
         """
-        GIVEN: a payload to create a signed user
-        WHEN: validation is run
-        THEN: an error is raised because the email value is incorrect
+        valid email value
         """
-        try:
-            syntax.SignedUserCreate(**{"email": "e@a.cc", "token": "02031980"})
-        except ValidationError as err:
-            assert err.errors()[0]["msg"] == "value is not a valid email address"
+        schema = syntax.SignedUserCreate(**{"email": "e@a.cc", "token": "02031980"})
+        assert schema.dict() == {"email": "e@a.cc", "token": "02031980"}
 
     def test_3(self):
         """
@@ -652,21 +574,16 @@ class TestCaseUserSchema:
         THEN: an error is raised because the token doesn't match
                 the format ddmmyyyy
         """
-        try:
+        with pytest.raises(ValidationError) as err:
             syntax.SignedUserCreate(**{"email": "test@proquiz.com", "token": "0203197"})
-        except ValidationError as err:
-            assert err.errors()[0]["msg"] == "Invalid token length"
+        assert err.value.errors()[0]["msg"] == "Invalid token length"
 
     def test_4(self):
         """
-        GIVEN: a payload to create a signed user
-        WHEN: validation is run
-        THEN: an error is raised because the token doesn't match
-                the format ddmmyyyy
+        token doesn't match the format: ddmmyyyy
         """
-        try:
+        with pytest.raises(ValidationError) as err:
             syntax.SignedUserCreate(
                 **{"email": "test@proquiz.com", "token": "02231970"}
             )
-        except ValidationError as err:
-            assert err.errors()[0]["msg"] == "Invalid token format"
+        assert err.value.errors()[0]["msg"] == "Invalid token format"
