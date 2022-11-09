@@ -2,18 +2,9 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.domain_service.data_transfer.answer import AnswerDTO
-from app.domain_service.data_transfer.game import GameDTO
-from app.domain_service.data_transfer.match import MatchDTO
-from app.domain_service.data_transfer.open_answer import OpenAnswerDTO
-from app.domain_service.data_transfer.question import QuestionDTO
-from app.domain_service.data_transfer.ranking import RankingDTO
-from app.domain_service.data_transfer.reaction import ReactionDTO
-from app.domain_service.data_transfer.user import UserDTO
 from app.domain_service.play import (
     GameFactory,
     PlayerStatus,
-    PlayScore,
     QuestionFactory,
     SinglePlayer,
 )
@@ -31,17 +22,6 @@ def shuffle_patch(mocker):
     yield mocker.patch(
         "app.domain_service.play.single_player.shuffle", side_effect=lambda arr: arr
     )
-
-
-class TestCaseBase:
-    @pytest.fixture(autouse=True)
-    def setUp(self, db_session, mocker):
-        self.question_dto = QuestionDTO(session=db_session)
-        self.match_dto = MatchDTO(session=db_session)
-        self.reaction_dto = ReactionDTO(session=db_session)
-        self.answer_dto = AnswerDTO(session=db_session)
-        self.game_dto = GameDTO(session=db_session)
-        self.user_dto = UserDTO(session=db_session)
 
 
 class TestCaseQuestionFactory:
@@ -551,19 +531,24 @@ class TestCaseStatus:
         assert status.all_games_played() == {g1.uid: g1, g2.uid: g2}
 
 
-class TestCaseSinglePlayer(TestCaseBase):
-    def test_reactionIsCreatedAsSoonAsQuestionIsReturned(self, db_session):
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
+class TestCaseSinglePlayer:
+    def test_1(self, db_session, match_dto, game_dto, question_dto, user_dto):
+        """
+        GIVEN: a match with one game and one questions
+        WHEN: the users starts the match
+        THEN: a new reaction is immediately created
+        """
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question = question_dto.new(
             text="Where is London?",
             game_uid=game.uid,
             position=0,
         )
-        self.question_dto.save(question)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
+        question_dto.save(question)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
 
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
@@ -573,32 +558,35 @@ class TestCaseSinglePlayer(TestCaseBase):
         assert player.current == question_returned
         assert user.reactions.count() == 1
 
-    def test_reactToFirstQuestion(self, db_session):
+    def test_2(
+        self, db_session, match_dto, game_dto, question_dto, user_dto, answer_dto
+    ):
         """
         GIVEN: a match with one question only
         WHEN: the user reacts to it
         THEN: the answer is correct because was the only
-        one and it was at position 0
+        one and it was at position 0, and forward() returns
+        the second question as expected
         """
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        first_question = self.question_dto.new(
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        first_question = question_dto.new(
             text="Where is London?",
             game_uid=game.uid,
             position=0,
         )
-        self.question_dto.save(first_question)
-        answer = self.answer_dto.new(question=first_question, text="UK", position=0)
-        self.answer_dto.save(answer)
-        second_question = self.question_dto.new(
+        question_dto.save(first_question)
+        answer = answer_dto.new(question=first_question, text="UK", position=0)
+        answer_dto.save(answer)
+        second_question = question_dto.new(
             text="Where is Paris?",
             game_uid=game.uid,
             position=1,
         )
-        self.question_dto.save(second_question)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
+        question_dto.save(second_question)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
 
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
@@ -608,19 +596,24 @@ class TestCaseSinglePlayer(TestCaseBase):
         assert player.forward() == second_question
         assert was_correct
 
-    def test_startMatchAlreadyExpired(self, db_session):
-        match = self.match_dto.new(to_time=datetime.now() - timedelta(microseconds=10))
-        self.match_dto.save(match)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
+    def test_3(self, db_session, match_dto, game_dto, question_dto, user_dto):
+        """
+        GIVEN: a match is expired
+        WHEN: then user starts it
+        THEN: a MatchError should be raised
+        """
+        match = match_dto.new(to_time=datetime.now() - timedelta(microseconds=10))
+        match_dto.save(match)
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question = question_dto.new(
             text="Where is London?",
             game_uid=game.uid,
             position=0,
         )
-        self.question_dto.save(question)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
+        question_dto.save(question)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
 
         status = PlayerStatus(user, match, db_session=db_session)
         player = SinglePlayer(status, user, match, db_session=db_session)
@@ -629,22 +622,24 @@ class TestCaseSinglePlayer(TestCaseBase):
 
         assert e.value.message == "Expired match"
 
-    def test_matchCanBePlayedAnotherTime(self, db_session):
+    def test_4(
+        self, db_session, match_dto, game_dto, question_dto, user_dto, answer_dto
+    ):
         """
         GIVEN: a match that can be played two times
         WHEN: the user plays once
         THEN: the method `start_fresh_one` should return True
         """
-        match = self.match_dto.save(self.match_dto.new(times=2))
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        first_question = self.question_dto.new(
+        match = match_dto.save(match_dto.new(times=2))
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        first_question = question_dto.new(
             text="Where is Graz?", game_uid=game.uid, position=0
         )
-        self.question_dto.save(first_question)
-        first_answer = self.answer_dto.new(
+        question_dto.save(first_question)
+        first_answer = answer_dto.new(
             question=first_question, text="Austria", position=1, level=2
         )
 
@@ -664,18 +659,27 @@ class TestCaseSinglePlayer(TestCaseBase):
 
         db_session.rollback()
 
-    def test_matchCannotBePlayedMoreThanMatchTimes(self, db_session):
+    def test_5(
+        self, db_session, match_dto, game_dto, question_dto, user_dto, answer_dto
+    ):
+        """
+        GIVEN: a match that can be played 2 times
+        WHEN: the user attempts to play it a third time
+        THEN: `start_fresh_one()` should return True two times
+                and at the third attempt a MatchNotPlayableError
+                should be raised
+        """
         max_times = 2
-        match = self.match_dto.save(self.match_dto.new(times=max_times))
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        first_question = self.question_dto.new(
+        match = match_dto.save(match_dto.new(times=max_times))
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        first_question = question_dto.new(
             text="Where is Graz?", game_uid=game.uid, position=0
         )
-        self.question_dto.save(first_question)
-        first_answer = self.answer_dto.new(
+        question_dto.save(first_question)
+        first_answer = answer_dto.new(
             question=first_question, text="Austria", position=1, level=2
         )
 
@@ -697,29 +701,42 @@ class TestCaseSinglePlayer(TestCaseBase):
 
         db_session.rollback()
 
-    def test_restoreOpenQuestionsMatchFromSecondQuestion(self, db_session):
-        match = self.match_dto.save(self.match_dto.new())
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        first_question = self.question_dto.new(
+    def test_6(
+        self,
+        db_session,
+        match_dto,
+        game_dto,
+        question_dto,
+        user_dto,
+        reaction_dto,
+        open_answer_dto,
+    ):
+        """
+        GIVEN: a user that has answered one of the two open questions
+        WHEN: he answers also the second question
+        THEN: the match should be considered completed, with 2 reactions
+                for the user
+        """
+        match = match_dto.save(match_dto.new())
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        first_question = question_dto.new(
             text="Where is Graz?", game_uid=game.uid, position=0
         )
-        self.question_dto.save(first_question)
-        second_question = self.question_dto.new(
+        question_dto.save(first_question)
+        second_question = question_dto.new(
             text="Where is Istanbul?",
             game_uid=game.uid,
             position=1,
         )
-        self.question_dto.save(second_question)
-
-        open_answer_dto = OpenAnswerDTO(session=db_session)
+        question_dto.save(second_question)
         open_answer_1 = open_answer_dto.new(text="Austria")
         open_answer_dto.save(open_answer_1)
 
-        first_reaction = self.reaction_dto.save(
-            self.reaction_dto.new(
+        first_reaction = reaction_dto.save(
+            reaction_dto.new(
                 match=match,
                 question=first_question,
                 user=user,
@@ -741,54 +758,3 @@ class TestCaseSinglePlayer(TestCaseBase):
 
         assert user.reactions.count() == 2
         assert not was_correct
-
-
-class TestCaseResumeMatch(TestCaseBase):
-    def test_matchCanBeResumedWhenThereIsStillOneQuestionToDisplay(self, db_session):
-        match = self.match_dto.save(self.match_dto.new(is_restricted=True))
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        first_question = self.question_dto.new(
-            text="Where is London?",
-            game_uid=game.uid,
-            position=0,
-        )
-        self.question_dto.save(first_question)
-        answer = self.answer_dto.new(
-            question=first_question, text="UK", position=0, is_correct=False
-        )
-        self.answer_dto.save(answer)
-        second_question = self.question_dto.new(
-            text="Where is Moscow?",
-            game_uid=game.uid,
-            position=1,
-        )
-        self.question_dto.save(second_question)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-
-        status = PlayerStatus(user, match, db_session=db_session)
-        player = SinglePlayer(status, user, match, db_session=db_session)
-        player.start()
-        was_correct = player.react(first_question, answer)
-        assert player.match_can_be_resumed
-        assert not was_correct
-
-    def test_matchCanNotBeResumedBecausePublic(self, db_session):
-        match = self.match_dto.save(self.match_dto.new(is_restricted=False))
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-
-        status = PlayerStatus(user, match, db_session=db_session)
-        player = SinglePlayer(status, user, match, db_session=db_session)
-        assert not player.match_can_be_resumed
-
-
-class TestCasePlayScore(TestCaseBase):
-    def test_compute_score(self, db_session):
-        match = self.match_dto.save(self.match_dto.new())
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        PlayScore(match.uid, user.uid, 5.5, db_session=db_session).save_to_ranking()
-
-        assert len(RankingDTO(session=db_session).all()) == 1

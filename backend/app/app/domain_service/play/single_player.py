@@ -255,18 +255,6 @@ class SinglePlayer:
 
         return self._new_reaction(question, attempt_uid)
 
-    @property
-    def match_can_be_resumed(self):
-        """Determine if this match can be restored
-
-        By counting the reactions it is possible to
-        determine if all questions were displayed
-        """
-        return (
-            self._match.is_restricted
-            and len(self._status.all_reactions()) < self._match.questions_count
-        )
-
     def react(self, question, answer=None, open_answer=None):
         if not self._current_reaction:
             self._current_reaction = self.last_reaction(question)
