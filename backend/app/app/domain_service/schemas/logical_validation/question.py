@@ -8,7 +8,7 @@ class ValidateNewQuestion:
 
     def either_text_or_content(self):
         if not (self.text or self.content_url):
-            raise ValidateError("Either text or contentURL must be provided ")
+            raise ValidateError("Either text or contentURL must be provided")
 
     def is_valid(self):
         self.either_text_or_content()

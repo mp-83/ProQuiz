@@ -1,9 +1,7 @@
 from sqlalchemy.orm import Session
 
-from app.domain_service.data_transfer.answer import AnswerDTO
 from app.domain_service.data_transfer.match import MatchDTO
 from app.domain_service.data_transfer.open_answer import OpenAnswerDTO
-from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.user import UserDTO, WordDigest
 from app.domain_service.schemas.logical_validation import RetrieveObject
 from app.exceptions import NotFoundObjectError, ValidateError
@@ -90,6 +88,7 @@ class ValidatePlayStart:
         match = self.valid_match()
         user = self.valid_user()
 
+        # TODO: move this logic inside the method and pass the argument as below
         if not match.is_active:
             raise ValidateError("Expired match")
 
@@ -121,63 +120,50 @@ class ValidatePlayNext:
         self._data = {}
         self.user_dto = UserDTO(session=db_session)
 
-    def valid_reaction(self):
-        user = self._data.get("user")
-        if not user:
-            user = self.user_dto.get(uid=self.user_uid)
-
-        question = self._data.get("question")
-        if not question:
-            question = QuestionDTO(session=self._session).get(uid=self.question_uid)
-            self._data["question"] = question
-
+    def valid_reaction(self, question, user):
         attempt_reactions = user.reactions.filter_by(attempt_uid=self.attempt_uid)
         if attempt_reactions.count() == 0:
             raise ValidateError("Invalid attempt-uid")
 
-        self._data["attempt_uid"] = self.attempt_uid
         reaction = user.reactions.filter_by(
             question_uid=question.uid, attempt_uid=self.attempt_uid
         ).one_or_none()
-        if reaction and reaction.answer:  # TODO and not question.is_open:
-            raise ValidateError("Duplicate Reactions")
+        if not reaction:
+            raise ValidateError("Invalid reaction")
 
-    def valid_answer(self):
+        if reaction.answer:  # TODO and not question.is_open:
+            raise ValidateError("Duplicate Reactions")
+        return reaction
+
+    def valid_answer(self, question):
         if self.answer_uid is None:
             return
 
-        answer = AnswerDTO(session=self._session).get(uid=self.answer_uid)
-        if answer is None:
-            raise NotFoundObjectError("Nonexistent answer")
+        answer = RetrieveObject(
+            self.answer_uid, otype="answer", db_session=self._session
+        ).get()
 
-        question = QuestionDTO(session=self._session).get(uid=self.question_uid)
-        if question and answer in question.answers:
-            self._data["answer"] = answer
-            return
+        if answer in question.answers:
+            return answer
 
         raise ValidateError("Invalid answer")
 
-    def valid_open_answer(self):
+    def valid_open_answer(self, question):
         if self.answer_text is None:
             return
 
-        question = QuestionDTO(session=self._session).get(uid=self.question_uid)
-        if question and question.is_open:
+        if question.is_open:
             open_answer_dto = OpenAnswerDTO(session=self._session)
             open_answer = open_answer_dto.new(text=self.answer_text)
             open_answer_dto.save(open_answer)
-            self._data["open_answer"] = open_answer
-            return
+            return open_answer
 
         raise ValidateError("Invalid answer")
 
     def valid_user(self):
-        user = self.user_dto.get(uid=self.user_uid)
-        if user:
-            self._data["user"] = user
-            return
-
-        raise NotFoundObjectError()
+        return RetrieveObject(
+            self.user_uid, otype="user", db_session=self._session
+        ).get()
 
     def valid_match(self):
         match = RetrieveObject(
@@ -186,13 +172,29 @@ class ValidatePlayNext:
         if not match.is_active:
             raise ValidateError("Expired match")
 
-        self._data["match"] = match
+        return match
+
+    def valid_question(self, match):
+        question = RetrieveObject(
+            self.question_uid, otype="question", db_session=self._session
+        ).get()
+
+        if question in match.questions_list:
+            return question
+        raise ValidateError("Invalid question")
 
     def is_valid(self):
         # expected to run in sequence
-        self.valid_answer()
-        self.valid_open_answer()
-        self.valid_user()
-        self.valid_match()
-        self.valid_reaction()
+        match = self.valid_match()
+        self._data["match"] = match
+        question = self.valid_question(match)
+        self._data["question"] = question
+        answer = self.valid_answer(question)
+        self._data["answer"] = answer
+        open_answer = self.valid_open_answer(question)
+        self._data["open_answer"] = open_answer
+        user = self.valid_user()
+        self._data["user"] = user
+        reaction = self.valid_reaction(user=user, question=question)
+        self._data["attempt_uid"] = reaction.attempt_uid
         return self._data
