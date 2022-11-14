@@ -128,12 +128,9 @@ class ValidatePlayNext:
         reaction = user.reactions.filter_by(
             question_uid=question.uid, attempt_uid=self.attempt_uid
         ).one_or_none()
-        if not reaction:
-            raise ValidateError("Invalid reaction")
-
-        if reaction.answer:  # TODO and not question.is_open:
+        if reaction and reaction.answer:  # TODO and not question.is_open:
             raise ValidateError("Duplicate Reactions")
-        return reaction
+        return self.attempt_uid
 
     def valid_answer(self, question):
         if self.answer_uid is None:
@@ -195,6 +192,6 @@ class ValidatePlayNext:
         self._data["open_answer"] = open_answer
         user = self.valid_user()
         self._data["user"] = user
-        reaction = self.valid_reaction(user=user, question=question)
-        self._data["attempt_uid"] = reaction.attempt_uid
+        attempt_uid = self.valid_reaction(user=user, question=question)
+        self._data["attempt_uid"] = attempt_uid
         return self._data
