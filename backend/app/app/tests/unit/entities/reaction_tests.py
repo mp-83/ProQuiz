@@ -4,26 +4,20 @@ from math import isclose
 import pytest
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
-from app.domain_service.data_transfer.answer import AnswerDTO
-from app.domain_service.data_transfer.game import GameDTO
-from app.domain_service.data_transfer.match import MatchDTO
-from app.domain_service.data_transfer.open_answer import OpenAnswerDTO
-from app.domain_service.data_transfer.question import QuestionDTO
-from app.domain_service.data_transfer.reaction import ReactionDTO, ReactionScore
-from app.domain_service.data_transfer.user import UserDTO
+from app.domain_service.data_transfer.reaction import ReactionScore
 
 
 class TestCaseReactionModel:
-    @pytest.fixture(autouse=True)
-    def setup(self, db_session):
-        self.question_dto = QuestionDTO(session=db_session)
-        self.answer_dto = AnswerDTO(session=db_session)
-        self.reaction_dto = ReactionDTO(session=db_session)
-        self.match_dto = MatchDTO(session=db_session)
-        self.game_dto = GameDTO(session=db_session)
-        self.user_dto = UserDTO(session=db_session)
-
-    def test_1(self, db_session):
+    def test_1(
+        self,
+        db_session,
+        match_dto,
+        game_dto,
+        question_dto,
+        answer_dto,
+        reaction_dto,
+        user_dto,
+    ):
         """
         GIVEN: a question of a match
         WHEN: a reaction of the user is created
@@ -31,26 +25,24 @@ class TestCaseReactionModel:
                 user and question cannot be created
                 at the same time
         """
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        question = self.question_dto.new(
-            text="new-question", position=0, game_uid=game.uid
-        )
-        self.question_dto.save(question)
-        answer = self.answer_dto.new(
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        question = question_dto.new(text="new-question", position=0, game_uid=game.uid)
+        question_dto.save(question)
+        answer = answer_dto.new(
             question=question,
             text="question2.answer1",
             position=1,
         )
-        self.answer_dto.save(answer)
+        answer_dto.save(answer)
 
         now = datetime.now()
         with pytest.raises((IntegrityError, InvalidRequestError)):
-            self.reaction_dto.save(
-                self.reaction_dto.new(
+            reaction_dto.save(
+                reaction_dto.new(
                     match_uid=match.uid,
                     question_uid=question.uid,
                     answer_uid=answer.uid,
@@ -59,8 +51,8 @@ class TestCaseReactionModel:
                     game_uid=game.uid,
                 )
             )
-            self.reaction_dto.save(
-                self.reaction_dto.new(
+            reaction_dto.save(
+                reaction_dto.new(
                     match_uid=match.uid,
                     question_uid=question.uid,
                     answer_uid=answer.uid,
@@ -71,35 +63,39 @@ class TestCaseReactionModel:
             )
         db_session.rollback()
 
-    def test_2(self):
+    def test_2(
+        self, match_dto, game_dto, question_dto, answer_dto, reaction_dto, user_dto
+    ):
         """
         GIVEN: an existing reaction of a user to a question
         WHEN: when question's text is updated
         THEN: the reaction should reflect the change
         """
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        question = self.question_dto.new(text="1+1 is = to", position=0)
-        self.question_dto.save(question)
-        answer = self.answer_dto.new(question=question, text="2", position=1)
-        self.answer_dto.save(answer)
-        reaction = self.reaction_dto.new(
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        question = question_dto.new(text="1+1 is = to", position=0)
+        question_dto.save(question)
+        answer = answer_dto.new(question=question, text="2", position=1)
+        answer_dto.save(answer)
+        reaction = reaction_dto.new(
             match_uid=match.uid,
             question_uid=question.uid,
             answer_uid=answer.uid,
             user_uid=user.uid,
             game_uid=game.uid,
         )
-        self.reaction_dto.save(reaction)
+        reaction_dto.save(reaction)
         question.text = "1+2 is = to"
-        self.question_dto.save(question)
+        question_dto.save(question)
 
         assert reaction.question.text == "1+2 is = to"
 
-    def test_3(self):
+    def test_3(
+        self, match_dto, game_dto, question_dto, answer_dto, reaction_dto, user_dto
+    ):
         """
         GIVEN: an existing reaction of a user created
                 when the question is displayed
@@ -108,33 +104,34 @@ class TestCaseReactionModel:
         THEN: the answer should not be recorded, therefore
         is not correct
         """
-        # and the score remains Null
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        question = self.question_dto.new(text="3*3 = ", time=0, position=0)
-        self.question_dto.save(question)
-        reaction = self.reaction_dto.new(
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        question = question_dto.new(text="3*3 = ", time=0, position=0)
+        question_dto.save(question)
+        reaction = reaction_dto.new(
             match=match,
             question=question,
             user=user,
             game_uid=game.uid,
         )
-        self.reaction_dto.save(reaction)
+        reaction_dto.save(reaction)
 
-        answer = self.answer_dto.new(
+        answer = answer_dto.new(
             question=question, text="9", position=1, is_correct=True
         )
-        self.answer_dto.save(answer)
-        was_correct = self.reaction_dto.record_answer(reaction, answer)
+        answer_dto.save(answer)
+        was_correct = reaction_dto.record_answer(reaction, answer)
 
         assert reaction.answer is None
         assert reaction.score is None
         assert not was_correct
 
-    def test_4(self):
+    def test_4(
+        self, match_dto, game_dto, question_dto, answer_dto, reaction_dto, user_dto
+    ):
         """
         GIVEN: an existing reaction of a user created
                 when the question is displayed
@@ -142,24 +139,24 @@ class TestCaseReactionModel:
                 time is elapsed
         THEN: the answer is recorded
         """
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        question = self.question_dto.new(text="1+1 =", time=2, position=0)
-        self.question_dto.save(question)
-        reaction = self.reaction_dto.new(
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        question = question_dto.new(text="1+1 =", time=2, position=0)
+        question_dto.save(question)
+        reaction = reaction_dto.new(
             match=match,
             question=question,
             user=user,
             game_uid=game.uid,
         )
-        self.reaction_dto.save(reaction)
+        reaction_dto.save(reaction)
 
-        answer = self.answer_dto.new(question=question, text="2", position=1)
-        self.answer_dto.save(answer)
-        was_correct = self.reaction_dto.record_answer(reaction, answer)
+        answer = answer_dto.new(question=question, text="2", position=1)
+        answer_dto.save(answer)
+        was_correct = reaction_dto.record_answer(reaction, answer)
 
         assert reaction.answer
         assert reaction.answer_time
@@ -169,7 +166,9 @@ class TestCaseReactionModel:
         # isclose is used to avoid brittleness
         assert isclose(reaction.score, 0.999, rel_tol=0.05)
 
-    def test_5(self, db_session):
+    def test_5(
+        self, match_dto, game_dto, question_dto, open_answer_dto, reaction_dto, user_dto
+    ):
         """
         GIVEN: an existing reaction of a user created
                 when the question is displayed
@@ -177,33 +176,32 @@ class TestCaseReactionModel:
         THEN: it should be associated with the reaction and no score
                 should be computed because it is an OpenAnswer
         """
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        question = self.question_dto.new(text="Where is Miami", position=0)
-        self.question_dto.save(question)
-        reaction = self.reaction_dto.new(
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        question = question_dto.new(text="Where is Miami", position=0)
+        question_dto.save(question)
+        reaction = reaction_dto.new(
             match=match,
             question=question,
             user=user,
             game_uid=game.uid,
         )
-        self.reaction_dto.save(reaction)
+        reaction_dto.save(reaction)
 
-        open_answer_dto = OpenAnswerDTO(session=db_session)
         open_answer = open_answer_dto.new(text="Miami is in Florida")
         open_answer_dto.save(open_answer)
 
-        was_correct = self.reaction_dto.record_answer(reaction, open_answer=open_answer)
+        was_correct = reaction_dto.record_answer(reaction, open_answer=open_answer)
         assert question.is_open
         assert reaction.answer == open_answer
         assert reaction.answer_time
         assert not reaction.score
         assert not was_correct
 
-    def test_6(self):
+    def test_6(self, match_dto, game_dto, question_dto, reaction_dto, user_dto):
         """
         GIVEN: two existing reactions of a user for two
                 distinct matches
@@ -213,30 +211,28 @@ class TestCaseReactionModel:
                 from the reactions property and their
                 attempt_uid should be different
         """
-        match_1 = self.match_dto.save(self.match_dto.new())
-        game_1 = self.game_dto.new(match_uid=match_1.uid)
-        self.game_dto.save(game_1)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
-        q1 = self.question_dto.new(text="Where is Choir?", position=0)
-        self.question_dto.save(q1)
-        r1 = self.reaction_dto.new(
+        match_1 = match_dto.save(match_dto.new())
+        game_1 = game_dto.new(match_uid=match_1.uid)
+        game_dto.save(game_1)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        q1 = question_dto.new(text="Where is Choir?", position=0)
+        question_dto.save(q1)
+        r1 = reaction_dto.new(
             match=match_1, question=q1, user=user, game_uid=game_1.uid
         )
-        self.reaction_dto.save(r1)
+        reaction_dto.save(r1)
 
-        match_2 = self.match_dto.save(self.match_dto.new())
-        game_2 = self.game_dto.new(match_uid=match_2.uid, index=0)
-        self.game_dto.save(game_2)
-        q2 = self.question_dto.new(
-            text="Where is Basel?", game_uid=game_2.uid, position=0
-        )
-        self.question_dto.save(q2)
+        match_2 = match_dto.save(match_dto.new())
+        game_2 = game_dto.new(match_uid=match_2.uid, index=0)
+        game_dto.save(game_2)
+        q2 = question_dto.new(text="Where is Basel?", game_uid=game_2.uid, position=0)
+        question_dto.save(q2)
 
-        r2 = self.reaction_dto.new(
+        r2 = reaction_dto.new(
             match=match_2, question=q2, user=user, game_uid=game_2.uid
         )
-        self.reaction_dto.save(r2)
+        reaction_dto.save(r2)
 
         reactions = user.reactions.filter_by(match_uid=match_1.uid).all()
         assert len(reactions) == 1
@@ -245,7 +241,9 @@ class TestCaseReactionModel:
         assert match_1.reactions.first() == r1
         assert user.reactions[0].attempt_uid != user.reactions[1].attempt_uid
 
-    def test_7(self, db_session):
+    def test_7(
+        self, match_dto, game_dto, question_dto, open_answer_dto, reaction_dto, user_dto
+    ):
         """
         GIVEN: three reactions to a match, each from different user
         WHEN: the open_answer property is accessed
@@ -254,46 +252,44 @@ class TestCaseReactionModel:
                 All reactions, because they belong to different users
                 are different
         """
-        open_answer_dto = OpenAnswerDTO(session=db_session)
-
-        match = self.match_dto.save(self.match_dto.new())
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        user_1 = self.user_dto.new(email="user_1@test.project")
-        self.user_dto.save(user_1)
-        question_1 = self.question_dto.new(text="Where is Lausanne?", position=0)
-        self.question_dto.save(question_1)
+        match = match_dto.save(match_dto.new())
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        user_1 = user_dto.new(email="user_1@test.project")
+        user_dto.save(user_1)
+        question_1 = question_dto.new(text="Where is Lausanne?", position=0)
+        question_dto.save(question_1)
 
         open_answer_1 = open_answer_dto.new(text="Lausanne is in Switzerland.")
         open_answer_dto.save(open_answer_1)
-        r1 = self.reaction_dto.new(
+        r1 = reaction_dto.new(
             match=match,
             question=question_1,
             user=user_1,
             game_uid=game.uid,
             open_answer_uid=open_answer_1.uid,
         )
-        self.reaction_dto.save(r1)
+        reaction_dto.save(r1)
 
-        user_2 = self.user_dto.new(email="user_2@test.project")
-        self.user_dto.save(user_2)
+        user_2 = user_dto.new(email="user_2@test.project")
+        user_dto.save(user_2)
         open_answer_2 = open_answer_dto.new(text="Lausanne is in France.")
         open_answer_dto.save(open_answer_2)
-        r2 = self.reaction_dto.new(
+        r2 = reaction_dto.new(
             match=match,
             question=question_1,
             user=user_2,
             game_uid=game.uid,
             open_answer_uid=open_answer_2.uid,
         )
-        self.reaction_dto.save(r2)
+        reaction_dto.save(r2)
 
-        user_3 = self.user_dto.new(email="user_3@test.project")
-        self.user_dto.save(user_3)
-        r3 = self.reaction_dto.new(
+        user_3 = user_dto.new(email="user_3@test.project")
+        user_dto.save(user_3)
+        r3 = reaction_dto.new(
             match=match, question=question_1, user=user_2, game_uid=game.uid
         )
-        self.reaction_dto.save(r3)
+        reaction_dto.save(r3)
 
         assert match.open_answers == [open_answer_1, open_answer_2]
         assert r2.attempt_uid != r3.attempt_uid

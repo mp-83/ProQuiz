@@ -29,7 +29,7 @@ class Question(TableMixin, Base):
     answers = relationship(
         "Answer",
         viewonly=True,
-        order_by="Answer.uid",
+        order_by="Answer.uid.asc()",
         lazy="dynamic",
         query_class=QAppenderClass,
     )

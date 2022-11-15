@@ -1,6 +1,6 @@
 class TestCaseUserFactory:
     def test_1(self, monkeypatch, user_dto):
-        # create new signed user via fetch
+        """create new signed user via fetch"""
         monkeypatch.setenv(
             "SIGNED_KEY", "3ba57f9a004e42918eee6f73326aa89d", prepend=None
         )
@@ -34,7 +34,6 @@ class TestCaseUserFactory:
         WHEN: fetch() is called twice without passing original-email
         THEN: two new unsigned users are returned
         """
-        # called twice to showcase the expected behaviour
         mocker.patch(
             "app.domain_service.data_transfer.user.uuid4",
             return_value=mocker.Mock(hex="3ba57f9a004e42918eee6f73326aa89d"),
@@ -65,7 +64,7 @@ class TestCaseUserFactory:
         assert signed_user.email != another_user.email
 
     def test_5(self, user_dto):
-        # createNewInternalUser
+        """Create a new internal user"""
         internal_user = user_dto.fetch(email="user@test.project", password="password")
         assert internal_user.email == "user@test.project"
         assert internal_user.check_password("password")
