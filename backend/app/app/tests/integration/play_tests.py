@@ -1,20 +1,15 @@
 from datetime import datetime, timedelta, timezone
 
-import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_service.data_transfer.answer import AnswerDTO
-from app.domain_service.data_transfer.game import GameDTO
-from app.domain_service.data_transfer.match import MatchDTO
-from app.domain_service.data_transfer.question import QuestionDTO
-from app.domain_service.data_transfer.reaction import ReactionDTO
-from app.domain_service.data_transfer.user import UserDTO, WordDigest
+from app.domain_service.data_transfer.user import WordDigest
 
 
 class TestCaseBadRequest:
-    def test_endpoints(self, client: TestClient, superuser_token_headers: dict):
+    def test_1(self, client: TestClient, superuser_token_headers: dict):
+        """Tests some edge cases"""
         endpoints = ["/play/h/BAD", "/play/start", "/play/next", "/play/sign"]
         for endpoint in endpoints:
             response = client.post(
@@ -26,11 +21,8 @@ class TestCaseBadRequest:
 
 
 class TestCasePlayLand:
-    # the test scenario for land/404 is already tested above
-    def test_playLand(
-        self, client: TestClient, superuser_token_headers: dict, db_session
-    ):
-        match_dto = MatchDTO(session=db_session)
+    def test_1(self, client: TestClient, superuser_token_headers: dict, match_dto):
+        """verify the match.uid is returned, when playing a match with hash"""
         match = match_dto.new(with_code=False)
         match_dto.save(match)
         response = client.post(
@@ -43,11 +35,13 @@ class TestCasePlayLand:
 
 
 class TestCasePlayCode:
-    def test_playCode(
-        self, client: TestClient, superuser_token_headers: dict, db_session
+    def test_1(
+        self, client: TestClient, superuser_token_headers: dict, db_session, match_dto
     ):
+        """verify the match.uid and user are returned, when
+        playing a match with code
+        """
         in_one_hour = datetime.now(tz=timezone.utc) + timedelta(hours=1)
-        match_dto = MatchDTO(session=db_session)
         match = match_dto.new(with_code=True, expires=in_one_hour)
         match_dto.save(match)
         response = client.post(
@@ -62,9 +56,14 @@ class TestCasePlayCode:
 
 
 class TestCasePlaySign:
-    def test_successfulSignReturnsExisting(
+    def test_1(
         self, client: TestClient, superuser_token_headers: dict, match_dto, user_dto
     ):
+        """
+        GIVEN: an existing user
+        WHEN: the user successfully signs in/logs in
+        THEN: the user is returned in the response
+        """
         match = match_dto.new(with_code=True)
         match_dto.save(match)
         email_digest = WordDigest("user@test.io").value()
@@ -86,14 +85,8 @@ class TestCasePlaySign:
 
 
 class TestCasePlayStart:
-    @pytest.fixture(autouse=True)
-    def setUp(self, db_session):
-        self.question_dto = QuestionDTO(session=db_session)
-        self.match_dto = MatchDTO(session=db_session)
-        self.game_dto = GameDTO(session=db_session)
-        self.user_dto = UserDTO(session=db_session)
-
-    def test_unexistentMatch(self, client: TestClient, superuser_token_headers: dict):
+    def test_1(self, client: TestClient, superuser_token_headers: dict):
+        """Start unexistent match"""
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": 100, "user_uid": 1},
@@ -101,12 +94,15 @@ class TestCasePlayStart:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_startExpiredMatch(self, client: TestClient, superuser_token_headers: dict):
+    def test_2(
+        self, client: TestClient, superuser_token_headers: dict, match_dto, user_dto
+    ):
+        """Start a match that has already expired"""
         one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
-        match = self.match_dto.new(expires=one_hour_ago)
-        self.match_dto.save(match)
+        match = match_dto.new(expires=one_hour_ago)
+        match_dto.save(match)
 
-        user = self.user_dto.fetch(signed=match.is_restricted)
+        user = user_dto.fetch(signed=match.is_restricted)
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": match.uid, "user_uid": user.uid},
@@ -114,17 +110,25 @@ class TestCasePlayStart:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_startMatchAndUserIsImplicitlyCreated(
-        self, client: TestClient, superuser_token_headers: dict
+    def test_3(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        match_dto,
+        game_dto,
+        question_dto,
     ):
-        match = self.match_dto.new(is_restricted=False)
-        self.match_dto.save(match)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
-            game_uid=game.uid, text="1+1 is = to", position=0
-        )
-        self.question_dto.save(question)
+        """
+        GIVEN: an existing match
+        WHEN: it is started without providing the user parameter
+        THEN: the user is created internally and returned in the response
+        """
+        match = match_dto.new(is_restricted=False)
+        match_dto.save(match)
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question = question_dto.new(game_uid=game.uid, text="1+1 is = to", position=0)
+        question_dto.save(question)
 
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
@@ -139,14 +143,20 @@ class TestCasePlayStart:
         assert response.json()["attempt_uid"]
         assert response.json()["user_uid"]
 
-    def test_startMatchWithoutQuestion(
-        self, client: TestClient, superuser_token_headers: dict
+    def test_4(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        match_dto,
+        game_dto,
+        user_dto,
     ):
-        match = self.match_dto.new(is_restricted=False)
-        self.match_dto.save(match)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        user = self.user_dto.fetch(signed=match.is_restricted)
+        """Starting a match without questions"""
+        match = match_dto.new(is_restricted=False)
+        match_dto.save(match)
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        user = user_dto.fetch(signed=match.is_restricted)
 
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
@@ -156,19 +166,23 @@ class TestCasePlayStart:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()["detail"] == f"Game {game.uid} has no questions"
 
-    # the password feature is tested more thoroughly in the logical_validation tests
-    def test_startRestrictedMatchUsingPassword(
-        self, client: TestClient, superuser_token_headers: dict
+    def test_5(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        match_dto,
+        game_dto,
+        question_dto,
+        user_dto,
     ):
-        match = self.match_dto.new(is_restricted=True)
-        self.match_dto.save(match)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
-            game_uid=game.uid, text="1+1 is = to", position=0
-        )
-        self.question_dto.save(question)
-        user = self.user_dto.fetch(signed=match.is_restricted)
+        """Start a restricte match also passing the password in the payload"""
+        match = match_dto.new(is_restricted=True)
+        match_dto.save(match)
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question = question_dto.new(game_uid=game.uid, text="1+1 is = to", position=0)
+        question_dto.save(question)
+        user = user_dto.fetch(signed=match.is_restricted)
 
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
@@ -187,18 +201,16 @@ class TestCasePlayStart:
 
 
 class TestCasePlayNext:
-    @pytest.fixture(autouse=True)
-    def setUp(self, db_session):
-        self.question_dto = QuestionDTO(session=db_session)
-        self.answer_dto = AnswerDTO(session=db_session)
-        self.game_dto = GameDTO(session=db_session)
-        self.user_dto = UserDTO(session=db_session)
-
-    def test_duplicateSameReaction(
-        self, client: TestClient, superuser_token_headers: dict, trivia_match
+    def test_1(
+        self, client: TestClient, superuser_token_headers: dict, trivia_match, user_dto
     ):
+        """
+        GIVEN: an existing match with several question
+        WHEN: the user submits the same reaction twice
+        THEN: an error should be returned
+        """
         match = trivia_match
-        user = self.user_dto.fetch(signed=match.is_restricted)
+        user = user_dto.fetch(signed=match.is_restricted)
         question = match.questions[0][0]
         answer = question.answers_by_position[0]
 
@@ -237,33 +249,40 @@ class TestCasePlayNext:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json() == {"detail": "Duplicate Reactions"}
 
-    def test_completeMixedMatch(
-        self, client: TestClient, superuser_token_headers: dict, db_session
+    def test_2(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        match_dto,
+        game_dto,
+        question_dto,
+        answer_dto,
+        user_dto,
     ):
-        match_dto = MatchDTO(session=db_session)
+        """Play a whole match, made of a question and one open-question"""
         match = match_dto.new(with_code=True, notify_correct=True)
         match_dto.save(match)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question = question_dto.new(
             text="Where is London?",
             game_uid=game.uid,
             position=0,
             time=2,
         )
-        self.question_dto.save(question)
-        answer = self.answer_dto.new(question=question, text="UK", position=1, level=2)
-        self.answer_dto.save(answer)
-        open_question = self.question_dto.new(
+        question_dto.save(question)
+        answer = answer_dto.new(question=question, text="UK", position=1, level=2)
+        answer_dto.save(answer)
+        open_question = question_dto.new(
             text="Where is Dallas?",
             game_uid=game.uid,
             position=1,
             time=2,
         )
-        self.question_dto.save(open_question)
+        question_dto.save(open_question)
 
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
             json={
@@ -305,53 +324,62 @@ class TestCasePlayNext:
         assert response.json()["was_correct"] is False
         assert match.rankings.count() == 1
 
-    def test_continueStartedMatchWithMultipleGames(
-        self, client: TestClient, superuser_token_headers: dict, db_session
+    def test_3(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        match_dto,
+        reaction_dto,
+        game_dto,
+        question_dto,
+        answer_dto,
+        user_dto,
     ):
+        """
+        GIVEN: a multi-games match that was already started
+                (there are already existing reactions)
+        WHEN: the user start playing again
+        THEN: the execution should continue from where it was left
+        """
         # first and only question of the first game is answered
         # first question of the second game is answered
-        match_dto = MatchDTO(session=db_session)
         match = match_dto.new(with_code=True, notify_correct=True)
         match_dto.save(match)
 
-        reaction_dto = ReactionDTO(session=db_session)
-
-        first_game = self.game_dto.new(match_uid=match.uid, index=0, order=False)
-        self.game_dto.save(first_game)
-        first_question = self.question_dto.new(
+        first_game = game_dto.new(match_uid=match.uid, index=0, order=False)
+        game_dto.save(first_game)
+        first_question = question_dto.new(
             text="Where is London?",
             game_uid=first_game.uid,
             position=0,
         )
-        self.question_dto.save(first_question)
-        first_answer = self.answer_dto.new(
-            question=first_question, text="UK", position=0
-        )
-        self.answer_dto.save(first_answer)
+        question_dto.save(first_question)
+        first_answer = answer_dto.new(question=first_question, text="UK", position=0)
+        answer_dto.save(first_answer)
 
-        second_game = self.game_dto.new(match_uid=match.uid, index=1, order=False)
-        self.game_dto.save(second_game)
+        second_game = game_dto.new(match_uid=match.uid, index=1, order=False)
+        game_dto.save(second_game)
 
-        second_question = self.question_dto.new(
+        second_question = question_dto.new(
             text="Where is Paris?",
             game_uid=second_game.uid,
             position=1,
         )
-        self.question_dto.save(second_question)
+        question_dto.save(second_question)
 
-        third_question = self.question_dto.new(
+        third_question = question_dto.new(
             text="Where is Dublin?",
             game_uid=second_game.uid,
             position=2,
         )
-        self.question_dto.save(third_question)
-        third_answer = self.answer_dto.new(
+        question_dto.save(third_question)
+        third_answer = answer_dto.new(
             question=third_question, text="Ireland", position=0
         )
-        self.answer_dto.save(third_answer)
+        answer_dto.save(third_answer)
 
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
 
         reaction_dto.save(
             reaction_dto.new(
@@ -395,27 +423,34 @@ class TestCasePlayNext:
         attempt_uid = user.reactions.first().attempt_uid
         assert user.reactions.filter_by(attempt_uid=attempt_uid).count() == 3
 
-    def test_7(self, client: TestClient, superuser_token_headers: dict, db_session):
+    def test_4(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        match_dto,
+        game_dto,
+        question_dto,
+        user_dto,
+    ):
         """
         GIVEN: an existing match with one open question
         WHEN: it is answered
         THEN: then an OpenAnswer is created.
         """
-        match_dto = MatchDTO(session=db_session)
         match = match_dto.new(with_code=True)
         match_dto.save(match)
 
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question = question_dto.new(
             text="Where is London?",
             game_uid=game.uid,
             position=0,
             time=2,
         )
-        self.question_dto.save(question)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
+        question_dto.save(question)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
 
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
@@ -449,43 +484,49 @@ class TestCasePlayNext:
         # assert question.open_answers.first().text == "London is in the United Kingdom"
         assert match.rankings.count() == 1
 
-    def test_8(self, client: TestClient, superuser_token_headers: dict, db_session):
+    def test_5(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        match_dto,
+        game_dto,
+        question_dto,
+        answer_dto,
+        user_dto,
+    ):
         """
         GIVEN: a restricted match with two question that can be
                 played unlimited times
         WHEN: the user plays two times
         THEN: the system should behave correctly, each time
         """
-        match_dto = MatchDTO(session=db_session)
         match = match_dto.new(is_restricted=True, times=0)
         match_dto.save(match)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question_1 = self.question_dto.new(
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question_1 = question_dto.new(
             text="Where is London?",
             game_uid=game.uid,
             position=0,
             time=None,
         )
-        self.question_dto.save(question_1)
-        answer_1 = self.answer_dto.new(
-            question=question_1, text="UK", position=0, level=2
-        )
-        self.answer_dto.save(answer_1)
+        question_dto.save(question_1)
+        answer_1 = answer_dto.new(question=question_1, text="UK", position=0, level=2)
+        answer_dto.save(answer_1)
 
-        question_2 = self.question_dto.new(
+        question_2 = question_dto.new(
             text="Where is Tokyo?",
             game_uid=game.uid,
             position=1,
             time=None,
         )
-        self.question_dto.save(question_2)
-        answer_2 = self.answer_dto.new(
+        question_dto.save(question_2)
+        answer_2 = answer_dto.new(
             question=question_2, text="Japan", position=0, level=2
         )
-        self.answer_dto.save(answer_2)
+        answer_dto.save(answer_2)
 
-        user = self.user_dto.fetch(signed=True)
+        user = user_dto.fetch(signed=True)
         for _ in range(2):
             response = client.post(
                 f"{settings.API_V1_STR}/play/start",
@@ -529,29 +570,36 @@ class TestCasePlayNext:
 
         assert match.rankings.count() == 2
 
-    def test_9(self, client: TestClient, superuser_token_headers: dict, db_session):
+    def test_6(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        match_dto,
+        game_dto,
+        user_dto,
+        question_dto,
+    ):
         """
         GIVEN: an existing match, not started via previous
                 call to /next
         WHEN: the user sends a request to /next endpoint
         THEN: an error should be returned
         """
-        match_dto = MatchDTO(session=db_session)
         match = match_dto.new(is_restricted=True, times=0)
         match_dto.save(match)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question_1 = self.question_dto.new(
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question_1 = question_dto.new(
             text="Where is London?",
             game_uid=game.uid,
             position=0,
             time=None,
         )
-        self.question_dto.save(question_1)
-        user = self.user_dto.new(
+        question_dto.save(question_1)
+        user = user_dto.new(
             email="user@test.project",
         )
-        self.user_dto.save(user)
+        user_dto.save(user)
         response = client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
@@ -564,30 +612,36 @@ class TestCasePlayNext:
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def test_10(self, client: TestClient, superuser_token_headers: dict, db_session):
+    def test_7(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        match_dto,
+        user_dto,
+        game_dto,
+        question_dto,
+        answer_dto,
+    ):
         """
         GIVEN: a restricted match with two question that can be
                 played unlimited times
         WHEN: the user plays two times
         THEN: the system should behave correctly, each time
         """
-        match_dto = MatchDTO(session=db_session)
         match = match_dto.new(is_restricted=True, times=1, notify_correct=True)
         match_dto.save(match)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question_1 = self.question_dto.new(
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question_1 = question_dto.new(
             text="Where is London?",
             game_uid=game.uid,
             position=0,
             time=None,
         )
-        self.question_dto.save(question_1)
-        answer_1 = self.answer_dto.new(
-            question=question_1, text="UK", position=0, level=2
-        )
-        self.answer_dto.save(answer_1)
-        user = self.user_dto.fetch(signed=True)
+        question_dto.save(question_1)
+        answer_1 = answer_dto.new(question=question_1, text="UK", position=0, level=2)
+        answer_dto.save(answer_1)
+        user = user_dto.fetch(signed=True)
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
             json={
@@ -617,8 +671,16 @@ class TestCasePlayNext:
         assert response.json()["was_correct"]
         assert response.json()["score"] > 0
 
-    def test_11(
-        self, client: TestClient, superuser_token_headers: dict, db_session, mocker
+    def test_8(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        mocker,
+        match_dto,
+        game_dto,
+        question_dto,
+        answer_dto,
+        user_dto,
     ):
         """
         GIVEN: a match that is valid at start time
@@ -630,21 +692,20 @@ class TestCasePlayNext:
             new_callable=mocker.PropertyMock,
             side_effect=[True, True, False],
         )
-        match_dto = MatchDTO(session=db_session)
         match = match_dto.new(to_time=datetime.now())
         match_dto.save(match)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question = question_dto.new(
             text="Where is London?",
             game_uid=game.uid,
             position=0,
         )
-        self.question_dto.save(question)
-        answer = self.answer_dto.new(question=question, text="UK", position=1)
-        self.answer_dto.save(answer)
-        user = self.user_dto.new(email="user@test.project")
-        self.user_dto.save(user)
+        question_dto.save(question)
+        answer = answer_dto.new(question=question, text="UK", position=1)
+        answer_dto.save(answer)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
 
         response = client.post(
             f"{settings.API_V1_STR}/play/start",

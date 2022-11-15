@@ -1,49 +1,16 @@
 from datetime import datetime, timedelta, timezone
 
-import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.domain_service.data_transfer.game import GameDTO
-from app.domain_service.data_transfer.match import MatchDTO
-from app.domain_service.data_transfer.question import QuestionDTO
 from app.domain_service.data_transfer.ranking import RankingDTO
-from app.domain_service.data_transfer.reaction import ReactionDTO
-from app.domain_service.data_transfer.user import UserDTO
 from app.tests.fixtures import TEST_1
 
 
-class TestCaseBadRequest:
-    def test_creation(self, client: TestClient, superuser_token_headers: dict) -> None:
-        response = client.post(
-            f"{settings.API_V1_STR}/matches/new",
-            json={"questions": [None]},
-            headers=superuser_token_headers,
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-    def test_update(self, client: TestClient, superuser_token_headers: dict) -> None:
-        response = client.put(
-            f"{settings.API_V1_STR}/matches/edit/1",
-            json={"questions": [1]},
-            headers=superuser_token_headers,
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-
 class TestCaseMatchEndpoints:
-    @pytest.fixture(autouse=True)
-    def setUp(self, db_session):
-        self.question_dto = QuestionDTO(session=db_session)
-        self.reaction_dto = ReactionDTO(session=db_session)
-        self.match_dto = MatchDTO(session=db_session)
-        self.game_dto = GameDTO(session=db_session)
-        self.user_dto = UserDTO(session=db_session)
-
-    def test_successfulCreationOfAMatch(
-        self, client: TestClient, superuser_token_headers: dict
-    ):
+    def test_1(self, client: TestClient, superuser_token_headers: dict):
+        """Create a new match"""
         match_name = "New Match"
         response = client.post(
             f"{settings.API_V1_STR}/matches/new",
@@ -56,9 +23,8 @@ class TestCaseMatchEndpoints:
         assert questions[0]["text"] == TEST_1[0]["text"]
         assert response.json()["is_restricted"]
 
-    def test_createMatchWithCode(
-        self, client: TestClient, superuser_token_headers: dict
-    ):
+    def test_2(self, client: TestClient, superuser_token_headers: dict):
+        """Create a new match"""
         match_name = "New Match"
         now = datetime.now(tz=timezone.utc) + timedelta(hours=1)
         tomorrow = now + timedelta(days=1)
@@ -76,31 +42,33 @@ class TestCaseMatchEndpoints:
         assert response.json()["code"]
         assert response.json()["expires"] == tomorrow.isoformat().replace("+00:00", "")
 
-    def test_requestUnexistentMatch(self, client: TestClient):
+    def test_3(self, client: TestClient):
+        """Unexistant match"""
         response = client.get(f"{settings.API_V1_STR}/matches/30")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_retriveOneMatchWithAllData(self, client: TestClient):
+    def test_4(self, client: TestClient, match_dto, game_dto, question_dto):
+        """Retrieve match's data, with questions"""
         match_name = "New Match"
-        match = self.match_dto.new(name=match_name)
-        self.match_dto.save(match)
-        first_game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(first_game)
-        question = self.question_dto.new(
+        match = match_dto.new(name=match_name)
+        match_dto.save(match)
+        first_game = game_dto.new(match_uid=match.uid)
+        game_dto.save(first_game)
+        question = question_dto.new(
             text="Where is London?",
             game_uid=first_game.uid,
             position=0,
         )
-        self.question_dto.save(question)
+        question_dto.save(question)
 
-        second_game = self.game_dto.new(match_uid=match.uid, index=1)
-        self.game_dto.save(second_game)
-        question = self.question_dto.new(
+        second_game = game_dto.new(match_uid=match.uid, index=1)
+        game_dto.save(second_game)
+        question = question_dto.new(
             text="Where is Vienna?",
             game_uid=second_game.uid,
             position=0,
         )
-        self.question_dto.save(question)
+        question_dto.save(question)
 
         response = client.get(f"{settings.API_V1_STR}/matches/{match.uid}")
         assert response.ok
@@ -127,11 +95,10 @@ class TestCaseMatchEndpoints:
             },
         ]
 
-    def test_updateFromTimeAndToTime(
-        self, client: TestClient, superuser_token_headers: dict
-    ):
-        match = self.match_dto.new(is_restricted=True)
-        self.match_dto.save(match)
+    def test_5(self, client: TestClient, superuser_token_headers: dict, match_dto):
+        """Update from-time and to-time attributes of a match"""
+        match = match_dto.new(is_restricted=True)
+        match_dto.save(match)
         response = client.put(
             f"{settings.API_V1_STR}/matches/edit/{match.uid}",
             json={
@@ -142,17 +109,20 @@ class TestCaseMatchEndpoints:
         )
 
         assert response.ok
-        self.match_dto.refresh(match)
+        match_dto.refresh(match)
         assert match.from_time == datetime.fromisoformat("2022-01-01T00:00:01")
         assert match.to_time == datetime.fromisoformat("2022-12-31T23:59:59")
         assert match.order
         assert match.is_restricted
 
-    def test_changeGamesOrder(self, client: TestClient, superuser_token_headers: dict):
-        match = self.match_dto.new()
-        self.match_dto.save(match)
-        first_game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(first_game)
+    def test_6(
+        self, client: TestClient, superuser_token_headers: dict, match_dto, game_dto
+    ):
+        """Change the match's order"""
+        match = match_dto.new()
+        match_dto.save(match)
+        first_game = game_dto.new(match_uid=match.uid)
+        game_dto.save(first_game)
         response = client.put(
             f"{settings.API_V1_STR}/matches/edit/{match.uid}",
             json={"games": [{"uid": first_game.uid, "order": False}]},
@@ -161,22 +131,28 @@ class TestCaseMatchEndpoints:
 
         assert response.ok
         assert response.json()["games_list"][0]["order"] is False
-        self.game_dto.refresh(first_game)
+        game_dto.refresh(first_game)
         assert not first_game.order
 
-    def test_addQuestionToExistingMatchWithOneGameOnly(
-        self, client: TestClient, superuser_token_headers: dict
+    def test_7(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        match_dto,
+        game_dto,
+        question_dto,
     ):
-        match = self.match_dto.new()
-        self.match_dto.save(match)
-        game = self.game_dto.new(match_uid=match.uid)
-        self.game_dto.save(game)
-        question = self.question_dto.new(
+        """Insert new questions to an existing match with one game"""
+        match = match_dto.new()
+        match_dto.save(match)
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        question = question_dto.new(
             text="Where is London?",
             game_uid=game.uid,
             position=0,
         )
-        self.question_dto.save(question)
+        question_dto.save(question)
         payload = {
             "times": 10,
             "questions": [
@@ -205,13 +181,14 @@ class TestCaseMatchEndpoints:
         assert not first_game_questions[1].answers_by_position[1].is_correct
         assert not first_game_questions[1].answers_by_position[2].is_correct
         assert game.questions.count() == 2
-        self.match_dto.refresh(match)
+        match_dto.refresh(match)
         assert match.times == 10
 
-    def test_listAllMatches(self, client: TestClient):
-        self.match_dto.save(self.match_dto.new())
-        self.match_dto.save(self.match_dto.new())
-        self.match_dto.save(self.match_dto.new())
+    def test_8(self, client: TestClient, match_dto):
+        """List all existing matches"""
+        match_dto.save(match_dto.new())
+        match_dto.save(match_dto.new())
+        match_dto.save(match_dto.new())
 
         response = client.get(f"{settings.API_V1_STR}/matches/")
         assert response.ok
@@ -222,6 +199,8 @@ class TestCaseMatchEndpoints:
         client: TestClient,
         superuser_token_headers: dict,
         fixed_answers_match_yaml_file,
+        match_dto,
+        game_dto,
     ):
         """
         GIVEN: a file containing questions and answers of a match
@@ -229,9 +208,9 @@ class TestCaseMatchEndpoints:
         THEN: the questions are correctly created in order and
                 same is for the answers associated to each question
         """
-        match = self.match_dto.new()
-        self.match_dto.save(match)
-        game = self.game_dto.save(self.game_dto.new(match_uid=match.uid))
+        match = match_dto.new()
+        match_dto.save(match)
+        game = game_dto.save(game_dto.new(match_uid=match.uid))
         base64_content, fname = fixed_answers_match_yaml_file
         superuser_token_headers.update(filename=fname)
         response = client.post(
@@ -259,6 +238,8 @@ class TestCaseMatchEndpoints:
         client: TestClient,
         superuser_token_headers: dict,
         open_answers_match_yaml_file,
+        match_dto,
+        game_dto,
     ):
         """
         GIVEN: a file containing data of a match with open questions
@@ -266,9 +247,9 @@ class TestCaseMatchEndpoints:
         THEN: the questions are correctly created in the provided order
                 and are `open`
         """
-        match = self.match_dto.new(is_restricted=True)
-        self.match_dto.save(match)
-        game = self.game_dto.save(self.game_dto.new(match_uid=match.uid))
+        match = match_dto.new(is_restricted=True)
+        match_dto.save(match)
+        game = game_dto.save(game_dto.new(match_uid=match.uid))
         base64_content, fname = open_answers_match_yaml_file
         superuser_token_headers.update(filename=fname)
         response = client.post(
@@ -290,16 +271,21 @@ class TestCaseMatchEndpoints:
         assert match.questions_list[1].is_open
         assert match.is_open
 
-    def test_importTemplateQuestions(
-        self, client: TestClient, superuser_token_headers: dict, question_dto
+    def test_11(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        question_dto,
+        match_dto,
+        game_dto,
     ):
         """
         this test guarantees that question with open answers can be
         created/imported
         """
-        match = self.match_dto.new()
-        self.match_dto.save(match)
-        new_game = self.game_dto.save(self.game_dto.new(match_uid=match.uid))
+        match = match_dto.new()
+        match_dto.save(match)
+        new_game = game_dto.save(game_dto.new(match_uid=match.uid))
         new_objects = question_dto.add_many(
             objects=[
                 question_dto.new(text="First Question", position=1),
@@ -319,10 +305,11 @@ class TestCaseMatchEndpoints:
         assert response.ok
         assert len(match.questions_list) == 3
 
-    def test_matchRankings(self, client: TestClient, db_session, match_dto):
+    def test_12(self, client: TestClient, db_session, match_dto, user_dto):
+        """List all existing ranking related to a match"""
         match = match_dto.save(match_dto.new())
-        user_1 = UserDTO(session=db_session).fetch()
-        user_2 = UserDTO(session=db_session).fetch()
+        user_1 = user_dto.fetch()
+        user_2 = user_dto.fetch()
 
         rank_1 = RankingDTO(session=db_session).new(
             match_uid=match.uid, user_uid=user_1.uid, score=4.1
