@@ -87,7 +87,7 @@ def superuser_token_headers(access_token_expires) -> Dict[str, str]:
 
 @pytest.fixture(scope="module")
 def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]:
-    # performs the whole authentication process
+    """perform the whole authentication process"""
     return authentication_token_from_email(
         client=client, email=settings.EMAIL_TEST_USER, db=db
     )
@@ -104,7 +104,6 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session")
 def ini_file(request):
-    # potentially grab this path from a pytest option
     return os.path.abspath("pytest.ini")
 
 

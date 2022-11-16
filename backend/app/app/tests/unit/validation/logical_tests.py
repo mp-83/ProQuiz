@@ -24,7 +24,6 @@ class TestCaseRetrieveObject:
             RetrieveObject(uid=1, otype="match", db_session=db_session).get()
 
     def test_2(self, db_session, user_dto):
-        # verify that the retrieved object is the one expected
         user = user_dto.fetch()
         obj = RetrieveObject(uid=user.uid, otype="user", db_session=db_session).get()
         assert obj == user
@@ -32,7 +31,6 @@ class TestCaseRetrieveObject:
 
 class TestCaseLandEndPoint:
     def test_1(self, db_session):
-        # matchDoesNotExists
         with pytest.raises(NotFoundObjectError):
             ValidatePlayLand(
                 match_uhash="wrong-hash", db_session=db_session
@@ -41,12 +39,11 @@ class TestCaseLandEndPoint:
 
 class TestCaseCodeEndPoint:
     def test_1(self, db_session):
-        # wrongCode
         with pytest.raises(NotFoundObjectError):
             ValidatePlayCode(match_code="2222", db_session=db_session).valid_match()
 
     def test_2(self, db_session, match_dto):
-        # verify match activeness
+        """verifies match activeness"""
         ten_hours_ago = datetime.now() - timedelta(hours=40)
         two_hours_ago = datetime.now() - timedelta(hours=3600)
         match = match_dto.save(
@@ -64,7 +61,6 @@ class TestCaseCodeEndPoint:
 
 class TestCaseSignEndPoint:
     def test_1(self, db_session, user_dto):
-        # wrongToken
         original_email = "user@test.io"
         email_digest = WordDigest(original_email).value()
         token_digest = WordDigest("01112021").value()
@@ -76,10 +72,12 @@ class TestCaseSignEndPoint:
                 token_digest=token_digest,
             )
         )
-        with pytest.raises(NotFoundObjectError):
+        with pytest.raises(NotFoundObjectError) as err:
             ValidatePlaySign(
                 original_email, "25121980", db_session=db_session
             ).is_valid()
+
+        assert err.value.message == "Invalid email-token"
 
 
 class TestCaseStartEndPoint:
@@ -124,12 +122,11 @@ class TestCaseStartEndPoint:
         assert err.value.message == "Password is required for private matches"
 
     def test_3(self, db_session):
-        # userDoesNotExists
+        """User does not exists"""
         with pytest.raises(NotFoundObjectError):
             ValidatePlayStart(user_uid=1, db_session=db_session).valid_user()
 
     def test_4(self, db_session, match_dto, user_dto):
-        # match's invalid password
         match = match_dto.new(is_restricted=True)
         match_dto.save(match)
         user_dto.fetch(signed=True)
@@ -157,8 +154,9 @@ class TestCaseNextEndPoint:
         WHEN: he tries to answer it again
         THEN: a validation-error should be returned because they cannot
                 exist two reactions with the same attempt-uid and answer
+                (there is also a DB constraint that prevents two concurrent
+                requests to reach at the same time)
         """
-        # despite the delay between the two (which respects the DB constraint)
         match = match_dto.save(match_dto.new())
         game = game_dto.new(match_uid=match.uid)
         game_dto.save(game)
@@ -240,12 +238,11 @@ class TestCaseNextEndPoint:
             )
 
     def test_5(self, db_session):
-        """userDoesNotExists"""
+        """User does not exists"""
         with pytest.raises(NotFoundObjectError):
             ValidatePlayNext(user_uid=1, db_session=db_session).valid_user()
 
     def test_6(self, db_session):
-        """matchDoesNotExists"""
         with pytest.raises(NotFoundObjectError):
             ValidatePlayNext(match_uid=1, db_session=db_session).valid_match()
 

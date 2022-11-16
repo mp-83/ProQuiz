@@ -419,7 +419,6 @@ class TestCaseYamlSchema:
         """
         fixed_match_structure returns the expected result
         """
-        # test meant to document input => output transformation
         value = {
             "questions": [
                 {"text": None},
@@ -490,7 +489,6 @@ class TestCaseYamlSchema:
         WHEN: fixed_match_structure is invoked
         THEN: produces the expected result
         """
-        # test meant to document input => output transformation
         value = {
             "questions": [
                 {"text": None},
@@ -523,7 +521,6 @@ class TestCaseYamlSchema:
         WHEN: open_match_structure is invoked
         THEN: produces the expected result
         """
-        # test meant to document input => output transformation
         value = {
             "questions": [
                 {"text": "Where is Austin?"},

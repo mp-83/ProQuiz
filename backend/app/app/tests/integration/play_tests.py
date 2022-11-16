@@ -341,8 +341,6 @@ class TestCasePlayNext:
         WHEN: the user start playing again
         THEN: the execution should continue from where it was left
         """
-        # first and only question of the first game is answered
-        # first question of the second game is answered
         match = match_dto.new(with_code=True, notify_correct=True)
         match_dto.save(match)
 
@@ -481,7 +479,6 @@ class TestCasePlayNext:
         assert response.json()["was_correct"] is None
 
         assert match.reactions.filter_by(open_answer_uid__isnot=None).count()
-        # assert question.open_answers.first().text == "London is in the United Kingdom"
         assert match.rankings.count() == 1
 
     def test_5(

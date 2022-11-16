@@ -26,7 +26,6 @@ class TestCaseQuestionEP:
 
     def test_3(self, client: TestClient, superuser_token_headers: dict, question_dto):
         """Create a question with the given data"""
-        # CSRF token is needed also in this case
         response = client.post(
             f"{settings.API_V1_STR}/questions/new",
             json={
