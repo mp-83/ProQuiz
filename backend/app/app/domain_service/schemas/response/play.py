@@ -1,4 +1,4 @@
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Optional
 
 from pydantic import BaseModel, NonNegativeInt, PositiveInt
 
@@ -40,11 +40,14 @@ class StartResponse(BaseModel):
 
 
 class NextResponse(BaseModel):
-    match_uid: PositiveInt = None
+    match_uid: Optional[PositiveInt]
     question: Question = None
-    user_uid: PositiveInt = None
-    score: int = None
+    user_uid: Optional[PositiveInt]
+    score: Optional[float]
     was_correct: bool = None
+
+    def dict(self, *args, **kwargs):
+        return super(NextResponse, self).dict(exclude_unset=True)
 
 
 class SignResponse(BaseModel):

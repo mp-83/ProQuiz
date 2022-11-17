@@ -319,7 +319,7 @@ class TestCasePlayNext:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
-        assert response.json()["match_uid"] is None
+        assert "match_uid" not in response.json()
         assert response.json()["score"] > 0
         assert response.json()["was_correct"] is False
         assert match.rankings.count() == 1
@@ -415,7 +415,6 @@ class TestCasePlayNext:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
-        assert response.json()["match_uid"] is None
         assert response.json()["was_correct"]
         assert match.rankings.count() == 1
         attempt_uid = user.reactions.first().attempt_uid
@@ -475,7 +474,6 @@ class TestCasePlayNext:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
-        assert response.json()["match_uid"] is None
         assert response.json()["was_correct"] is None
 
         assert match.reactions.filter_by(open_answer_uid__isnot=None).count()
@@ -561,7 +559,6 @@ class TestCasePlayNext:
             )
             assert response.status_code == status.HTTP_200_OK
             assert response.json()["question"] is None
-            assert response.json()["match_uid"] is None
             assert response.json()["score"] > 0
             assert response.json()["was_correct"] is None
 
@@ -664,7 +661,7 @@ class TestCasePlayNext:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
-        assert response.json()["match_uid"] is None
+        assert "match_uid" not in response.json()
         assert response.json()["was_correct"]
         assert response.json()["score"] > 0
 
@@ -727,3 +724,62 @@ class TestCasePlayNext:
             headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_9(
+        self,
+        client: TestClient,
+        superuser_token_headers: dict,
+        db_session,
+        match_dto,
+        game_dto,
+        question_dto,
+        user_dto,
+        answer_dto,
+    ):
+        """
+        GIVEN: a treasure-hunt match, which is only
+        WHEN: the user answers wrongly
+        THEN: the response should contain the expected payload
+        """
+        match = match_dto.save(match_dto.new(treasure_hunt=True))
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        first_question = question_dto.new(
+            text="Where is Graz?", game_uid=game.uid, position=0
+        )
+        question_dto.save(first_question)
+        correct = answer_dto.new(
+            question_uid=first_question.uid, text="Austria", position=1, level=2
+        )
+        answer_dto.save(correct)
+        wrong = answer_dto.new(
+            question_uid=first_question.uid, text="Germany", position=2, level=2
+        )
+        answer_dto.save(wrong)
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+
+        response = client.post(
+            f"{settings.API_V1_STR}/play/start",
+            json={
+                "match_uid": match.uid,
+                "user_uid": user.uid,
+            },
+            headers=superuser_token_headers,
+        )
+        assert response.ok
+        attempt_uid = response.json()["attempt_uid"]
+
+        response = client.post(
+            f"{settings.API_V1_STR}/play/next",
+            json={
+                "match_uid": match.uid,
+                "question_uid": first_question.uid,
+                "answer_uid": wrong.uid,
+                "user_uid": user.uid,
+                "attempt_uid": attempt_uid,
+            },
+            headers=superuser_token_headers,
+        )
+        assert response.ok
+        assert response.json() == {"question": None, "score": 0.0, "was_correct": None}

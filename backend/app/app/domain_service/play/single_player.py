@@ -6,6 +6,7 @@ from app.domain_service.data_transfer.reaction import ReactionDTO
 from app.exceptions import (
     GameError,
     GameOver,
+    HuntOver,
     MatchError,
     MatchNotPlayableError,
     MatchOver,
@@ -269,13 +270,21 @@ class SinglePlayer:
             attempt_uid = self._current_reaction.attempt_uid
             self._current_reaction = self._new_reaction(question, attempt_uid)
 
-        return self.reaction_dto.record_answer(
+        was_correct = self.reaction_dto.record_answer(
             self._current_reaction, answer=answer, open_answer=open_answer
         )
+        self.end_now(was_correct)
+        return was_correct
 
     @property
     def current(self):
         return self._question_factory.current
+
+    def end_now(self, was_correct):
+        if not self._match.treasure_hunt or was_correct:
+            return
+
+        raise HuntOver("Hunt-treasure match over")
 
     def forward(self):
         try:

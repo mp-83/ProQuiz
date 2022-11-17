@@ -36,6 +36,10 @@ class GameOver(InternalException):
     """"""
 
 
+class HuntOver(InternalException):
+    """Signal the treasure hunt is over"""
+
+
 class ValidateError(InternalException):
     """"""
 

@@ -11,6 +11,7 @@ from app.domain_service.play import (
 from app.exceptions import (
     GameError,
     GameOver,
+    HuntOver,
     MatchError,
     MatchNotPlayableError,
     MatchOver,
@@ -758,3 +759,33 @@ class TestCaseSinglePlayer:
 
         assert user.reactions.count() == 2
         assert not was_correct
+
+    def test_7(
+        self, db_session, match_dto, game_dto, question_dto, user_dto, answer_dto
+    ):
+        """
+        GIVEN: a treasure-hunt match, which is only
+        WHEN: the user answers wrongly
+        THEN: a HuntOver exception should be raised
+        """
+        match = match_dto.save(match_dto.new(treasure_hunt=True))
+        user = user_dto.new(email="user@test.project")
+        user_dto.save(user)
+        game = game_dto.new(match_uid=match.uid)
+        game_dto.save(game)
+        first_question = question_dto.new(
+            text="Where is Graz?", game_uid=game.uid, position=0
+        )
+        question_dto.save(first_question)
+        correct = answer_dto.new(
+            question_uid=first_question.uid, text="Austria", position=1, level=2
+        )
+        answer_dto.save(correct)
+        wrong = answer_dto.new(
+            question_uid=first_question.uid, text="Germany", position=2, level=2
+        )
+        answer_dto.save(wrong)
+        status = PlayerStatus(user, match, db_session=db_session)
+        player = SinglePlayer(status, user, match, db_session=db_session)
+        with pytest.raises(HuntOver):
+            player.react(first_question, wrong)

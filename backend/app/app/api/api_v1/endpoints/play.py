@@ -18,7 +18,7 @@ from app.domain_service.schemas.logical_validation import (
     ValidatePlaySign,
     ValidatePlayStart,
 )
-from app.exceptions import InternalException, MatchOver
+from app.exceptions import HuntOver, InternalException, MatchOver
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,11 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message
         ) from exc
 
-    was_correct = player.react(question, answer, open_answer)
+    try:
+        was_correct = player.react(question, answer, open_answer)
+    except HuntOver:
+        return {"question": None, "score": 0, "was_correct": None}
+
     if not match.notify_correct:
         was_correct = None
 

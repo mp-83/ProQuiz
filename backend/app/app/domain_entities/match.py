@@ -36,7 +36,11 @@ class Match(TableMixin, Base):
     topic = Column(String(TOPIC_NAME_LENGTH))
     # indicates whether the user has to be told that the answer given
     # (if any) was the correct one
-    notify_correct = Column(Boolean, default=False)
+    notify_correct = Column(Boolean, server_default="0")
+    # indicates whether this match is a treasure hunt, that
+    # implies the next question is returned only if the previous
+    # one was answered correctly
+    treasure_hunt = Column(Boolean, server_default="0")
 
     games = relationship(
         "Game",
