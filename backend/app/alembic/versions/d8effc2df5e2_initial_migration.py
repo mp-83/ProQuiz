@@ -1,16 +1,15 @@
 """Initial migration
 
-Revision ID: 0725e3bf4168
+Revision ID: d8effc2df5e2
 Revises:
-Create Date: 2022-11-04 07:41:44.731668
+Create Date: 2022-11-17 20:38:14.506937
 
 """
 import sqlalchemy as sa
 
 from alembic import op
 
-# revision identifiers, used by Alembic.
-revision = "0725e3bf4168"
+revision = "d8effc2df5e2"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -32,7 +31,8 @@ def upgrade():
         sa.Column("times", sa.Integer(), server_default=sa.text("1"), nullable=True),
         sa.Column("order", sa.Boolean(), server_default="1", nullable=True),
         sa.Column("topic", sa.String(length=60), nullable=True),
-        sa.Column("notify_correct", sa.Boolean(), nullable=True),
+        sa.Column("notify_correct", sa.Boolean(), server_default="0", nullable=True),
+        sa.Column("treasure_hunt", sa.Boolean(), server_default="0", nullable=True),
         sa.PrimaryKeyConstraint("uid", name=op.f("pk_matches")),
         sa.UniqueConstraint("name", name=op.f("uq_matches_name")),
     )
