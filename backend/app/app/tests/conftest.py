@@ -213,7 +213,11 @@ def create_fixture_test(db_session, match_dto, game_dto, question_dto):
 
 @pytest.fixture
 def fixed_answers_match_yaml_file():
-    with open("app/tests/files/fixed_answers_match.yaml", "rb") as fp:
+    file_path = "app/tests/files/fixed_answers_match.yaml"
+    if os.environ.get("GITHUB_WORKSPACE"):
+        prefix = f"{os.environ.get('GITHUB_WORKSPACE')}/backend/app/"
+        file_path = f"{prefix}/{file_path}"
+    with open(file_path, "rb") as fp:
         b64content = b64encode(fp.read()).decode()
         b64string = f"data:application/x-yaml;base64,{b64content}"
         yield b64string, "fixed_answers_match.yaml"
@@ -221,7 +225,11 @@ def fixed_answers_match_yaml_file():
 
 @pytest.fixture
 def open_answers_match_yaml_file():
-    with open("app/tests/files/open_answers_match.yaml", "rb") as fp:
+    file_path = "app/tests/files/open_answers_match.yaml"
+    if os.environ.get("GITHUB_WORKSPACE"):
+        prefix = f"{os.environ.get('GITHUB_WORKSPACE')}/backend/app/"
+        file_path = f"{prefix}/{file_path}"
+    with open(file_path, "rb") as fp:
         b64content = b64encode(fp.read()).decode()
         b64string = f"data:application/x-yaml;base64,{b64content}"
         yield b64string, "open_answers_match.yaml"
@@ -229,5 +237,9 @@ def open_answers_match_yaml_file():
 
 @pytest.fixture
 def excel_file():
-    with open("app/tests/files/file.xlsx", "rb") as fp:
+    file_path = "app/tests/files/file.xlsx"
+    if os.environ.get("GITHUB_WORKSPACE"):
+        prefix = f"{os.environ.get('GITHUB_WORKSPACE')}/backend/app/"
+        file_path = f"{prefix}/{file_path}"
+    with open(file_path, "rb") as fp:
         yield fp, "file.xlsx"
