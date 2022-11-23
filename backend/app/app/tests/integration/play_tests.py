@@ -15,29 +15,25 @@ class TestCaseBadRequest:
             response = client.post(
                 f"{settings.API_V1_STR}{endpoint}",
                 json={"questions": [None]},
-                headers=superuser_token_headers,
             )
             assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 class TestCasePlayLand:
-    def test_1(self, client: TestClient, superuser_token_headers: dict, match_dto):
+    def test_1(self, client: TestClient, match_dto):
         """verify the match.uid is returned, when playing a match with hash"""
         match = match_dto.new(with_code=False)
         match_dto.save(match)
         response = client.post(
             f"{settings.API_V1_STR}/play/h/{match.uhash}",
             json={},
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["match_uid"] == match.uid
 
 
 class TestCasePlayCode:
-    def test_1(
-        self, client: TestClient, superuser_token_headers: dict, db_session, match_dto
-    ):
+    def test_1(self, client: TestClient, db_session, match_dto):
         """verify the match.uid and user are returned, when
         playing a match with code
         """
@@ -47,7 +43,6 @@ class TestCasePlayCode:
         response = client.post(
             f"{settings.API_V1_STR}/play/code",
             json={"match_code": match.code},
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
         # the user.uid value can't be known ahead, but it will be > 0
@@ -56,9 +51,7 @@ class TestCasePlayCode:
 
 
 class TestCasePlaySign:
-    def test_1(
-        self, client: TestClient, superuser_token_headers: dict, match_dto, user_dto
-    ):
+    def test_1(self, client: TestClient, match_dto, user_dto):
         """
         GIVEN: an existing user
         WHEN: the user successfully signs in/logs in
@@ -78,25 +71,21 @@ class TestCasePlaySign:
         response = client.post(
             f"{settings.API_V1_STR}/play/sign",
             json={"email": "user@test.io", "token": "01112021"},
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["user"] == user.uid
 
 
 class TestCasePlayStart:
-    def test_1(self, client: TestClient, superuser_token_headers: dict):
+    def test_1(self, client: TestClient):
         """Start unexistent match"""
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": 100, "user_uid": 1},
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_2(
-        self, client: TestClient, superuser_token_headers: dict, match_dto, user_dto
-    ):
+    def test_2(self, client: TestClient, match_dto, user_dto):
         """Start a match that has already expired"""
         one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
         match = match_dto.new(expires=one_hour_ago)
@@ -106,14 +95,12 @@ class TestCasePlayStart:
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": match.uid, "user_uid": user.uid},
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_3(
         self,
         client: TestClient,
-        superuser_token_headers: dict,
         match_dto,
         game_dto,
         question_dto,
@@ -133,7 +120,6 @@ class TestCasePlayStart:
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": match.uid},
-            headers=superuser_token_headers,
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -146,7 +132,6 @@ class TestCasePlayStart:
     def test_4(
         self,
         client: TestClient,
-        superuser_token_headers: dict,
         match_dto,
         game_dto,
         user_dto,
@@ -161,7 +146,6 @@ class TestCasePlayStart:
         response = client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": match.uid, "user_uid": user.uid},
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()["detail"] == f"Game {game.uid} has no questions"
@@ -169,7 +153,6 @@ class TestCasePlayStart:
     def test_5(
         self,
         client: TestClient,
-        superuser_token_headers: dict,
         match_dto,
         game_dto,
         question_dto,
@@ -191,7 +174,6 @@ class TestCasePlayStart:
                 "user_uid": user.uid,
                 "password": match.password,
             },
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"]["text"] == question.text
@@ -201,9 +183,7 @@ class TestCasePlayStart:
 
 
 class TestCasePlayNext:
-    def test_1(
-        self, client: TestClient, superuser_token_headers: dict, trivia_match, user_dto
-    ):
+    def test_1(self, client: TestClient, trivia_match, user_dto):
         """
         GIVEN: an existing match with several question
         WHEN: the user submits the same reaction twice
@@ -220,7 +200,6 @@ class TestCasePlayNext:
                 "match_uid": match.uid,
                 "user_uid": user.uid,
             },
-            headers=superuser_token_headers,
         )
         current_reaction = user.reactions.first()
         response = client.post(
@@ -232,7 +211,6 @@ class TestCasePlayNext:
                 "user_uid": user.uid,
                 "attempt_uid": current_reaction.attempt_uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
         response = client.post(
@@ -244,7 +222,6 @@ class TestCasePlayNext:
                 "user_uid": user.uid,
                 "attempt_uid": current_reaction.attempt_uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json() == {"detail": "Duplicate Reactions"}
@@ -252,7 +229,6 @@ class TestCasePlayNext:
     def test_2(
         self,
         client: TestClient,
-        superuser_token_headers: dict,
         match_dto,
         game_dto,
         question_dto,
@@ -289,7 +265,6 @@ class TestCasePlayNext:
                 "match_uid": match.uid,
                 "user_uid": user.uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.ok
         attempt_uid = response.json()["attempt_uid"]
@@ -302,7 +277,6 @@ class TestCasePlayNext:
                 "user_uid": user.uid,
                 "attempt_uid": attempt_uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.json()["question"]["answers_to_display"] == []
 
@@ -315,7 +289,6 @@ class TestCasePlayNext:
                 "user_uid": user.uid,
                 "attempt_uid": attempt_uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
@@ -327,7 +300,6 @@ class TestCasePlayNext:
     def test_3(
         self,
         client: TestClient,
-        superuser_token_headers: dict,
         match_dto,
         reaction_dto,
         game_dto,
@@ -411,7 +383,6 @@ class TestCasePlayNext:
                 "user_uid": user.uid,
                 "attempt_uid": first_reaction.attempt_uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
@@ -423,7 +394,6 @@ class TestCasePlayNext:
     def test_4(
         self,
         client: TestClient,
-        superuser_token_headers: dict,
         match_dto,
         game_dto,
         question_dto,
@@ -455,7 +425,6 @@ class TestCasePlayNext:
                 "match_uid": match.uid,
                 "user_uid": user.uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.ok
         attempt_uid = response.json()["attempt_uid"]
@@ -470,7 +439,6 @@ class TestCasePlayNext:
                 "user_uid": user.uid,
                 "attempt_uid": attempt_uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
@@ -482,7 +450,6 @@ class TestCasePlayNext:
     def test_5(
         self,
         client: TestClient,
-        superuser_token_headers: dict,
         match_dto,
         game_dto,
         question_dto,
@@ -530,7 +497,6 @@ class TestCasePlayNext:
                     "user_uid": user.uid,
                     "password": match.password,
                 },
-                headers=superuser_token_headers,
             )
             assert response.ok
             attempt_uid = response.json()["attempt_uid"]
@@ -544,7 +510,6 @@ class TestCasePlayNext:
                     "user_uid": user.uid,
                     "attempt_uid": attempt_uid,
                 },
-                headers=superuser_token_headers,
             )
             response = client.post(
                 f"{settings.API_V1_STR}/play/next",
@@ -555,7 +520,6 @@ class TestCasePlayNext:
                     "user_uid": user.uid,
                     "attempt_uid": attempt_uid,
                 },
-                headers=superuser_token_headers,
             )
             assert response.status_code == status.HTTP_200_OK
             assert response.json()["question"] is None
@@ -567,7 +531,6 @@ class TestCasePlayNext:
     def test_6(
         self,
         client: TestClient,
-        superuser_token_headers: dict,
         match_dto,
         game_dto,
         user_dto,
@@ -602,14 +565,12 @@ class TestCasePlayNext:
                 "answer_uid": None,
                 "user_uid": user.uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def test_7(
         self,
         client: TestClient,
-        superuser_token_headers: dict,
         match_dto,
         user_dto,
         game_dto,
@@ -643,7 +604,6 @@ class TestCasePlayNext:
                 "user_uid": user.uid,
                 "password": match.password,
             },
-            headers=superuser_token_headers,
         )
         assert response.ok
         attempt_uid = response.json()["attempt_uid"]
@@ -657,7 +617,6 @@ class TestCasePlayNext:
                 "user_uid": user.uid,
                 "attempt_uid": attempt_uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["question"] is None
@@ -668,7 +627,6 @@ class TestCasePlayNext:
     def test_8(
         self,
         client: TestClient,
-        superuser_token_headers: dict,
         mocker,
         match_dto,
         game_dto,
@@ -707,7 +665,6 @@ class TestCasePlayNext:
                 "match_uid": match.uid,
                 "user_uid": user.uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.ok
         attempt_uid = response.json()["attempt_uid"]
@@ -721,14 +678,12 @@ class TestCasePlayNext:
                 "user_uid": user.uid,
                 "attempt_uid": attempt_uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_9(
         self,
         client: TestClient,
-        superuser_token_headers: dict,
         db_session,
         match_dto,
         game_dto,
@@ -765,7 +720,6 @@ class TestCasePlayNext:
                 "match_uid": match.uid,
                 "user_uid": user.uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.ok
         attempt_uid = response.json()["attempt_uid"]
@@ -779,7 +733,6 @@ class TestCasePlayNext:
                 "user_uid": user.uid,
                 "attempt_uid": attempt_uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.ok
         assert response.json() == {"question": None, "score": 0.0, "was_correct": None}

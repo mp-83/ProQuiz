@@ -2,7 +2,9 @@ from datetime import timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_csrf_protect import CsrfProtect
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -49,3 +51,10 @@ def test_token(current_user: User = Depends(get_current_user)) -> Any:
     Test access token
     """
     return current_user
+
+
+@router.get("/csrftoken")
+async def get_csrf_token(csrf_protect: CsrfProtect = Depends()):
+    response = JSONResponse(status_code=200, content={"csrf_token": "cookie"})
+    csrf_protect.set_csrf_cookie(response)
+    return response

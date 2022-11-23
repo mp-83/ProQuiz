@@ -51,4 +51,8 @@ class Settings(BaseSettings):
         case_sensitive = True
 
 
+class CsrfSettings(BaseSettings):
+    secret_key: str = "Kaakaww!"
+
+
 settings = Settings()

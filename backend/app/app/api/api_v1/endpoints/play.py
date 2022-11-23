@@ -1,7 +1,8 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
+from fastapi_csrf_protect import CsrfProtect
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -57,7 +58,13 @@ def code(user_input: syntax.CodePlay, session: Session = Depends(get_db)):
 
 
 @router.post("/start", response_model=response.StartResponse)
-def start(user_input: syntax.StartPlay, session: Session = Depends(get_db)):
+def start(
+    user_input: syntax.StartPlay,
+    request: Request,
+    session: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends(),
+):
+    csrf_protect.validate_csrf_in_cookies(request)
     user_input = user_input.dict()
     data = LogicValidation(ValidatePlayStart).validate(db_session=session, **user_input)
     match = data.get("match")
