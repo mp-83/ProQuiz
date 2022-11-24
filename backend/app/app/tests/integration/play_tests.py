@@ -7,12 +7,25 @@ from app.core.config import settings
 from app.domain_service.data_transfer.user import WordDigest
 
 
+class TestCaseCSRF:
+    def test_1(self, client: TestClient, match_dto):
+        """Verify that the response is the expected one"""
+        match = match_dto.new(with_code=False)
+        match_dto.save(match)
+        response = client.post(
+            f"{settings.API_V1_STR}/play/h/{match.uhash}",
+            json={},
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert response.json()["detail"] == "Missing Cookie CSRF-Token"
+
+
 class TestCaseBadRequest:
-    def test_1(self, client: TestClient, superuser_token_headers: dict):
+    def test_1(self, se_client: TestClient):
         """Tests some edge cases"""
         endpoints = ["/play/h/BAD", "/play/start", "/play/next", "/play/sign"]
         for endpoint in endpoints:
-            response = client.post(
+            response = se_client.post(
                 f"{settings.API_V1_STR}{endpoint}",
                 json={"questions": [None]},
             )
@@ -20,11 +33,11 @@ class TestCaseBadRequest:
 
 
 class TestCasePlayLand:
-    def test_1(self, client: TestClient, match_dto):
+    def test_1(self, se_client: TestClient, match_dto):
         """verify the match.uid is returned, when playing a match with hash"""
         match = match_dto.new(with_code=False)
         match_dto.save(match)
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/h/{match.uhash}",
             json={},
         )
@@ -33,14 +46,14 @@ class TestCasePlayLand:
 
 
 class TestCasePlayCode:
-    def test_1(self, client: TestClient, db_session, match_dto):
+    def test_1(self, se_client: TestClient, db_session, match_dto):
         """verify the match.uid and user are returned, when
         playing a match with code
         """
         in_one_hour = datetime.now(tz=timezone.utc) + timedelta(hours=1)
         match = match_dto.new(with_code=True, expires=in_one_hour)
         match_dto.save(match)
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/code",
             json={"match_code": match.code},
         )
@@ -51,7 +64,7 @@ class TestCasePlayCode:
 
 
 class TestCasePlaySign:
-    def test_1(self, client: TestClient, match_dto, user_dto):
+    def test_1(self, se_client: TestClient, match_dto, user_dto):
         """
         GIVEN: an existing user
         WHEN: the user successfully signs in/logs in
@@ -68,7 +81,7 @@ class TestCasePlaySign:
             token_digest=token_digest,
         )
         user_dto.save(user)
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/sign",
             json={"email": "user@test.io", "token": "01112021"},
         )
@@ -77,22 +90,22 @@ class TestCasePlaySign:
 
 
 class TestCasePlayStart:
-    def test_1(self, client: TestClient):
+    def test_1(self, se_client: TestClient):
         """Start unexistent match"""
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": 100, "user_uid": 1},
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_2(self, client: TestClient, match_dto, user_dto):
+    def test_2(self, se_client: TestClient, match_dto, user_dto):
         """Start a match that has already expired"""
         one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
         match = match_dto.new(expires=one_hour_ago)
         match_dto.save(match)
 
         user = user_dto.fetch(signed=match.is_restricted)
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": match.uid, "user_uid": user.uid},
         )
@@ -100,7 +113,7 @@ class TestCasePlayStart:
 
     def test_3(
         self,
-        client: TestClient,
+        se_client: TestClient,
         match_dto,
         game_dto,
         question_dto,
@@ -117,7 +130,7 @@ class TestCasePlayStart:
         question = question_dto.new(game_uid=game.uid, text="1+1 is = to", position=0)
         question_dto.save(question)
 
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": match.uid},
         )
@@ -131,7 +144,7 @@ class TestCasePlayStart:
 
     def test_4(
         self,
-        client: TestClient,
+        se_client: TestClient,
         match_dto,
         game_dto,
         user_dto,
@@ -143,7 +156,7 @@ class TestCasePlayStart:
         game_dto.save(game)
         user = user_dto.fetch(signed=match.is_restricted)
 
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/start",
             json={"match_uid": match.uid, "user_uid": user.uid},
         )
@@ -152,7 +165,7 @@ class TestCasePlayStart:
 
     def test_5(
         self,
-        client: TestClient,
+        se_client: TestClient,
         match_dto,
         game_dto,
         question_dto,
@@ -167,7 +180,7 @@ class TestCasePlayStart:
         question_dto.save(question)
         user = user_dto.fetch(signed=match.is_restricted)
 
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/start",
             json={
                 "match_uid": match.uid,
@@ -183,7 +196,7 @@ class TestCasePlayStart:
 
 
 class TestCasePlayNext:
-    def test_1(self, client: TestClient, trivia_match, user_dto):
+    def test_1(self, se_client: TestClient, trivia_match, user_dto):
         """
         GIVEN: an existing match with several question
         WHEN: the user submits the same reaction twice
@@ -194,7 +207,7 @@ class TestCasePlayNext:
         question = match.questions[0][0]
         answer = question.answers_by_position[0]
 
-        client.post(
+        se_client.post(
             f"{settings.API_V1_STR}/play/start",
             json={
                 "match_uid": match.uid,
@@ -202,7 +215,7 @@ class TestCasePlayNext:
             },
         )
         current_reaction = user.reactions.first()
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
                 "match_uid": match.uid,
@@ -213,7 +226,7 @@ class TestCasePlayNext:
             },
         )
         assert response.status_code == status.HTTP_200_OK
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
                 "match_uid": match.uid,
@@ -228,7 +241,7 @@ class TestCasePlayNext:
 
     def test_2(
         self,
-        client: TestClient,
+        se_client: TestClient,
         match_dto,
         game_dto,
         question_dto,
@@ -259,7 +272,7 @@ class TestCasePlayNext:
 
         user = user_dto.new(email="user@test.project")
         user_dto.save(user)
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/start",
             json={
                 "match_uid": match.uid,
@@ -268,7 +281,7 @@ class TestCasePlayNext:
         )
         assert response.ok
         attempt_uid = response.json()["attempt_uid"]
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
                 "match_uid": match.uid,
@@ -280,7 +293,7 @@ class TestCasePlayNext:
         )
         assert response.json()["question"]["answers_to_display"] == []
 
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
                 "match_uid": match.uid,
@@ -299,7 +312,7 @@ class TestCasePlayNext:
 
     def test_3(
         self,
-        client: TestClient,
+        se_client: TestClient,
         match_dto,
         reaction_dto,
         game_dto,
@@ -374,7 +387,7 @@ class TestCasePlayNext:
             )
         )
 
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
                 "match_uid": match.uid,
@@ -393,7 +406,7 @@ class TestCasePlayNext:
 
     def test_4(
         self,
-        client: TestClient,
+        se_client: TestClient,
         match_dto,
         game_dto,
         question_dto,
@@ -419,7 +432,7 @@ class TestCasePlayNext:
         user = user_dto.new(email="user@test.project")
         user_dto.save(user)
 
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/start",
             json={
                 "match_uid": match.uid,
@@ -429,7 +442,7 @@ class TestCasePlayNext:
         assert response.ok
         attempt_uid = response.json()["attempt_uid"]
 
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
                 "match_uid": match.uid,
@@ -449,7 +462,7 @@ class TestCasePlayNext:
 
     def test_5(
         self,
-        client: TestClient,
+        se_client: TestClient,
         match_dto,
         game_dto,
         question_dto,
@@ -490,7 +503,7 @@ class TestCasePlayNext:
 
         user = user_dto.fetch(signed=True)
         for _ in range(2):
-            response = client.post(
+            response = se_client.post(
                 f"{settings.API_V1_STR}/play/start",
                 json={
                     "match_uid": match.uid,
@@ -501,7 +514,7 @@ class TestCasePlayNext:
             assert response.ok
             attempt_uid = response.json()["attempt_uid"]
 
-            client.post(
+            se_client.post(
                 f"{settings.API_V1_STR}/play/next",
                 json={
                     "match_uid": match.uid,
@@ -511,7 +524,7 @@ class TestCasePlayNext:
                     "attempt_uid": attempt_uid,
                 },
             )
-            response = client.post(
+            response = se_client.post(
                 f"{settings.API_V1_STR}/play/next",
                 json={
                     "match_uid": match.uid,
@@ -530,7 +543,7 @@ class TestCasePlayNext:
 
     def test_6(
         self,
-        client: TestClient,
+        se_client: TestClient,
         match_dto,
         game_dto,
         user_dto,
@@ -557,7 +570,7 @@ class TestCasePlayNext:
             email="user@test.project",
         )
         user_dto.save(user)
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
                 "match_uid": match.uid,
@@ -570,7 +583,7 @@ class TestCasePlayNext:
 
     def test_7(
         self,
-        client: TestClient,
+        se_client: TestClient,
         match_dto,
         user_dto,
         game_dto,
@@ -597,7 +610,7 @@ class TestCasePlayNext:
         answer_1 = answer_dto.new(question=question_1, text="UK", position=0, level=2)
         answer_dto.save(answer_1)
         user = user_dto.fetch(signed=True)
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/start",
             json={
                 "match_uid": match.uid,
@@ -608,7 +621,7 @@ class TestCasePlayNext:
         assert response.ok
         attempt_uid = response.json()["attempt_uid"]
 
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
                 "match_uid": match.uid,
@@ -626,7 +639,7 @@ class TestCasePlayNext:
 
     def test_8(
         self,
-        client: TestClient,
+        se_client: TestClient,
         mocker,
         match_dto,
         game_dto,
@@ -659,7 +672,7 @@ class TestCasePlayNext:
         user = user_dto.new(email="user@test.project")
         user_dto.save(user)
 
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/start",
             json={
                 "match_uid": match.uid,
@@ -669,7 +682,7 @@ class TestCasePlayNext:
         assert response.ok
         attempt_uid = response.json()["attempt_uid"]
 
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
                 "match_uid": match.uid,
@@ -683,7 +696,7 @@ class TestCasePlayNext:
 
     def test_9(
         self,
-        client: TestClient,
+        se_client: TestClient,
         db_session,
         match_dto,
         game_dto,
@@ -714,7 +727,7 @@ class TestCasePlayNext:
         user = user_dto.new(email="user@test.project")
         user_dto.save(user)
 
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/start",
             json={
                 "match_uid": match.uid,
@@ -724,7 +737,7 @@ class TestCasePlayNext:
         assert response.ok
         attempt_uid = response.json()["attempt_uid"]
 
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/play/next",
             json={
                 "match_uid": match.uid,

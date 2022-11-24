@@ -132,9 +132,9 @@ class TestCaseUser:
         assert response.json()["players"][1]["uid"] == user_2.uid
         assert not response.json()["players"][1]["signed"]
 
-    def test_5(self, client: TestClient):
+    def test_5(self, se_client: TestClient):
         """Register a new `signed` user"""
-        response = client.post(
+        response = se_client.post(
             f"{settings.API_V1_STR}/players/sign",
             json={"email": "user@domain.com", "token": "01012022"},
         )

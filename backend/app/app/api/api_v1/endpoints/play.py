@@ -29,8 +29,11 @@ router = APIRouter()
 @router.post("/h/{match_uhash}", response_model=response.UIDSchemaBase)
 def land(
     match_uhash: str,
+    request: Request,
     session: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends(),
 ):
+    csrf_protect.validate_csrf_in_cookies(request)
     try:
         match_uhash = syntax.LandPlay(match_uhash=match_uhash).dict()["match_uhash"]
     except ValidationError as exc:
@@ -47,7 +50,13 @@ def land(
 
 
 @router.post("/code", response_model=response.UIDSchemaBase)
-def code(user_input: syntax.CodePlay, session: Session = Depends(get_db)):
+def code(
+    user_input: syntax.CodePlay,
+    request: Request,
+    session: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends(),
+):
+    csrf_protect.validate_csrf_in_cookies(request)
     match_code = user_input.dict()["match_code"]
     data = LogicValidation(ValidatePlayCode).validate(
         match_code=match_code, db_session=session
@@ -91,7 +100,13 @@ def start(
 
 
 @router.post("/next", response_model=response.NextResponse)
-def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
+def next(
+    user_input: syntax.NextPlay,
+    request: Request,
+    session: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends(),
+):
+    csrf_protect.validate_csrf_in_cookies(request)
     user_input = user_input.dict()
     data = LogicValidation(ValidatePlayNext).validate(db_session=session, **user_input)
     match = data.get("match")
@@ -137,7 +152,13 @@ def next(user_input: syntax.NextPlay, session: Session = Depends(get_db)):
 
 
 @router.post("/sign", response_model=response.SignResponse)
-def sign(user_input: syntax.SignPlay, session: Session = Depends(get_db)):
+def sign(
+    user_input: syntax.SignPlay,
+    request: Request,
+    session: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends(),
+):
+    csrf_protect.validate_csrf_in_cookies(request)
     user_input = user_input.dict()
     data = LogicValidation(ValidatePlaySign).validate(db_session=session, **user_input)
     user = data.get("user")

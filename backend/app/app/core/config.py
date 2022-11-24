@@ -53,6 +53,7 @@ class Settings(BaseSettings):
 
 class CsrfSettings(BaseSettings):
     secret_key: str = "Kaakaww!"
+    cookie_key: str = "CSRF-Token"
 
 
 settings = Settings()

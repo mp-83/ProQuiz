@@ -67,6 +67,21 @@ def db_session() -> Session:
 def client(db_session, superuser_token_headers) -> Generator:
     with TestClient(app) as c:
         c.headers = superuser_token_headers
+        yield c
+
+
+@pytest.fixture()
+def se_client(db_session) -> TestClient:
+    with TestClient(app) as c:
+        response = c.get(f"{settings.API_V1_STR}/csrftoken")
+        c.cookies = response.cookies
+        yield c
+
+
+@pytest.fixture()
+def ase_client(db_session, superuser_token_headers) -> TestClient:
+    with TestClient(app) as c:
+        c.headers = superuser_token_headers
         response = c.get(f"{settings.API_V1_STR}/csrftoken")
         c.cookies = response.cookies
         yield c

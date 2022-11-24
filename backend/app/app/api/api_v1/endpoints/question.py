@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi_csrf_protect import CsrfProtect
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -49,9 +50,12 @@ def get_question(
 @router.post("/new", response_model=response.Question)
 def new_question(
     question_in: syntax.QuestionCreate,
+    request: Request,
     session: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends(),
     _user: User = Depends(get_current_user),
 ):
+    csrf_protect.validate_csrf_in_cookies(request)
     user_input = question_in.dict()
     LogicValidation(ValidateNewQuestion).validate(question_in=user_input)
     dto = QuestionDTO(session=session)
@@ -65,9 +69,12 @@ def new_question(
 def edit_question(
     uid,
     question_in: syntax.QuestionEdit,
+    request: Request,
     session: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends(),
     _user: User = Depends(get_current_user),
 ):
+    csrf_protect.validate_csrf_in_cookies(request)
     try:
         question = RetrieveObject(uid=uid, otype="question", db_session=session).get()
     except NotFoundObjectError as exc:

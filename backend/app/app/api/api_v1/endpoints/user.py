@@ -1,6 +1,7 @@
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
+from fastapi_csrf_protect import CsrfProtect
 from sqlalchemy.orm import Session
 
 from app.domain_entities.db.session import get_db
@@ -33,8 +34,12 @@ def players(signed: bool = None, session: Session = Depends(get_db)):
 
 @router.post("/sign", response_model=response.Player)
 def register_signed_user(
-    user_input: syntax.SignedUserCreate, session: Session = Depends(get_db)
+    user_input: syntax.SignedUserCreate,
+    request: Request,
+    session: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends(),
 ):
+    csrf_protect.validate_csrf_in_cookies(request)
     user_input = user_input.dict()
     dto = UserDTO(session=session)
     return dto.fetch(original_email=user_input["email"], token=user_input["token"])
