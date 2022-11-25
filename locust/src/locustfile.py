@@ -3,9 +3,8 @@ import os
 from random import randint
 from time import sleep
 
-from requests.exceptions import RequestException
-
 from locust import HttpUser, between, task
+from requests.exceptions import RequestException
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +24,8 @@ class BackEndApi(HttpUser):
     def on_start(self):
         username = os.getenv("FIRST_SUPERUSER")
         password = os.getenv("FIRST_SUPERUSER_PASSWORD")
+        # fetch and store the CSRF token
+        self.client.get(f"{BASE_URL}/csrftoken")
 
         response = self.client.post(
             f"{BASE_URL}/login/access-token",
@@ -129,8 +130,8 @@ class BackEndApi(HttpUser):
                     open_answer_text = ""
             else:
                 answer_idx = randint(0, len(question["answers_to_display"]) - 1)
-                answer = question["answers_to_display"][answer_idx]
-                answer_uid = answer["uid"]
+                uid, _ = question["answers_to_display"][answer_idx]
+                answer_uid = uid
 
             payload = {
                 "match_uid": response_data["match_uid"],
@@ -208,8 +209,8 @@ class BackEndApi(HttpUser):
                     open_answer_text = ""
             else:
                 answer_idx = randint(0, len(question["answers_to_display"]) - 1)
-                answer = question["answers_to_display"][answer_idx]
-                answer_uid = answer["uid"]
+                uid, _ = question["answers_to_display"][answer_idx]
+                answer_uid = uid
 
             payload = {
                 "match_uid": response_data["match_uid"],

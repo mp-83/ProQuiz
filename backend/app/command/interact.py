@@ -15,10 +15,6 @@ logger = logging.getLogger(__name__)
 app = typer.Typer()
 
 
-"""
-alias quiz='clear && docker-compose exec backend python command/interact.py'
-"""
-
 BASE_URL = "http://localhost:7070/api/v1"
 
 
@@ -33,8 +29,10 @@ class TestingError(Exception):
 
 
 class Client:
-    def __init__(self):
+    def __init__(self, csrf=True):
         self._client = requests.Session()
+        if csrf:
+            self._client.get(f"{BASE_URL}/csrftoken")
 
     def authenticate(self, username=None, password=None):
         username = username or os.getenv("FIRST_SUPERUSER")
@@ -362,7 +360,7 @@ def play(client):
         match_password = None
 
     # create a new client with new headers (i.e. unauthenticated)
-    client = Client()
+    client = Client(csrf=True)
 
     sign_in = input("Do you want to sign-in (y/n) ? ")
     user_uid = None
@@ -422,9 +420,11 @@ def play(client):
 def print_question_and_answers(question):
     answer_map = {}
     typer.echo(f"{question['text']}\n")
+
     for i, answer in enumerate(question["answers_to_display"]):
-        typer.echo(f"{i}:\t{answer['text']}")
-        answer_map[i] = answer["uid"]
+        uid, text = answer
+        typer.echo(f"{i}:\t{text}")
+        answer_map[i] = uid
 
     typer.echo("\n\n")
     return answer_map
@@ -453,7 +453,7 @@ def player_sign(_):
     if not (original_email or token):
         return
 
-    client = Client()
+    client = Client(csrf=True)
     response = client.post(
         f"{BASE_URL}/play/sign", json={"email": original_email, "token": token}
     )
@@ -470,7 +470,7 @@ def create_new_signed_user(_):
     if not (original_email or token):
         return
 
-    client = Client()
+    client = Client(csrf=True)
     response = client.post(
         f"{BASE_URL}/players/sign", json={"email": original_email, "token": token}
     )
@@ -482,7 +482,7 @@ def create_new_signed_user(_):
 
 def get_ranking_for_a_match(_):
     match_uid = input("Enter the match ID:  ")
-    client = Client()
+    client = Client(csrf=True)
     response = client.get(f"{BASE_URL}/matches/rankings/{match_uid}")
     if not response.ok:
         typer.echo(response.reason)
@@ -547,7 +547,8 @@ Choose your option:
 
 @app.command()
 def start():
-    client = Client()
+    # for simplicity, CSRF is set for every call
+    client = Client(csrf=True)
     client.authenticate()
 
     while True:
