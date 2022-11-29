@@ -1,7 +1,7 @@
 ## ProQuiz
 <p>
 <a href="https://github.com/mp-83/ProQuiz/actions?query=workflow%3AProQuiz+event%3Apush+branch%3Aactions-test" target="_blank">
-    <img src="https://github.com/mp-83/ProQuiz/workflows/ProQuiz/badge.svg?event=push&branch=actions-test" alt="ProQuiz">
+    <img src="https://github.com/mp-83/ProQuiz/workflows/ProQuiz/badge.svg?event=push&branch=develop" alt="ProQuiz">
 </a>
 
 ProQuiz is a trivia game, pretty much like _Who wants to be a millionaire_.
