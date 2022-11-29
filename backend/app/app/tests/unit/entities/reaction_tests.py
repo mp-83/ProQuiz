@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from math import isclose
 
 import pytest
@@ -94,7 +94,14 @@ class TestCaseReactionModel:
         assert reaction.question.text == "1+2 is = to"
 
     def test_3(
-        self, match_dto, game_dto, question_dto, answer_dto, reaction_dto, user_dto
+        self,
+        match_dto,
+        game_dto,
+        question_dto,
+        answer_dto,
+        reaction_dto,
+        user_dto,
+        mocker,
     ):
         """
         GIVEN: an existing reaction of a user created
@@ -109,7 +116,7 @@ class TestCaseReactionModel:
         game_dto.save(game)
         user = user_dto.new(email="user@test.project")
         user_dto.save(user)
-        question = question_dto.new(text="3*3 = ", time=0, position=0)
+        question = question_dto.new(text="3*3 = ", time=5, position=0)
         question_dto.save(question)
         reaction = reaction_dto.new(
             match=match,
@@ -119,6 +126,12 @@ class TestCaseReactionModel:
         )
         reaction_dto.save(reaction)
 
+        class MockDatetime:
+            @classmethod
+            def now(cls, **_):
+                return datetime.now() + timedelta(seconds=7)
+
+        mocker.patch("app.domain_service.data_transfer.reaction.datetime", MockDatetime)
         answer = answer_dto.new(
             question=question, text="9", position=1, is_correct=True
         )
