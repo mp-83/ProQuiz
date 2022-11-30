@@ -167,6 +167,13 @@ There is a composed command that mimics the basic interaction a user might perfo
 docker-compose exec backend sh gui.sh
 ```
 
+### Performance
+
+Performances evaluation were solely focus on the play side. Tests were performed using [Locust](https://locust.io/)
+
+![Performance stats](docs/performances.png "Performance stats")
+
+
 ### Contributing
 
 This project was developed during my freetime (snapshots of the design & development phase, using the old *pen and paper* approach, are available [here](https://photos.app.goo.gl/2nQmgMT5WSuZwSrF6)). It is currently a library not a fully fledged application. It totally misses the GUI so there is no way to display anything but using the `gui.sh` script.
