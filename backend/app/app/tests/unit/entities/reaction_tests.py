@@ -126,12 +126,10 @@ class TestCaseReactionModel:
         )
         reaction_dto.save(reaction)
 
-        class MockDatetime:
-            @classmethod
-            def now(cls, **_):
-                return datetime.now() + timedelta(seconds=7)
-
-        mocker.patch("app.domain_service.data_transfer.reaction.datetime", MockDatetime)
+        datetime_mock = mocker.patch(
+            "app.domain_service.data_transfer.reaction.datetime"
+        )
+        datetime_mock.now.return_value = datetime.now() + timedelta(seconds=7)
         answer = answer_dto.new(
             question=question, text="9", position=1, is_correct=True
         )
