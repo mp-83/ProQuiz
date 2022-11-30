@@ -64,9 +64,27 @@ def db_session() -> Session:
 
 
 @pytest.fixture()
-def client(db_session) -> Generator:
-    with TestClient(app) as c:
-        yield c
+def client(db_session, superuser_token_headers) -> Generator:
+    with TestClient(app) as _client:
+        _client.headers = superuser_token_headers
+        yield _client
+
+
+@pytest.fixture()
+def se_client(db_session) -> TestClient:
+    with TestClient(app) as _client:
+        response = _client.get(f"{settings.API_V1_STR}/csrftoken")
+        _client.cookies = response.cookies
+        yield _client
+
+
+@pytest.fixture()
+def ase_client(db_session, superuser_token_headers) -> TestClient:
+    with TestClient(app) as _client:
+        _client.headers = superuser_token_headers
+        response = _client.get(f"{settings.API_V1_STR}/csrftoken")
+        _client.cookies = response.cookies
+        yield _client
 
 
 @pytest.fixture(scope="session")
@@ -91,11 +109,6 @@ def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]
     return authentication_token_from_email(
         client=client, email=settings.EMAIL_TEST_USER, db=db
     )
-
-
-class Cookie:
-    def values(self):
-        return []
 
 
 def pytest_addoption(parser):

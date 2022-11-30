@@ -9,13 +9,12 @@ from app.tests.fixtures import TEST_1
 
 
 class TestCaseMatchEndpoints:
-    def test_1(self, client: TestClient, superuser_token_headers: dict):
+    def test_1(self, ase_client: TestClient):
         """Create a new match"""
         match_name = "New Match"
-        response = client.post(
+        response = ase_client.post(
             f"{settings.API_V1_STR}/matches/new",
             json={"name": match_name, "questions": TEST_1, "is_restricted": "true"},
-            headers=superuser_token_headers,
         )
         assert response.ok
         questions = response.json()["questions_list"]
@@ -23,12 +22,12 @@ class TestCaseMatchEndpoints:
         assert questions[0]["text"] == TEST_1[0]["text"]
         assert response.json()["is_restricted"]
 
-    def test_2(self, client: TestClient, superuser_token_headers: dict):
+    def test_2(self, ase_client: TestClient):
         """Create a new match"""
         match_name = "New Match"
         now = datetime.now(tz=timezone.utc) + timedelta(hours=1)
         tomorrow = now + timedelta(days=1)
-        response = client.post(
+        response = ase_client.post(
             f"{settings.API_V1_STR}/matches/new",
             json={
                 "name": match_name,
@@ -36,7 +35,6 @@ class TestCaseMatchEndpoints:
                 "from_time": now.isoformat(),
                 "to_time": tomorrow.isoformat(),
             },
-            headers=superuser_token_headers,
         )
         assert response.ok
         assert response.json()["code"]
@@ -95,17 +93,16 @@ class TestCaseMatchEndpoints:
             },
         ]
 
-    def test_5(self, client: TestClient, superuser_token_headers: dict, match_dto):
+    def test_5(self, ase_client: TestClient, match_dto):
         """Update from-time and to-time attributes of a match"""
         match = match_dto.new(is_restricted=True)
         match_dto.save(match)
-        response = client.put(
+        response = ase_client.put(
             f"{settings.API_V1_STR}/matches/edit/{match.uid}",
             json={
                 "from_time": "2022-01-01T00:00:01+00:00",
                 "to_time": "2022-12-31T23:59:59+00:00",
             },
-            headers=superuser_token_headers,
         )
 
         assert response.ok
@@ -115,18 +112,15 @@ class TestCaseMatchEndpoints:
         assert match.order
         assert match.is_restricted
 
-    def test_6(
-        self, client: TestClient, superuser_token_headers: dict, match_dto, game_dto
-    ):
+    def test_6(self, ase_client: TestClient, match_dto, game_dto):
         """Change the match's order"""
         match = match_dto.new()
         match_dto.save(match)
         first_game = game_dto.new(match_uid=match.uid)
         game_dto.save(first_game)
-        response = client.put(
+        response = ase_client.put(
             f"{settings.API_V1_STR}/matches/edit/{match.uid}",
             json={"games": [{"uid": first_game.uid, "order": False}]},
-            headers=superuser_token_headers,
         )
 
         assert response.ok
@@ -136,8 +130,7 @@ class TestCaseMatchEndpoints:
 
     def test_7(
         self,
-        client: TestClient,
-        superuser_token_headers: dict,
+        ase_client: TestClient,
         match_dto,
         game_dto,
         question_dto,
@@ -168,10 +161,9 @@ class TestCaseMatchEndpoints:
                 }
             ],
         }
-        response = client.put(
+        response = ase_client.put(
             f"{settings.API_V1_STR}/matches/edit/{match.uid}",
             json=payload,
-            headers=superuser_token_headers,
         )
         assert response.ok
         first_game_questions = match.questions[0]
@@ -196,8 +188,7 @@ class TestCaseMatchEndpoints:
 
     def test_9(
         self,
-        client: TestClient,
-        superuser_token_headers: dict,
+        ase_client: TestClient,
         fixed_answers_match_yaml_file,
         match_dto,
         game_dto,
@@ -212,11 +203,10 @@ class TestCaseMatchEndpoints:
         match_dto.save(match)
         game = game_dto.save(game_dto.new(match_uid=match.uid))
         base64_content, fname = fixed_answers_match_yaml_file
-        superuser_token_headers.update(filename=fname)
-        response = client.post(
+        ase_client.headers.update(filename=fname)
+        response = ase_client.post(
             f"{settings.API_V1_STR}/matches/yaml_import",
             json={"uid": match.uid, "data": base64_content, "game_uid": game.uid},
-            headers=superuser_token_headers,
         )
 
         assert response.ok
@@ -235,8 +225,7 @@ class TestCaseMatchEndpoints:
 
     def test_10(
         self,
-        client: TestClient,
-        superuser_token_headers: dict,
+        ase_client: TestClient,
         open_answers_match_yaml_file,
         match_dto,
         game_dto,
@@ -251,11 +240,10 @@ class TestCaseMatchEndpoints:
         match_dto.save(match)
         game = game_dto.save(game_dto.new(match_uid=match.uid))
         base64_content, fname = open_answers_match_yaml_file
-        superuser_token_headers.update(filename=fname)
-        response = client.post(
+        ase_client.headers.update(filename=fname)
+        response = ase_client.post(
             f"{settings.API_V1_STR}/matches/yaml_import",
             json={"uid": match.uid, "data": base64_content, "game_uid": game.uid},
-            headers=superuser_token_headers,
         )
 
         assert response.ok
@@ -273,8 +261,7 @@ class TestCaseMatchEndpoints:
 
     def test_11(
         self,
-        client: TestClient,
-        superuser_token_headers: dict,
+        ase_client: TestClient,
         question_dto,
         match_dto,
         game_dto,
@@ -293,14 +280,13 @@ class TestCaseMatchEndpoints:
                 question_dto.new(text="Third Question", position=3),
             ]
         )
-        response = client.post(
+        response = ase_client.post(
             f"{settings.API_V1_STR}/matches/import_questions",
             json={
                 "uid": match.uid,
                 "questions": [q.uid for q in new_objects],
                 "game_uid": new_game.uid,
             },
-            headers=superuser_token_headers,
         )
         assert response.ok
         assert len(match.questions_list) == 3

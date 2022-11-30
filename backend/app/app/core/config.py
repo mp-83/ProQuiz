@@ -51,4 +51,9 @@ class Settings(BaseSettings):
         case_sensitive = True
 
 
+class CsrfSettings(BaseSettings):
+    secret_key: str
+    cookie_key: str = "CSRF-Token"
+
+
 settings = Settings()

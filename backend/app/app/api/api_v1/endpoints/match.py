@@ -1,6 +1,7 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi_csrf_protect import CsrfProtect
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -48,9 +49,12 @@ def get_match(
 @router.post("/new", response_model=response.Match)
 def create_match(
     match_in: syntax.MatchCreate,
+    request: Request,
     session: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends(),
     _user: User = Depends(get_current_user),
 ):
+    csrf_protect.validate_csrf_in_cookies(request)
     user_input = match_in.dict()
     LogicValidation(ValidateNewMatch).validate(match_in=user_input, db_session=session)
     questions = user_input.pop("questions", None) or []
@@ -67,9 +71,12 @@ def create_match(
 def edit_match(
     uid: int,
     user_input: syntax.MatchEdit,
+    request: Request,
     session: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends(),
     _user: User = Depends(get_current_user),
 ):
+    csrf_protect.validate_csrf_in_cookies(request)
     match_in = user_input.dict()
     _initial_fields = match_in.pop("_initial_fields")
     match = LogicValidation(ValidateEditMatch).validate(
@@ -84,9 +91,12 @@ def edit_match(
 @router.post("/yaml_import", response_model=response.Match)
 def match_yaml_import(
     user_input: syntax.MatchYamlImport,
+    request: Request,
     session: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends(),
     _user: User = Depends(get_current_user),
 ):
+    csrf_protect.validate_csrf_in_cookies(request)
     user_input = user_input.dict()
     match_uid = user_input.get("uid")
     game_uid = user_input.get("game_uid")
@@ -101,9 +111,12 @@ def match_yaml_import(
 @router.post("/import_questions", response_model=response.Match)
 def import_questions(
     user_input: syntax.ImportQuestions,
+    request: Request,
     session: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends(),
     _user: User = Depends(get_current_user),
 ):
+    csrf_protect.validate_csrf_in_cookies(request)
     user_input = user_input.dict()
     match_uid = user_input.get("uid")
     match = LogicValidation(ValidateMatchImport).validate(
